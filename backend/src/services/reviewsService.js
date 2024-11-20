@@ -1,37 +1,17 @@
 import { extractGooglePlayAppId, extractAppleAppId, combineReviews } from '../utils/extractors.js';
+import path from 'path';
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
 import gplay from 'google-play-scraper';
 import axios from 'axios';
 
-export const handleUSPGeneration = async (google_play, apple_app) => {
-  const appName = await gplay.app({ appId: extractGooglePlayAppId(google_play) }).title;
-  const googleReviews = await gplay.reviews({ appId: extractGooglePlayAppId(google_play), sort: gplay.sort.NEWEST });
-  const appleReviews = apple_app ? await appleReviews(apple_app) : [];
-  const combinedReviews = combineReviews(googleReviews.data, appleReviews);
+// Convert import.meta.url to __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  return generateUSPhrases(appName, combinedReviews);
-};
-
-export const getAppNameFromGooglePlay = async (url) => {
-  const match = url.match(/id=([a-zA-Z0-9._]+)/); // Extract app ID from URL
-  if (!match) {
-    console.error('Invalid Google Play URL');
-    return null;
-  }
-
-  const appId = match[1];
-  try {
-    const appDetails = await gplay.app({ appId });
-    console.log('App Name:', appDetails.title);
-    return appDetails.title;
-  } catch (error) {
-    console.error('Error fetching app details from Google Play:', error);
-    return null;
-  }
-};
-
-// Scrape reviews from Google Play Store.
+// Scrape reviews from Google Play Store
 export const scrapeGooglePlayReviews = async (url) => {
-  const appId = extractGooglePlayAppId(url); // Use helper function from utils/extractors.js
+  const appId = extractGooglePlayAppId(url); // Extract app ID from URL
   if (!appId) {
     console.error('Error: Invalid Google Play Store URL');
     throw new Error('Invalid Google Play Store URL');
@@ -46,59 +26,55 @@ export const scrapeGooglePlayReviews = async (url) => {
       sort: gplay.sort.NEWEST,
     });
 
-    // Print reviews
     console.log(`Fetched ${reviews.data.length} reviews from Google Play Store`);
-    console.log('Google Play Reviews:', reviews.data);
-
-    return reviews.data.slice(0, 50); // Return top 50 reviews
+    // console.log('Google Play Reviews:', reviews.data);
+    return reviews.data.slice(0, 150); // Return top 150 reviews
   } catch (error) {
-    console.error('Error fetching Google Play Store reviews:', error);
+    console.error('Error fetching Google Play Store reviews:', error.message);
     return [];
   }
 };
 
-// Scrape reviews from Apple App Store.
-export const scrapeAppleStoreReviews = async (url) => {
-  const appId = extractAppleAppId(url);
-  if (!appId) {
-    console.error('Error: Invalid Apple App Store URL');
-    throw new Error('Invalid Apple App Store URL');
-  }
+// Scrape reviews from Apple App Store
+export const scrapeAppleStoreReviews = async (appId, country = 'in', appName) => {
+  const scriptPath = path.join(__dirname, './scrape_apple_reviews.py'); // Ensure the path is correct
+  console.log('Script path:', scriptPath); // Verify the Python script path
+  console.log('Calling Python script with args:', appId, country, appName); // Log the parameters passed to the Python script
 
-  const apiUrl = `https://itunes.apple.com/in/rss/customerreviews/page=1/id=${appId}/sortBy=mostRecent/json`;
-  try {
-    console.log('Fetching Apple App Store reviews for App ID:', appId);
-    const response = await axios.get(apiUrl);
+  return new Promise((resolve, reject) => {
+    const process = spawn('python', [scriptPath, appId, country, appName]);
 
-    console.log('Apple API response:', JSON.stringify(response.data, null, 2));
+    let output = '';
+    let error = '';
 
-    // Check if the `entry` field exists
-    if (!response.data.feed.entry) {
-      console.warn('No reviews found in Apple API response.');
-      return [];
-    }
+    process.stdout.on('data', (data) => {
+      output += data.toString();
+    });
 
-    const reviews = response.data.feed.entry.map((entry) => ({
-      author: entry.author.name.label,
-      title: entry.title.label,
-      review: entry.content.label,
-      rating: entry['im:rating'].label,
-    }));
+    process.stderr.on('data', (data) => {
+      error += data.toString();
+    });
 
-    // Print reviews
-    console.log(`Fetched ${reviews.length} reviews from Apple App Store`);
-    console.log('Apple App Store Reviews:', reviews);
-
-    return reviews.slice(0, 50); // Limit to top 50 reviews
-  } catch (error) {
-    console.error('Error fetching Apple Store reviews:', error);
-    return [];
-  }
+    process.on('close', (code) => {
+      if (code === 0) {
+        try {
+          const parsedData = JSON.parse(output); // Parse Python output
+          resolve(Array.isArray(parsedData) ? parsedData : []);
+        } catch (parseError) {
+          console.error('Error parsing Python output:', parseError.message);
+          resolve([]); // Return an empty array if parsing fails
+        }
+      } else {
+        console.error('Python script failed with code:', code, 'Error:', error.trim());
+        resolve([]); // Return an empty array if the script fails
+      }
+    });
+  });
 };
 
-// Generate USP phrases using Gemini API.
+// Generate USP phrases using Gemini API
 export const generateUSPhrases = async (appName, reviews) => {
-  const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
   const prompt = `What can be the 20 most efficient USP marketing headlines for ads for ${appName}? Focus only on providing the phrases category and phrases, related to the brand's main USP. Ensure there are no extra lines, tips, notes, or commentary—just the 20 headlines with its respective categories. Here's the context from the reviews:\n\n${reviews}`;
 
   try {
@@ -133,7 +109,55 @@ export const generateUSPhrases = async (appName, reviews) => {
     console.log('Generated USP phrases:', phrases);
     return phrases;
   } catch (error) {
-    console.error('Error generating USP phrases:', error);
+    console.error('Error generating USP phrases:', error.message);
     return [];
+  }
+};
+
+export const getAppNameFromGooglePlay = async (url) => {
+  const match = url.match(/id=([a-zA-Z0-9._]+)/); // Extract app ID from URL
+  if (!match) {
+    console.error('Invalid Google Play URL');
+    throw new Error('Invalid Google Play URL');
+  }
+
+  const appId = match[1];
+  try {
+    const appDetails = await gplay.app({ appId });
+    console.log('App Name:', appDetails.title);
+    return appDetails.title;
+  } catch (error) {
+    console.error('Error fetching app details from Google Play:', error.message);
+    throw new Error('Failed to fetch app name from Google Play');
+  }
+};
+
+// Handle USP Generation
+export const handleUSPGeneration = async (google_play, apple_app) => {
+  try {
+    // Fetch Google Play reviews
+    const googleReviews = await scrapeGooglePlayReviews(google_play);
+
+    // Extract Apple app details
+    const appleAppId = extractAppleAppId(apple_app); // Extract Apple App ID
+    const appName = await getAppNameFromGooglePlay(google_play); // Ensure appName is awaited properly
+
+    let appleReviews = [];
+    if (appleAppId) {
+      console.log(`Fetching Apple reviews for App ID: ${appleAppId} and App Name: ${appName}`);
+      appleReviews = await scrapeAppleStoreReviews(appleAppId, 'in', appName); // Pass appName correctly
+    }
+
+    // Log fetched Apple reviews for debugging
+    console.log("Fetched Apple Reviews:", appleReviews);
+
+    // Combine reviews
+    const combinedReviews = combineReviews(googleReviews, appleReviews);
+
+    // Generate USP phrases
+    return await generateUSPhrases(appName, combinedReviews);
+  } catch (error) {
+    console.error('Error handling USP generation:', error.message);
+    throw new Error(error.message);
   }
 };
