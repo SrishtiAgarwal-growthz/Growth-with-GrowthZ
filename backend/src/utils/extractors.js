@@ -4,12 +4,14 @@ export const extractGooglePlayAppId = (url) => {
 };
 
 export const extractAppleAppId = (url) => {
-    const match = url.match(/\/app\/([^/]+)\/id(\d+)/);
+    const match = url.match(/\/id(\d+)/); // Extract the numeric App ID
     return match ? match[1] : null;
 };
 
 export const combineReviews = (googleReviews, appleReviews) => {
-    const googleText = googleReviews.map((review) => review.text || '').join(' ');
-    const appleText = appleReviews.map((review) => review.review || '').join(' ');
-    return `${googleText}\n${appleText}`;
+    const combinedReviews = [
+        ...googleReviews,
+        ...appleReviews,
+    ];
+    return combinedReviews.join("\n"); // Combine as a single string
 };
