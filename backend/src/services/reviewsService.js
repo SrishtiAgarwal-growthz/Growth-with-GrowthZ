@@ -1,7 +1,7 @@
 import axios from "axios";
-import path from "path";
-import { spawn } from "child_process";
 import gplay from "google-play-scraper";
+import store from "app-store-scraper";
+import path from "path";
 import { fileURLToPath } from "url";
 import { extractGooglePlayAppId } from "../utils/extractors.js";
 
@@ -44,7 +44,7 @@ export const scrapeGooglePlayReviews = async (url) => {
       lang: "en",
       country: "in",
       sort: gplay.sort.RATING,
-      num: 500, // Fetch up to 500 reviews
+      num: 5000, // Fetch up to 500 reviews
     });
 
     // Filter 5-star reviews and extract only the 'reviewText' field
@@ -61,56 +61,53 @@ export const scrapeGooglePlayReviews = async (url) => {
 };
 
 // Scrape reviews from Apple App Store
-export const scrapeAppleStoreReviews = async (appId, country = "in", appName = "") => {
-  const scriptPath = path.resolve(__dirname, "./scrape_apple_reviews.py");
-  console.log(`[scrapeAppleStoreReviews] Script Path: ${scriptPath}`);
-  console.log(`[scrapeAppleStoreReviews] App ID: ${appId}, Country: ${country}, App Name: ${appName}`);
+export const scrapeAppleAppStoreReviews = async (input) => {
+  let appId;
 
-  return new Promise((resolve, reject) => {
-    const process = spawn("python", [scriptPath, appId, country, appName]);
+  // If input is a URL, extract the App ID
+  if (input.includes("apple.com")) {
+    console.log(`[scrapeAppleAppStoreReviews] Extracting Apple App ID from URL: ${input}`);
+    const match = input.match(/id(\d+)/); // Extract ID from URL pattern like ".../id123456789"
+    appId = match ? match[1] : null;
+  } else {
+    // If input is not a URL, assume it's an App ID
+    appId = input;
+  }
 
-    let output = "";
-    let error = "";
+  if (!appId) {
+    console.error("[scrapeAppleAppStoreReviews] Error: Invalid Apple App Store URL or App ID");
+    throw new Error("Invalid Apple App Store URL or App ID");
+  }
+  console.log(`[scrapeAppleAppStoreReviews] Extracted App ID: ${appId}`);
 
-    process.stdout.on("data", (data) => {
-      output += data.toString();
-      console.log(`[scrapeAppleStoreReviews] Python Script Output: ${data.toString()}`);
+  try {
+    console.log(`[scrapeAppleAppStoreReviews] Fetching reviews for App ID: ${appId}`);
+    const reviews = await store.reviews({
+      id: appId,
+      country: "in", // Set to India; adjust if needed
+      page: 1, // Start with the first page of reviews
+      sort: store.sort.RECENT, // Sort by most recent reviews
     });
 
-    process.stderr.on("data", (data) => {
-      error += data.toString();
-    });
+    // Filter 5-star reviews and extract only the 'text' field
+    const fiveStarReviews = reviews
+      .filter((review) => review.score === 5) // Only 5-star reviews
+      .map((review) => review.text || ""); // Extract only 'text' field, default to empty string if missing
 
-    process.on("close", (code) => {
-      if (code === 0) {
-        try {
-          const parsedData = output ? JSON.parse(output) : { reviews: [] };
-          if (parsedData.reviews && Array.isArray(parsedData.reviews)) {
-            console.log(`[scrapeAppleStoreReviews] Parsed ${parsedData.reviews.length} 5-star reviews`);
-            resolve(parsedData.reviews);
-          } else {
-            console.error("[scrapeAppleStoreReviews] No reviews found in parsed data.");
-            resolve([]);
-          }
-        } catch (parseError) {
-          console.error("[scrapeAppleStoreReviews] Error parsing Python output:", parseError.message);
-          console.error("[scrapeAppleStoreReviews] Raw Output:", output);
-          resolve([]); // Return an empty array on parsing error
-        }
-      } else {
-        console.error(`[scrapeAppleStoreReviews] Python script failed with code: ${code}, Error: ${error.trim()}`);
-        resolve([]); // Return an empty array on script failure
-      }
-    });
-  });
+    console.log(`[scrapeAppleAppStoreReviews] Fetched ${fiveStarReviews.length} 5-star reviews for App ID: ${appId}`);
+    return fiveStarReviews.slice(0, 5000); // Limit to the first 150 reviews
+  } catch (error) {
+    console.error("[scrapeAppleAppStoreReviews] Error fetching reviews:", error.message);
+    return [];
+  }
 };
 
 // Generate USP phrases using Gemini API
-export const generateUSPhrases = async (appName, reviews) => {
+export const generateUSPhrases = async (appName, keywords) => {
   console.log(`[generateUSPhrases] Generating USP phrases for App: ${appName}`);
   const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
-  const prompt = `What can be the 20 most efficient USP marketing headlines for ads for ${appName}? Focus only on providing the phrases category and phrases, related to the brand's main USP. Ensure there are no extra lines, tips, notes, or commentary—just the 20 headlines with its respective categories. Here's the context from the reviews:\n\n${reviews}`;
+  const prompt = `Generate 20 USPs for ${appName} based on these reviews:\n${keywords};`;
 
   try {
     console.log("[generateUSPhrases] Sending request to Gemini API...");

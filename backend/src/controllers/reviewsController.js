@@ -1,10 +1,11 @@
 import {
   generateUSPhrases,
   scrapeGooglePlayReviews,
-  scrapeAppleStoreReviews,
+  scrapeAppleAppStoreReviews,
   fetchAppNameFromGooglePlay,
 } from "../services/reviewsService.js";
 import { extractGooglePlayAppId, extractAppleAppId } from "../utils/extractors.js";
+import { extractMeaningfulWords } from "../utils/word_extractor.js";
 
 export const generateUSPhrasesHandler = async (req, res) => {
   console.log("[generateUSPhrasesHandler] Initial Request Body:", req.body);
@@ -34,22 +35,29 @@ export const generateUSPhrasesHandler = async (req, res) => {
 
     let appleStoreReviews = [];
     if (apple_app) {
-      const appleAppId = extractAppleAppId(apple_app);
-      appleStoreReviews = await scrapeAppleStoreReviews(appleAppId, "in", appName);
+      console.log(`[generateUSPhrasesHandler] Processing Apple App URL: ${apple_app}`);
+      appleStoreReviews = await scrapeAppleAppStoreReviews(apple_app); // Pass the full URL
       console.log(`[generateUSPhrasesHandler] Total Apple Reviews: ${appleStoreReviews.length}`);
     } else {
       console.warn("[generateUSPhrasesHandler] Apple App Store URL not provided. Skipping.");
     }
 
+    // Combine reviews from both stores
     const combinedReviews = googlePlayReviews.concat(appleStoreReviews);
     console.log(`[generateUSPhrasesHandler] Total Combined Reviews: ${combinedReviews.length}`);
 
-    const uspPhrases = await generateUSPhrases(appName, combinedReviews.join("\n"));
+    // Extract meaningful words (keywords) from the combined reviews
+    const keywords = extractMeaningfulWords(combinedReviews);
+    console.log(`[generateUSPhrasesHandler] Extracted Keywords: ${keywords}`);
+
+    // Generate USP phrases
+    const uspPhrases = await generateUSPhrases(appName, keywords);
     res.json({
       status: "success",
       totalGoogleReviews: googlePlayReviews.length,
       totalAppleReviews: appleStoreReviews.length,
       totalReviews: combinedReviews.length,
+      keywords,
       uspPhrases,
     });
   } catch (error) {
