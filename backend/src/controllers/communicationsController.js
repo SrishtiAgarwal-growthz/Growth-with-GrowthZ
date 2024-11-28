@@ -1,4 +1,5 @@
-import * as communicationsService from '../services/communicationsService.js';
+import { saveApprovedPhraseInDb } from '../services/communicationsService.js';
+import { saveRejectedPhraseInDb } from '../services/communicationsService.js';
 
 export const saveApprovedPhrase = async (req, res) => {
   const { phrase, email } = req.body;
@@ -8,7 +9,7 @@ export const saveApprovedPhrase = async (req, res) => {
   }
 
   try {
-    await communicationsService.saveApprovedPhraseInDb(email, phrase);
+    await saveApprovedPhraseInDb(email, phrase);
     return res.status(200).json({ message: 'Approved phrase saved successfully.' });
   } catch (error) {
     return res.status(500).json({ message: "Error saving approved phrase.", error: error.message });
@@ -23,7 +24,7 @@ export const saveRejectedPhrase = async (req, res) => {
   }
 
   try {
-    await communicationsService.saveRejectedPhraseInDb(email, phrase);
+    await saveRejectedPhraseInDb(email, phrase);
     return res.status(200).json({ message: 'Rejected phrase saved successfully.' });
   } catch (error) {
     return res.status(500).json({ message: "Error saving rejected phrase.", error: error.message });
