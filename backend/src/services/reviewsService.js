@@ -53,7 +53,7 @@ export const scrapeGooglePlayReviews = async (url) => {
       .map((review) => review.text || ""); // Extract only 'reviewText' field, default to empty string if missing
 
     console.log(`[scrapeGooglePlayReviews] Fetched ${fiveStarReviews.length} 5-star reviews for App ID: ${appId}`);
-    return fiveStarReviews.slice(0, 150); // Limit to the first 150 reviews
+    return fiveStarReviews.slice(0, 5000); // Limit to the first 150 reviews
   } catch (error) {
     console.error("[scrapeGooglePlayReviews] Error fetching reviews:", error.message);
     return [];
@@ -107,7 +107,15 @@ export const generateUSPhrases = async (appName, keywords) => {
   console.log(`[generateUSPhrases] Generating USP phrases for App: ${appName}`);
   const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
-  const prompt = `Generate 20 USPs for ${appName} based on these reviews:\n${keywords};`;
+  const prompt = `
+    Generate 20 unique selling propositions (USPs) for the following app. 
+    Make the USPs concise, engaging, and user-centric. Highlight the app's benefits and unique features.
+    
+    - App Name: ${appName}
+    - Keywords: ${keywords.slice(0, 5000).join(", ")} 
+    
+    Focus on making these USPs persuasive and tailored to potential users.
+  `;
 
   try {
     console.log("[generateUSPhrases] Sending request to Gemini API...");

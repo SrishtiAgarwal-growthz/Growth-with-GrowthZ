@@ -1,7 +1,7 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import { configureCORS } from './src/middlewares/cors.js';
-import routes from './src/routes/server.js';
+import express from "express";
+import dotenv from "dotenv";
+import { configureCORS } from "./src/middlewares/cors.js";
+import routes from "./src/routes/server.js";
 
 dotenv.config();
 
@@ -14,20 +14,19 @@ app.use(express.json());
 app.use(configureCORS);
 
 app.use((req, res, next) => {
-    console.log('Request Body:', req.body);
-    next();
+  console.log("[Server] Request Body:", req.body);
+  next();
 });
 
-// Debug middleware (if necessary)
-app.use((req, res, next) => {
-    console.log('[DEBUG] Middleware Body:', req.body);
-    next();
+app.get("/", (req, res) => {
+  console.log("[Server] Health check route hit.");
+  res.send("Server is running!");
 });
 
-// Registering routes
-app.use('/api', routes);
+// Routes
+app.use("/api", routes);
 
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`[Server] Running on http://localhost:${PORT}`));
 
 export default app;

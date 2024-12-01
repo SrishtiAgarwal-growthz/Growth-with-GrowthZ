@@ -1,8 +1,8 @@
 import {
-  generateUSPhrases,
+  fetchAppNameFromGooglePlay,
   scrapeGooglePlayReviews,
   scrapeAppleAppStoreReviews,
-  fetchAppNameFromGooglePlay,
+  generateUSPhrases,
 } from "../services/reviewsService.js";
 import { scrapeWebsiteContent } from "../services/websiteScrapeService.js";
 import { extractGooglePlayAppId } from "../utils/extractors.js";
@@ -11,21 +11,17 @@ import { extractMeaningfulWords } from "../utils/word_extractor.js";
 export const generateUSPhrasesHandler = async (req, res) => {
   console.log("[generateUSPhrasesHandler] Initial Request Body:", req.body);
 
-  if (!req.body) {
-    console.error("[generateUSPhrasesHandler] Error: req.body is undefined");
-    return res.status(400).json({ message: "Invalid request body" });
-  }
-
-  const { google_play, apple_app, website_link } = req.body;
-
-  // Ensure at least one input is provided
-  if (!google_play && !apple_app && !website_link) {
-    return res.status(400).json({
-      message: "Please provide either Google Play and/or Apple App Store link or a Website link.",
-    });
-  }
-
   try {
+    const { google_play, apple_app, website_link } = req.body;
+
+    // Ensure at least one input is provided
+    if (!google_play && !apple_app && !website_link) {
+      console.warn("[generateUSPhrasesHandler] Missing required input.");
+      return res.status(400).json({
+        message: "Please provide either Google Play and/or Apple App Store link or a Website link.",
+      });
+    }
+
     let appName = "";
     let contentSource = "";
     let combinedReviews = [];
@@ -33,17 +29,17 @@ export const generateUSPhrasesHandler = async (req, res) => {
 
     if (website_link) {
       // Handle Website Link
-      console.log(`[generateUSPhrasesHandler] Processing Website Link: ${website_link}`);
+      console.log("[generateUSPhrasesHandler] Scraping website content:", website_link);
       const websiteContent = await scrapeWebsiteContent(website_link);
 
       if (!websiteContent || !websiteContent.metadata) {
+        console.error("[generateUSPhrasesHandler] Failed to scrape website content.");
         throw new Error("Unable to scrape content from the website.");
       }
 
       appName = websiteContent.metadata.title || "Untitled Website";
       contentSource = "website";
 
-      // Combine text from metadata, headings, and forms
       combinedReviews = [
         websiteContent.metadata.metaDescription || "",
         websiteContent.metadata.keywords || "",
@@ -51,7 +47,7 @@ export const generateUSPhrasesHandler = async (req, res) => {
         ...websiteContent.tables.flat().join(" "),
       ];
 
-      console.log(`[generateUSPhrasesHandler] Scraped Content: ${combinedReviews.length} elements`);
+      console.log("[generateUSPhrasesHandler] Scraped content length:", combinedReviews.length);
     } else {
       // Handle Google Play and Apple App Store Links
       if (!google_play) {
@@ -59,36 +55,42 @@ export const generateUSPhrasesHandler = async (req, res) => {
       }
 
       const googleAppId = extractGooglePlayAppId(google_play);
-      if (!googleAppId) throw new Error("[generateUSPhrasesHandler] Invalid Google Play App ID");
-      console.log(`[generateUSPhrasesHandler] Google App ID: ${googleAppId}`);
+      if (!googleAppId) {
+        console.error("[generateUSPhrasesHandler] Invalid Google Play App ID.");
+        throw new Error("Invalid Google Play App ID.");
+      }
 
+      console.log("[generateUSPhrasesHandler] Fetching app name for Google App ID:", googleAppId);
       appName = await fetchAppNameFromGooglePlay(googleAppId);
-      if (!appName) throw new Error("Unable to extract app name from Google Play URL.");
+      if (!appName) {
+        throw new Error("Unable to extract app name from Google Play URL.");
+      }
       contentSource = "google_play";
 
+      console.log("[generateUSPhrasesHandler] Fetching Google Play reviews...");
       const googlePlayReviews = await scrapeGooglePlayReviews(google_play);
-      console.log(`[generateUSPhrasesHandler] Total Google Reviews: ${googlePlayReviews.length}`);
+      console.log("[generateUSPhrasesHandler] Total Google Play reviews:", googlePlayReviews.length);
 
       let appleStoreReviews = [];
       if (apple_app) {
-        console.log(`[generateUSPhrasesHandler] Processing Apple App URL: ${apple_app}`);
+        console.log("[generateUSPhrasesHandler] Fetching Apple App Store reviews...");
         appleStoreReviews = await scrapeAppleAppStoreReviews(apple_app);
-        console.log(`[generateUSPhrasesHandler] Total Apple Reviews: ${appleStoreReviews.length}`);
-      } else {
-        console.warn("[generateUSPhrasesHandler] Apple App Store URL not provided. Skipping.");
+        console.log("[generateUSPhrasesHandler] Total Apple App Store reviews:", appleStoreReviews.length);
       }
 
-      combinedReviews = googlePlayReviews.concat(appleStoreReviews);
-      console.log(`[generateUSPhrasesHandler] Total Combined Reviews: ${combinedReviews.length}`);
+      combinedReviews = [...googlePlayReviews, ...appleStoreReviews];
+      console.log("[generateUSPhrasesHandler] Combined reviews length:", combinedReviews.length);
     }
 
-    // Extract meaningful words (keywords) from the combined content
+    // Extract meaningful keywords
+    console.log("[generateUSPhrasesHandler] Extracting keywords...");
     keywords = extractMeaningfulWords(combinedReviews);
-    console.log(`[generateUSPhrasesHandler] Extracted Keywords: ${keywords}`);
+    console.log("[generateUSPhrasesHandler] Keywords extracted:", keywords);
 
     // Generate USP phrases
+    console.log("[generateUSPhrasesHandler] Generating USP phrases...");
     const uspPhrases = await generateUSPhrases(appName, keywords);
-    console.log(`[generateUSPhrasesHandler] Generated USP Phrases: ${uspPhrases}`);
+    console.log("[generateUSPhrasesHandler] USP phrases generated:", uspPhrases);
 
     res.json({
       status: "success",
@@ -100,6 +102,9 @@ export const generateUSPhrasesHandler = async (req, res) => {
     });
   } catch (error) {
     console.error("[generateUSPhrasesHandler] Error:", error.message);
-    res.status(500).json({ message: "Error generating USP phrases", error: error.message });
+    res.status(500).json({
+      message: "Error generating USP phrases.",
+      error: error.message,
+    });
   }
 };
