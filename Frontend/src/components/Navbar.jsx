@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Menu } from 'lucide-react';
-
+import logo from '../assets/logo.png'
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -9,8 +9,13 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto flex justify-between items-center px-8 w-full">
         {/* Logo */}
         <div className="flex items-center">
-          <span className="text-white text-xl font-bold">
-            growth<span className="text-blue-500">Z</span>.ai
+           <span className="relative">
+            <img
+              src={logo}
+              alt="Logo"
+              className="w-[195px] h-[45px] "
+              // style={{ opacity: 0 }}
+            />
           </span>
         </div>
 
