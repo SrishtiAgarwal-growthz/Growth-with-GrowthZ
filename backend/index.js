@@ -1,6 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
+import { connectToMongo } from './src/config/db.js';
 import { configureCORS } from "./src/middlewares/cors.js";
+import authRoutes from "./src/routes/authRoutes.js"; 
 import routes from "./src/routes/server.js";
 
 dotenv.config();
@@ -23,8 +25,14 @@ app.get("/", (req, res) => {
   res.send("Server is running!");
 });
 
+connectToMongo().then(() => {
+  console.log("Connected to MongoDB!");
+}).catch((err) => {
+  console.error("Failed to connect to MongoDB:", err.message);
+});
+
 // Routes
-app.use("/api", routes);
+app.use("/api", authRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`[Server] Running on http://localhost:${PORT}`));

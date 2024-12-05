@@ -12,7 +12,7 @@
     "@google/generative-ai": "^0.21.0",
     "app-store-scraper": "^0.18.0",
     "aws-sdk": "^2.1692.0",
-    "axios": "^1.7.8",
+    "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "canvas": "^2.11.2",
     "cors": "^2.8.5",
