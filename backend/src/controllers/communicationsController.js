@@ -1,32 +1,49 @@
-import { saveApprovedPhraseInDb } from '../services/communicationsService.js';
-import { saveRejectedPhraseInDb } from '../services/communicationsService.js';
+import { approvePhraseService, rejectPhraseService } from "../services/communicationsService.js";
 
+/**
+ * Approve a phrase by its text and appId.
+ */
 export const saveApprovedPhrase = async (req, res) => {
-  const { phrase, email } = req.body;
-
-  if (!phrase || !email) {
-    return res.status(400).send("Phrase and email are required.");
-  }
-
   try {
-    await saveApprovedPhraseInDb(email, phrase);
-    return res.status(200).json({ message: 'Approved phrase saved successfully.' });
+    const { text, appId } = req.body;
+
+    if (!text || !appId) {
+      return res.status(400).json({ message: "Both phrase text and appId are required." });
+    }
+
+    const result = await approvePhraseService(appId, text);
+
+    if (result.modifiedCount > 0) {
+      return res.status(200).json({ message: "Phrase approved successfully." });
+    } else {
+      return res.status(404).json({ message: "Phrase not found or already approved." });
+    }
   } catch (error) {
-    return res.status(500).json({ message: "Error saving approved phrase.", error: error.message });
+    console.error("[saveApprovedPhrase] Error approving phrase:", error.message);
+    res.status(500).json({ message: "Error approving phrase.", error: error.message });
   }
 };
 
+/**
+ * Reject a phrase by its text and appId.
+ */
 export const saveRejectedPhrase = async (req, res) => {
-  const { phrase, email } = req.body;
-
-  if (!phrase || !email) {
-    return res.status(400).send("Phrase and email are required.");
-  }
-
   try {
-    await saveRejectedPhraseInDb(email, phrase);
-    return res.status(200).json({ message: 'Rejected phrase saved successfully.' });
+    const { text, appId } = req.body;
+
+    if (!text || !appId) {
+      return res.status(400).json({ message: "Both phrase text and appId are required." });
+    }
+
+    const result = await rejectPhraseService(appId, text);
+
+    if (result.modifiedCount > 0) {
+      return res.status(200).json({ message: "Phrase rejected successfully." });
+    } else {
+      return res.status(404).json({ message: "Phrase not found or already rejected." });
+    }
   } catch (error) {
-    return res.status(500).json({ message: "Error saving rejected phrase.", error: error.message });
+    console.error("[saveRejectedPhrase] Error rejecting phrase:", error.message);
+    res.status(500).json({ message: "Error rejecting phrase.", error: error.message });
   }
 };
