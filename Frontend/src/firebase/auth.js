@@ -1,3 +1,4 @@
+import axios from "axios";
 import { auth, db } from './config';
 import { 
     createUserWithEmailAndPassword, 
@@ -14,20 +15,32 @@ const isBlockedEmailDomain = (email) => {
 
 export const signUp = async (email, password, fullName, companyName) => {
     if (isBlockedEmailDomain(email)) {
-        throw new Error('Email address from this domain is not allowed.');
+        throw new Error("Email address from this domain is not allowed.");
     }
 
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    
+
     await sendEmailVerification(user);
-    
+
+    // Store in Firestore
     await setDoc(doc(db, "users", user.uid), {
         email,
         fullName,
-        companyName
+        companyName,
     });
-    
+
+    // Store in MongoDB by hitting the backend API
+    try {
+        await axios.post("http://localhost:8000/api/users", {
+            email,
+            fullName,
+            companyName,
+        });
+    } catch (error) {
+        console.error("Error saving data to MongoDB:", error.message);
+    }
+
     return user;
 };
 
