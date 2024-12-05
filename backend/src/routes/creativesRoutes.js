@@ -1,14 +1,12 @@
-import express from 'express';
-import * as scrapeController from '../controllers/scrapingController.js';
-import * as creativeController from '../controllers/creativesController.js';
+import express from "express";
+import { addCreativeToTasks } from "../controllers/creativesController.js";
+import { processImagesForApp } from "../controllers/creativesController.js";
+import { createAdsForImagesController } from "../controllers/creativesController.js";
 
 const router = express.Router();
 
-// Scrape Routes
-router.post('/scrape', scrapeController.scrapeAndStoreImages);
-
-// Creative Routes
-router.post('/oneSixty', creativeController.generateCreatives);
-router.post('/getCreatives', creativeController.getCreatives);
+router.post("/addToTasks", addCreativeToTasks);
+router.post("/process-images", processImagesForApp);
+router.post("/create-ads", createAdsForImagesController);
 
 export default router;
