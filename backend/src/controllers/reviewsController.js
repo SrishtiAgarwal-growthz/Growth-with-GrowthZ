@@ -5,6 +5,8 @@ import {
   generateUSPhrases,
 } from "../services/reviewsService.js";
 import { scrapeWebsiteContent } from "../services/websiteScrapeService.js";
+import { saveTask } from "../services/taskService.js";
+import { saveGeneratedPhrases } from "../services/phraseService.js";
 import { extractGooglePlayAppId } from "../utils/extractors.js";
 import { extractMeaningfulWords } from "../utils/word_extractor.js";
 
@@ -12,7 +14,7 @@ export const generateUSPhrasesHandler = async (req, res) => {
   console.log("[generateUSPhrasesHandler] Initial Request Body:", req.body);
 
   try {
-    const { google_play, apple_app, website_link } = req.body;
+    const { google_play, apple_app, website_link, userId, appId } = req.body;
 
     // Ensure at least one input is provided
     if (!google_play && !apple_app && !website_link) {
@@ -22,6 +24,11 @@ export const generateUSPhrasesHandler = async (req, res) => {
       });
     }
 
+    // Step 1: Create a new task
+    console.log("[generateUSPhrasesHandler] Creating a new task...");
+    const task = await saveTask(userId, appId);
+
+    // Step 2: Fetch app details and generate phrases
     let appName = "";
     let contentSource = "";
     let combinedReviews = [];
@@ -92,12 +99,18 @@ export const generateUSPhrasesHandler = async (req, res) => {
     const uspPhrases = await generateUSPhrases(appName, keywords);
     console.log("[generateUSPhrasesHandler] USP phrases generated:", uspPhrases);
 
-    res.json({
+     // Step 3: Save generated phrases to the database
+     console.log("[generateUSPhrasesHandler] Saving phrases to database...");
+     const savedPhrases = await saveGeneratedPhrases(appId, task._id, uspPhrases);
+     console.log("[generateUSPhrasesHandler] Phrases saved successfully:", savedPhrases);
+
+    res.status(200).json({
       status: "success",
-      contentSource,
+      taskId: task._id,
+      phrases: savedPhrases,
       appName,
       totalReviews: combinedReviews.length,
-      keywords,
+      // keywords,
       uspPhrases,
     });
   } catch (error) {
