@@ -1,88 +1,53 @@
-import { connectToMongo } from '../config/db.js';
-import dotenv from 'dotenv';
+import { connectToMongo } from "../config/db.js";
 
-// Load environment variables from .env file
-dotenv.config();
+/**
+ * Approve a phrase by updating its status to "approved".
+ * @param {string} appId - The ID of the app.
+ * @param {string} text - The text of the phrase to approve.
+ * @returns {Promise<Object>} - MongoDB update result.
+ */
+export const approvePhraseService = async (appId, text) => {
+  const client = await connectToMongo();
+  const db = client.db("GrowthZ");
+  const adCopiesCollection = db.collection("AdCopies");
 
-const client = await connectToMongo();
-const db = client.db('Communications');
+  try {
+    console.log(`[approvePhraseService] Approving phrase: "${text}" for appId: ${appId}`);
 
-export const saveApprovedPhraseInDb = async (email, phrase) => {
-    try {
-        const collection = db.collection('approvedCommunication');
-        await collection.updateOne(
-            { email },
-            { $push: { phrases: phrase } },
-            { upsert: true }
-        );
-        console.log(`Phrase saved to ${collection} for email: ${email}`);
-    } catch (error) {
-        console.error(`Error saving phrase to ${collection}:`, error);
-        throw error;
-    }
+    const result = await adCopiesCollection.updateOne(
+      { appId, "phrases.text": text },
+      { $set: { "phrases.$.status": "approved" } }
+    );
+
+    console.log(`[approvePhraseService] Update result:`, result);
+    return result;
+  } finally {
+    await client.close();
+  }
 };
 
-export const saveRejectedPhraseInDb = async (email, phrase) => {
-    try {
-        const collection = db.collection('rejectedCommunication');
-        await collection.updateOne(
-            { email },
-            { $push: { phrases: phrase } },
-            { upsert: true }
-        );
-        console.log(`Phrase saved to ${collection} for email: ${email}`);
-    } catch (error) {
-        console.error(`Error saving phrase to ${collection}:`, error);
-        throw error;
-    }
-};
+/**
+ * Reject a phrase by updating its status to "rejected".
+ * @param {string} appId - The ID of the app.
+ * @param {string} text - The text of the phrase to reject.
+ * @returns {Promise<Object>} - MongoDB update result.
+ */
+export const rejectPhraseService = async (appId, text) => {
+  const client = await connectToMongo();
+  const db = client.db("GrowthZ");
+  const adCopiesCollection = db.collection("AdCopies");
 
-// Fetch all phrases for an email from the database
-export const fetchPhrasesByEmail = async (email) => {
-    try {
-        const collection = db.collection('approvedCommunication');
-        const result = await collection.findOne({ email });
-        if (result && result.phrases) {
-            console.log(`Phrases fetched for email: ${email}`);
-            return result.phrases;
-        } else {
-            console.log(`No phrases found for email: ${email}`);
-            return [];
-        }
-    } catch (error) {
-        console.error(`Error fetching phrases from ${collection}:`, error);
-        throw error;
-    }
-};
+  try {
+    console.log(`[rejectPhraseService] Rejecting phrase: "${text}" for appId: ${appId}`);
 
-// Delete a phrase for a specific email
-export const deletePhraseByEmail = async (email, phrase) => {
-    try {
-        const collection = db.collection('approvedCommunication');
-        const result = await collection.updateOne(
-            { email },
-            { $pull: { phrases: phrase } }
-        );
-        if (result.modifiedCount > 0) {
-            console.log(`Phrase deleted from ${collection} for email: ${email}`);
-        } else {
-            console.log(`Phrase not found for email: ${email}`);
-        }
-    } catch (error) {
-        console.error(`Error deleting phrase from ${collection}:`, error);
-        throw error;
-    }
-};
+    const result = await adCopiesCollection.updateOne(
+      { appId, "phrases.text": text },
+      { $set: { "phrases.$.status": "rejected" } }
+    );
 
-// Fetch all records from a collection
-export const fetchAllFromCollection = async () => {
-    try {
-        const collection = db.collection('approvedCommunication');
-        const result = await collection.find({}).toArray();
-        console.log(`Fetched all records from ${collection}`);
-        return result;
-    } catch (error) {
-        console.error(`Error fetching all records from ${collection}:`, error);
-        throw error;
-    }
+    console.log(`[rejectPhraseService] Update result:`, result);
+    return result;
+  } finally {
+    await client.close();
+  }
 };

@@ -1,4 +1,4 @@
-const allowedOrigins = ['http://127.0.0.1:8001', 'https://www.growthz.ai'];
+const allowedOrigins = ['http://127.0.0.1:8001', 'https://www.growthz.ai', 'http://localhost:5173'];
 
 export const configureCORS = (req, res, next) => {
   const origin = req.headers.origin;

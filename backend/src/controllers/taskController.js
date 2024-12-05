@@ -4,15 +4,24 @@ export const createTask = async (req, res) => {
   console.log("[TaskController] Request to create task received:", req.body);
 
   try {
-    const { appId } = req.body;
+    // Extract userId and appId from the request body
+    const { appId, userId } = req.body;
+
+    // Validate inputs
     if (!appId) {
       console.warn("[TaskController] Missing appId in request body.");
       return res.status(400).json({ message: "App ID is required." });
     }
 
-    const userId = req.user.id; // User ID from JWT token
+    if (!userId) {
+      console.warn("[TaskController] Missing userId in request body.");
+      return res.status(400).json({ message: "User ID is required." });
+    }
+
+    // Create the task
     const task = await saveTask(userId, appId);
 
+    // Respond with success
     res.status(201).json({
       message: "Task created successfully.",
       task,
