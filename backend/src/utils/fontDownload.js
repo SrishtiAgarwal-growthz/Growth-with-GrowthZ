@@ -1,7 +1,24 @@
 import { launch } from "puppeteer";
 import axios from "axios";
-import { mkdirSync, createWriteStream } from "fs";
+import { mkdirSync, createWriteStream, existsSync } from "fs";
 import { join, extname } from "path";
+import { fileURLToPath } from "url";
+
+// Define __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = join(__filename, ".."); // Directory containing this file
+
+/**
+ * Utility function to get the fonts directory path inside `utils`
+ */
+function getFontsDirectory() {
+  const fontsDir = join(__dirname, "fonts"); // Fonts folder inside `utils`
+  if (!existsSync(fontsDir)) {
+    mkdirSync(fontsDir, { recursive: true });
+    console.log(`[getFontsDirectory] Created fonts directory at: ${fontsDir}`);
+  }
+  return fontsDir;
+}
 
 /**
  * Fetch the font URL from Google Fonts using the font name.
@@ -13,7 +30,6 @@ async function fetchGoogleFont(fontName) {
     console.log(`[fetchGoogleFont] Searching for "${fontName}" on Google Fonts...`);
     const googleFontsCssUrl = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, "+")}`;
     const response = await axios.get(googleFontsCssUrl);
-
 
     // Extract font URL from CSS
     const fontUrlMatch = response.data.match(/url\(([^)]+)\)/);
@@ -45,62 +61,57 @@ async function downloadFontFromWebsite(fontName, websiteUrl) {
 
   try {
     console.log(`[downloadFontFromWebsite] Opening website: ${websiteUrl}`);
-    await page.goto(websiteUrl, { waitUntil: "networkidle2" });
+    await page.goto(websiteUrl, { waitUntil: "networkidle2", timeout: 60000 });
+    await await new Promise((resolve) => setTimeout(resolve, 5000)); // Replace 5000 with your desired timeout in ms(5000); // Ensure all network requests are captured
 
     console.log(`[downloadFontFromWebsite] Monitoring network requests for font files...`);
     page.on("response", async (response) => {
       const requestUrl = response.url();
-      if (requestUrl.endsWith(".woff") || requestUrl.endsWith(".woff2") || requestUrl.endsWith(".ttf") || requestUrl.endsWith(".otf")) {
-        if (fontName.toLowerCase() === "abc" || fontRegex.test(requestUrl)) {
-          console.log(`[downloadFontFromWebsite] Font URL detected: ${requestUrl}`);
-          fontUrls.push(requestUrl);
-        }
+      const contentType = response.headers()["content-type"] || "";
+
+      if (
+        contentType.includes("font") ||
+        requestUrl.endsWith(".woff") ||
+        requestUrl.endsWith(".woff2") ||
+        requestUrl.endsWith(".ttf") ||
+        requestUrl.endsWith(".otf")
+      ) {
+        console.log(`[Font Response] URL: ${requestUrl}`);
+        fontUrls.push(requestUrl);
       }
     });
 
-    // Reload to capture requests during page load
     await page.reload({ waitUntil: "networkidle2" });
 
     if (fontUrls.length === 0) {
-      console.error(`[downloadFontFromWebsite] No font URLs found on the website.`);
+      console.error(`[downloadFontFromWebsite] No font URLs found.`);
       throw new Error("No font URLs found.");
     }
 
-    const tempDir = join(process.cwd(), "font");
-    mkdirSync(tempDir, { recursive: true });
+    const tempDir = getFontsDirectory();
+    const fontExtension = extname(fontUrls[0]).split("?")[0] || ".woff2";
+    const filename = fontName.split(",")[0].trim().replace(/\s+/g, "_");
+    const fontOutputPath = join(tempDir, `${filename}${fontExtension}`);
 
-    // Attempt to download fonts
-    for (const fontUrl of fontUrls) {
-      try {
-        console.log(`[downloadFontFromWebsite] Attempting to download font from: ${fontUrl}`);
-        const fontExtension = extname(fontUrl).split("?")[0] || ".woff2";
-        const filename = fontName.toLowerCase() === "abc" ? "downloaded_font" : fontName;
-        const fontOutputPath = join(tempDir, `${filename}${fontExtension}`);
+    console.log(`[downloadFontFromWebsite] Downloading font from: ${fontUrls[0]}`);
+    const response = await axios({
+      url: fontUrls[0],
+      method: "GET",
+      responseType: "stream",
+    });
 
-        const response = await axios({
-          url: fontUrl,
-          method: "GET",
-          responseType: "stream",
-        });
+    const writer = createWriteStream(fontOutputPath);
+    response.data.pipe(writer);
 
-        const writer = createWriteStream(fontOutputPath);
-        response.data.pipe(writer);
+    await new Promise((resolve, reject) => {
+      writer.on("finish", resolve);
+      writer.on("error", reject);
+    });
 
-        await new Promise((resolve, reject) => {
-          writer.on("finish", resolve);
-          writer.on("error", reject);
-        });
-
-        console.log(`[downloadFontFromWebsite] Font downloaded successfully: ${fontOutputPath}`);
-        return fontOutputPath;
-      } catch (downloadError) {
-        console.error(`[downloadFontFromWebsite] Failed to download font from ${fontUrl}: ${downloadError.message}`);
-      }
-    }
-
-    throw new Error("Failed to download any of the found font URLs.");
+    console.log(`[downloadFontFromWebsite] Font downloaded successfully: ${fontOutputPath}`);
+    return fontOutputPath;
   } catch (error) {
-    console.error(`[downloadFontFromWebsite] Error during font extraction or download: ${error.message}`);
+    console.error(`[downloadFontFromWebsite] Error: ${error.message}`);
     throw error;
   } finally {
     await browser.close();
@@ -114,8 +125,7 @@ async function downloadFontFromWebsite(fontName, websiteUrl) {
  * @returns {Promise<{fontName: string, fontPath: string}>} - The font name and its local path.
  */
 export async function saveFontToTemp(fontName, websiteUrl = null) {
-  const tempDir = join(process.cwd(), "font");
-  mkdirSync(tempDir, { recursive: true });
+  const fontsDir = getFontsDirectory();
 
   try {
     if (fontName.toLowerCase() !== "abc") {
@@ -124,7 +134,7 @@ export async function saveFontToTemp(fontName, websiteUrl = null) {
 
       if (googleFontUrl) {
         const fontExtension = extname(googleFontUrl).split("?")[0] || ".woff2";
-        const outputPath = join(tempDir, `${fontName.replace(/\s+/g, "_")}${fontExtension}`);
+        const outputPath = join(fontsDir, `${fontName.replace(/\s+/g, "_")}${fontExtension}`);
 
         try {
           console.log(`[saveFontToTemp] Downloading font from Google Fonts: ${googleFontUrl}`);
