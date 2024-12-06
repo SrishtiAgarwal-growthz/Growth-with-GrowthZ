@@ -1,7 +1,3 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
 // Export the function
 export const extractMeaningfulWords = (reviews) => {
     const stopwords = new Set([

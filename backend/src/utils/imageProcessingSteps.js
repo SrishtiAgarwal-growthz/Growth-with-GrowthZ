@@ -13,7 +13,7 @@ import { saveFontToTemp } from "./fontDownload.js";
  * @returns {Promise<Buffer>} - Returns the processed image as a buffer.
  */
 export const removeBackground = async (imageUrl) => {
-  const apiKey = "Q46dvgPSGYZBm6qWvcNgNkeU"; // Move to .env for better security
+  const apiKey = "7bfmbMeaHkNTHy3eP5M2aX69"; // Move to .env for better security
   try {
     console.log(`[removeBackground] Removing background for image URL: ${imageUrl}`);
 
@@ -212,7 +212,6 @@ export const fetchFont = async (websiteUrl) => {
     // Call saveFontToTemp to download the font
     const fontDetails = await saveFontToTemp(fontFamily, websiteUrl);
 
-    console.log(`[fetchFont] Font downloaded: ${fontDetails.fontName}, Path: ${fontDetails.fontPath}`);
     return fontDetails;
   } catch (error) {
     console.error(`[fetchFont] Error fetching font: ${error.message}`);

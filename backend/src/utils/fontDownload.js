@@ -1,6 +1,5 @@
 import { launch } from "puppeteer";
 import axios from "axios";
-import { mkdirSync, createWriteStream, existsSync } from "fs";
 import { join, extname } from "path";
 import { fileURLToPath } from "url";
 
@@ -9,26 +8,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, ".."); // Directory containing this file
 
 /**
- * Utility function to get the fonts directory path inside `utils`
- */
-function getFontsDirectory() {
-  const fontsDir = join(__dirname, "fonts"); // Fonts folder inside `utils`
-  if (!existsSync(fontsDir)) {
-    mkdirSync(fontsDir, { recursive: true });
-    console.log(`[getFontsDirectory] Created fonts directory at: ${fontsDir}`);
-  }
-  return fontsDir;
-}
-
-/**
- * Fetch the font URL from Google Fonts using the font name.
- * @param {string} fontName - The font name to search on Google Fonts.
+ * Fetch the font URL from Google Fonts using the font family.
+ * @param {string} fontFamily - The font family to search on Google Fonts.
  * @returns {Promise<string|null>} - The font file URL or null if not found.
  */
-async function fetchGoogleFont(fontName) {
+async function fetchGoogleFont(fontFamily) {
   try {
-    console.log(`[fetchGoogleFont] Searching for "${fontName}" on Google Fonts...`);
-    const googleFontsCssUrl = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, "+")}`;
+    console.log(`[fetchGoogleFont] Searching for "${fontFamily}" on Google Fonts...`);
+    const googleFontsCssUrl = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, "+")}`;
     const response = await axios.get(googleFontsCssUrl);
 
     // Extract font URL from CSS
@@ -39,32 +26,30 @@ async function fetchGoogleFont(fontName) {
       return fontUrl;
     }
 
-    console.log(`[fetchGoogleFont] Font "${fontName}" not found on Google Fonts.`);
+    console.log(`[fetchGoogleFont] Font "${fontFamily}" not found on Google Fonts.`);
     return null;
   } catch (error) {
-    console.error(`[fetchGoogleFont] Error searching for "${fontName}": ${error.message}`);
+    console.error(`[fetchGoogleFont] Error searching for "${fontFamily}": ${error.message}`);
     return null;
   }
 }
 
 /**
- * Download fonts directly from the website by monitoring network requests.
- * @param {string} fontName - The font name to search for on the website.
+ * Extract the font URL directly from the website by monitoring network requests.
+ * @param {string} fontFamily - The font family to search for on the website.
  * @param {string} websiteUrl - The website URL to monitor for font requests.
- * @returns {Promise<string>} - The path to the downloaded font file.
+ * @returns {Promise<string>} - The font URL.
  */
-async function downloadFontFromWebsite(fontName, websiteUrl) {
+async function extractFontUrlFromWebsite(fontFamily, websiteUrl) {
   const browser = await launch({ headless: true });
   const page = await browser.newPage();
-  const fontRegex = fontName.toLowerCase() === "abc" ? null : new RegExp(fontName.replace(/\s+/g, ".*"), "i");
   const fontUrls = [];
 
   try {
-    console.log(`[downloadFontFromWebsite] Opening website: ${websiteUrl}`);
+    console.log(`[extractFontUrlFromWebsite] Opening website: ${websiteUrl}`);
     await page.goto(websiteUrl, { waitUntil: "networkidle2", timeout: 60000 });
-    await await new Promise((resolve) => setTimeout(resolve, 5000)); // Replace 5000 with your desired timeout in ms(5000); // Ensure all network requests are captured
 
-    console.log(`[downloadFontFromWebsite] Monitoring network requests for font files...`);
+    console.log(`[extractFontUrlFromWebsite] Monitoring network requests for font files...`);
     page.on("response", async (response) => {
       const requestUrl = response.url();
       const contentType = response.headers()["content-type"] || "";
@@ -84,34 +69,14 @@ async function downloadFontFromWebsite(fontName, websiteUrl) {
     await page.reload({ waitUntil: "networkidle2" });
 
     if (fontUrls.length === 0) {
-      console.error(`[downloadFontFromWebsite] No font URLs found.`);
+      console.error(`[extractFontUrlFromWebsite] No font URLs found.`);
       throw new Error("No font URLs found.");
     }
 
-    const tempDir = getFontsDirectory();
-    const fontExtension = extname(fontUrls[0]).split("?")[0] || ".woff2";
-    const filename = fontName.split(",")[0].trim().replace(/\s+/g, "_");
-    const fontOutputPath = join(tempDir, `${filename}${fontExtension}`);
-
-    console.log(`[downloadFontFromWebsite] Downloading font from: ${fontUrls[0]}`);
-    const response = await axios({
-      url: fontUrls[0],
-      method: "GET",
-      responseType: "stream",
-    });
-
-    const writer = createWriteStream(fontOutputPath);
-    response.data.pipe(writer);
-
-    await new Promise((resolve, reject) => {
-      writer.on("finish", resolve);
-      writer.on("error", reject);
-    });
-
-    console.log(`[downloadFontFromWebsite] Font downloaded successfully: ${fontOutputPath}`);
-    return fontOutputPath;
+    console.log(`[extractFontUrlFromWebsite] Font URL extracted: ${fontUrls[0]}`);
+    return fontUrls[0]; // Return the first detected font URL
   } catch (error) {
-    console.error(`[downloadFontFromWebsite] Error: ${error.message}`);
+    console.error(`[extractFontUrlFromWebsite] Error: ${error.message}`);
     throw error;
   } finally {
     await browser.close();
@@ -119,56 +84,32 @@ async function downloadFontFromWebsite(fontName, websiteUrl) {
 }
 
 /**
- * Save the font to a temporary directory by downloading from Google Fonts or a website.
- * @param {string} fontName - The name of the font to download.
+ * Save the font family and URL to MongoDB by downloading from Google Fonts or extracting from a website.
+ * @param {string} fontFamily - The name of the font to fetch.
  * @param {string|null} websiteUrl - The website URL to fetch the font from (if not found on Google Fonts).
- * @returns {Promise<{fontName: string, fontPath: string}>} - The font name and its local path.
+ * @returns {Promise<{fontFamily: string, fontUrl: string}>} - The font family and its URL.
  */
-export async function saveFontToTemp(fontName, websiteUrl = null) {
-  const fontsDir = getFontsDirectory();
-
+export async function saveFontToTemp(fontFamily, websiteUrl = null) {
   try {
-    if (fontName.toLowerCase() !== "abc") {
-      console.log(`[saveFontToTemp] Checking Google Fonts for: "${fontName}"`);
-      const googleFontUrl = await fetchGoogleFont(fontName);
+    if (fontFamily.toLowerCase() !== "abc") {
+      console.log(`[saveFontToTemp] Checking Google Fonts for: "${fontFamily}"`);
+      const googleFontUrl = await fetchGoogleFont(fontFamily);
 
       if (googleFontUrl) {
-        const fontExtension = extname(googleFontUrl).split("?")[0] || ".woff2";
-        const outputPath = join(fontsDir, `${fontName.replace(/\s+/g, "_")}${fontExtension}`);
-
-        try {
-          console.log(`[saveFontToTemp] Downloading font from Google Fonts: ${googleFontUrl}`);
-          const response = await axios({
-            url: googleFontUrl,
-            method: "GET",
-            responseType: "stream",
-          });
-
-          const writer = createWriteStream(outputPath);
-          response.data.pipe(writer);
-
-          await new Promise((resolve, reject) => {
-            writer.on("finish", resolve);
-            writer.on("error", reject);
-          });
-
-          console.log(`[saveFontToTemp] Font downloaded successfully from Google Fonts: ${outputPath}`);
-          return { fontName, fontPath: outputPath };
-        } catch (error) {
-          console.error(`[saveFontToTemp] Failed to download font from Google Fonts: ${error.message}`);
-        }
+        console.log(`[saveFontToTemp] Found Google Font URL: ${googleFontUrl}`);
+        return { fontFamily, fontUrl: googleFontUrl };
       }
     }
 
     if (websiteUrl) {
-      console.log(`[saveFontToTemp] Google Fonts did not have "${fontName}". Attempting website extraction.`);
-      const fontPath = await downloadFontFromWebsite(fontName, websiteUrl);
-      return { fontName, fontPath };
+      console.log(`[saveFontToTemp] Google Fonts did not have "${fontFamily}". Attempting website extraction.`);
+      const fontUrl = await extractFontUrlFromWebsite(fontFamily, websiteUrl);
+      return { fontFamily, fontUrl };
     }
 
-    throw new Error(`Font "${fontName}" not found on Google Fonts or website.`);
+    throw new Error(`Font "${fontFamily}" not found on Google Fonts or website.`);
   } catch (error) {
-    console.error(`[saveFontToTemp] Failed to save font "${fontName}": ${error.message}`);
+    console.error(`[saveFontToTemp] Failed to retrieve font for "${fontFamily}": ${error.message}`);
     throw error;
   }
 }
