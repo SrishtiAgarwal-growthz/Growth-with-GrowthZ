@@ -17,7 +17,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 /**
  * Process app images: remove background, upload to S3, extract background color, and identify font.
  * @param {string} appId - The ID of the app whose images are to be processed.
@@ -44,6 +43,9 @@ export const processAppImages = async (appId, userId) => {
     const iconUrl = await fetchIconUrl(appId);
     console.log(`[processAppImages] Icon URL fetched: ${iconUrl}`);
 
+    const iconBackgroundColor = await extractBackgroundColor(iconUrl);
+    console.log(`[processAppImages] Extracting logo background color for: ${iconUrl}`);
+
     // Fetch website URL
     const websiteUrl = await fetchWebsiteUrl(appId);
     console.log(`[processAppImages] Website URL fetched: ${websiteUrl}`);
@@ -57,12 +59,13 @@ export const processAppImages = async (appId, userId) => {
       { _id: new ObjectId(appId) },
       {
         $set: {
+          iconBackgroundColor: iconBackgroundColor,
           fontUrl: fontDetails.fontUrl, // Save the URL instead of the local path
           fontFamily: fontDetails.fontFamily,
         },
       }
     );
-    
+
     console.log(`[processAppImages] Font URL saved in the app document for appId: ${appId}`);
 
     const updatedImages = [];
@@ -147,30 +150,27 @@ export const generateAdImages = async (appId) => {
       throw new Error("[generateAdImages] App not found or invalid image field.");
     }
 
-    console.log("App Data:", app);
-
     // Fetch approved phrases
     const adCopy = await adCopiesCollection.findOne({ appId });
     if (!adCopy || !Array.isArray(adCopy.phrases)) {
       throw new Error("[generateAdImages] No phrases found for appId: " + appId);
     }
 
-    const approvedPhrases = adCopy.phrases.filter((p) => p.status === "approved").map((p) => p.text);
-    console.log("Approved Phrases:", approvedPhrases);
+    const approvedPhrases = adCopy.phrases
+      .filter((p) => p.status === "approved")
+      .map((p) => p.text);
 
     if (approvedPhrases.length === 0) {
       throw new Error("[generateAdImages] No approved phrases available.");
     }
 
     const ads = [];
-    const outputDir = path.join(process.cwd(), "ads"); // Directory to save ads
+    const outputDir = path.join(process.cwd(), "ads");
 
-    // Ensure the output directory exists
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    // Cycle through phrases
     let phraseIndex = 0;
 
     for (const image of app.images) {
@@ -180,25 +180,44 @@ export const generateAdImages = async (appId) => {
       }
 
       const currentPhrase = approvedPhrases[phraseIndex];
-      phraseIndex = (phraseIndex + 1) % approvedPhrases.length; // Cycle through phrases
+      phraseIndex = (phraseIndex + 1) % approvedPhrases.length;
 
-      const adOptions = {
-        logoUrl: app.iconUrl,
-        mainImageUrl: image.removedBgUrl,
-        fontFamily: app.fontFamily,
-        fontUrl: app.fontUrl,
-        phrase: currentPhrase,
-        outputDir, // Directory to save the generated ad
-        bgColor: image.backgroundColor, // Use the corresponding background color
-      };
+      try {
+        const adOptions = {
+          logoUrl: app.iconUrl,
+          mainImageUrl: image.removedBgUrl,
+          fontFamily: app.fontFamily,
+          fontUrl: app.fontUrl,
+          phrase: currentPhrase,
+          outputDir,
+          bgColor: image.backgroundColor,
+          adDimensions: { width: 160, height: 600 },
+          fontSize: '24px',
+          textColor: "#000000",
+          ctaText: "Order Now",
+          ctaColor: app.iconBackgroundColor,
+          ctaTextColor: "#FFFFFF"
+        };
 
-      console.log("Creating ad with options:", adOptions);
+        console.log(`[generateAdImages] Creating ad for image with options:`, {
+          ...adOptions,
+          fontUrl: adOptions.fontUrl ? 'Present' : 'Not present',
+        });
 
-      const adPath = await createAd(adOptions);
-      ads.push({ filePath: adPath, phrase: currentPhrase });
+        const adPath = await createAd(adOptions);
+        ads.push({
+          filePath: adPath,
+          phrase: currentPhrase,
+          imageUrl: image.removedBgUrl
+        });
+
+        console.log(`[generateAdImages] Ad created successfully: ${adPath}`);
+      } catch (error) {
+        console.error(`[generateAdImages] Error generating ad for image: ${image.removedBgUrl}`, error);
+      }
     }
 
-    console.log(`[generateAdImages] Ads saved locally for appId: ${appId}`);
+    console.log(`[generateAdImages] Successfully generated ${ads.length} ads for appId: ${appId}`);
     return ads;
   } finally {
     await client.close();
