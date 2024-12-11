@@ -1,102 +1,79 @@
 import axios from "axios";
 import puppeteer from "puppeteer";
 import { join } from "path";
-// import { existsSync, mkdirSync, createWriteStream } from "fs";
-// import { fileURLToPath } from 'url';
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = join(__filename, "..");
+/**
+ * Download and save the font file locally.
+ * @param {string} fontUrl - The URL of the font file.
+ * @param {string} fontFamily - The font family name.
+ * @returns {string} - The local file path of the saved font.
+ */
+async function downloadFont(fontUrl, fontFamily) {
+  const extension = extname(fontUrl).split("?")[0] || ".woff2";
+  const safeFontName = fontFamily.replace(/[^a-z0-9]/gi, "-").toLowerCase();
+  const fontFileName = `${safeFontName}${extension}`;
+  const fontPath = join(fontsDir, fontFileName);
 
-// async function downloadAndSaveFont(fontUrl, fontFamily) {
-//   try {
-//     // Create fonts directory if it doesn't exist
-//     const fontsDir = join(__dirname, 'utils', 'fonts');
-//     if (!existsSync(fontsDir)) {
-//       mkdirSync(fontsDir, { recursive: true });
-//     }
+  if (existsSync(fontPath)) {
+    console.log(`[downloadFont] Font already exists: ${fontPath}`);
+    return fontPath;
+  }
 
-//     // Generate safe filename from fontFamily
-//     const safeFontName = fontFamily.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-//     const fontPath = join(fontsDir, `${safeFontName}.woff2`);
+  console.log(`[downloadFont] Downloading font from: ${fontUrl}`);
+  const response = await axios.get(fontUrl, { responseType: "arraybuffer" });
+  writeFileSync(fontPath, response.data);
+  console.log(`[downloadFont] Font saved successfully: ${fontPath}`);
 
-//     // Check if font already exists
-//     if (existsSync(fontPath)) {
-//       console.log(`[downloadAndSaveFont] Font already exists: ${fontPath}`);
-//       return fontPath;
-//     }
-
-//     // Download the font
-//     console.log(`[downloadAndSaveFont] Downloading font from: ${fontUrl}`);
-//     const response = await axios({
-//       url: fontUrl,
-//       method: 'GET',
-//       responseType: 'stream'
-//     });
-
-//     // Save the font file
-//     const writer = createWriteStream(fontPath);
-//     response.data.pipe(writer);
-
-//     await new Promise((resolve, reject) => {
-//       writer.on('finish', resolve);
-//       writer.on('error', reject);
-//     });
-
-//     console.log(`[downloadAndSaveFont] Font saved successfully: ${fontPath}`);
-//     return fontPath;
-//   } catch (error) {
-//     console.error(`[downloadAndSaveFont] Error: ${error.message}`);
-//     throw error;
-//   }
-// }
+  return fontPath;
+}
 
 function processAdText(text) {
   try {
-      let processedText = text;
+    let processedText = text;
 
-      // Basic cleanup
-      processedText = processedText
-          .replace(/^\d+\.\s*/, '')        // Remove numbering
-          .replace(/\*+/g, '')             // Remove asterisks
-          .replace(/\s*\([^)]*\)/g, '')    // Remove parenthetical text
-          .replace(/\s+/g, ' ')            // Normalize spaces
-          .replace(/\.{2,}/g, '.')         // Fix multiple dots
-          .replace(/[""]/g, '"')           // Normalize quotes
-          .replace(/['']/g, "'");          // Normalize apostrophes
+    // Basic cleanup
+    processedText = processedText
+      .replace(/^\d+\.\s*/, '')        // Remove numbering
+      .replace(/\*+/g, '')             // Remove asterisks
+      .replace(/\s*\([^)]*\)/g, '')    // Remove parenthetical text
+      .replace(/\s+/g, ' ')            // Normalize spaces
+      .replace(/\.{2,}/g, '.')         // Fix multiple dots
+      .replace(/[""]/g, '"')           // Normalize quotes
+      .replace(/['']/g, "'");          // Normalize apostrophes
 
-      // Handle colon in text
-      const colonParts = processedText.split(':');
-      if (colonParts.length > 1 && colonParts[1].trim().length > 0) {
-          processedText = colonParts[1];
-      }
+    // Handle colon in text
+    const colonParts = processedText.split(':');
+    if (colonParts.length > 1 && colonParts[1].trim().length > 0) {
+      processedText = colonParts[1];
+    }
 
-      // Split into sentences and clean them
-      const sentences = processedText
-          .split(/(?<=\.)\s+/)
-          .map(s => s.trim())
-          .filter(s => s.length > 0);
+    // Split into sentences using both . and ? as delimiters
+    const sentences = processedText
+      .split(/(?<=[.?])\s+/)           // Split after . or ?
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
 
-      // For multiple sentences, analyze and style
-      if (sentences.length > 1) {
-          // Process each sentence
-          return sentences.map(sentence => {
-              const wordCount = sentence.split(/\s+/).length;
-              const isCTA = /\b(get|order|try|start|download|subscribe|join)\b/i.test(sentence);
-              
-              // Highlight if it's a CTA or short sentence
-              if (isCTA || wordCount <= 4) {
-                  return `<span style="color: #FFFFFF; font-weight: 800;">${sentence}</span>`;
-              }
-              return sentence;
-          }).join('<br>');
-      }
+    // For multiple sentences, apply different styles
+    if (sentences.length > 1) {
+      return sentences.map((sentence, index) => {
+        const wordCount = sentence.split(/\s+/).length;
+        const isCTA = /\b(get|order|try|start|download|subscribe|join)\b/i.test(sentence);
 
-      // Return single sentences as is
-      return processedText.trim();
+        // First sentence gets larger font size
+        if (index === 0) {
+          return `<div style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">${sentence}</div>`;
+        }
+        // Second sentence gets smaller font size
+        return `<div style="font-size: 16px;">${sentence}</div>`;
+      }).join('');
+    }
+
+    // Return single sentences as is, with the larger font size
+    return `<div style="font-size: 22px;">${processedText.trim()}</div>`;
 
   } catch (error) {
-      console.error('[processAdText] Error:', error);
-      return text;
+    console.error('[processAdText] Error:', error);
+    return text;
   }
 }
 
@@ -104,57 +81,54 @@ export async function createAd(options = {}) {
   const {
     logoUrl,
     mainImageUrl,
-    fontFamily,
+    fontFamily = 'system-ui, -apple-system, sans-serif',
     fontUrl,
     phrase,
     outputDir,
     bgColor,
     adDimensions = { width: 160, height: 600 },
+    fontSize,
+    textColor,
     ctaText = 'ORDER NOW',
     ctaColor,
-    ctaTextColor = '#FFFFFF'
+    ctaTextColor,
   } = options;
 
   let browser;
   try {
-    // // Ensure output directory exists
-    // if (!existsSync(outputDir)) {
-    //   mkdirSync(outputDir, { recursive: true });
-    // }
-
-    // // Download and setup font if URL is provided
-    // let fontFaceRule = '';
-    // if (fontUrl && fontFamily) {
-    //   try {
-    //     const fontPath = await downloadAndSaveFont(fontUrl, fontFamily);
-    //     fontFaceRule = `
-    //       @font-face {
-    //         font-family: '${fontFamily}';
-    //         src: url('file://${fontPath.replace(/\\/g, '/')}') format('woff2');
-    //         font-weight: normal;
-    //         font-style: normal;
-    //         font-display: swap;
-    //       }
-    //     `;
-    //   } catch (error) {
-    //     console.error(`[createAd] Font download error: ${error.message}`);
-    //   }
-    // }
+    // Process font with fallback handling
+    const { fontPath, fontFamily: resolvedFontFamily } = await fontHandler.downloadAndSaveFont(
+      fontUrl === 'Not present' ? null : fontUrl,
+      fontFamily
+    );
 
     const processedPhrase = processAdText(phrase);
+
+    // Construct font-face CSS only if we have a custom font
+    const fontFaceCSS = fontPath ? `
+      @font-face {
+        font-family: '${resolvedFontFamily}';
+        src: url('file://${fontPath.replace(/\\/g, "/")}') format('woff2');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+      }
+    ` : '';
 
     const html = `
     <!DOCTYPE html>
     <html>
       <head>
         <style>
-        
+        ${fontFaceCSS}
+
           body {
             margin: 0;
             padding: 0;
             width: ${adDimensions.width}px;
             height: ${adDimensions.height}px;
             overflow: hidden;
+            font-family: ${resolvedFontFamily}, system-ui, -apple-system, sans-serif;
           }
 
           .ad-container {
@@ -171,34 +145,40 @@ export async function createAd(options = {}) {
 
           .logo-container {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 25px;
-            height: 25px;
+            top: 7px;
+            right: 7px;
+            width: 40px;
+            height: 40px;
             z-index: 2;
+            padding: 3px;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
 
           .logo {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
           }
 
           .text-container {
             width: 100%;
-            padding: 45px 10px 15px 10px;
+            height: 180px; /* Fixed height for text section */
+            padding: 45px 10px 0 10px;
             box-sizing: border-box;
-            min-height: 100px;
+            margin-bottom: 15px;
           }
 
           .ad-text {
-            font-size: 19px;
             text-align: left;
             line-height: 1.4;
-            color: #89CFF0;
+            color: ${textColor};
             font-weight: 600;
             margin: 0;
-            padding-right: 15px;
+            padding-right: 10px;
           }
 
           .ad-text br {
@@ -207,24 +187,34 @@ export async function createAd(options = {}) {
             content: "";
           }
 
+          .ad-text div {
+            margin-bottom: 8px;
+          }
+          
+          .ad-text div:last-child {
+            margin-bottom: 0;
+          }
+
           .main-image-container {
-            flex-grow: 1;
+            width: 100%;
+            height: 550px; /* Fixed height for image section */
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 15px 0;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            overflow: hidden;
           }
 
           .main-image {
             width: 100%;
-            max-height: 500px;
-            object-fit: contain;
+            height: 100%;
+            object-fit: contain; /* Maintains aspect ratio */
           }
 
           .cta-container {
             width: 100%;
-            padding: 0 0 15px 0;
+            padding: 0 0 10px 0;
+            margin-top: auto; /* Pushes button to bottom */
             box-sizing: border-box;
           }
 
@@ -244,22 +234,6 @@ export async function createAd(options = {}) {
             letter-spacing: 0.5px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
           }
-
-          .trust-badge {
-            font-size: 11px;
-            color: #666;
-            text-align: center;
-            margin: 8px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-          }
-
-          .trust-badge svg {
-            width: 12px;
-            height: 12px;
-          }
         </style>
       </head>
       <body>
@@ -275,12 +249,6 @@ export async function createAd(options = {}) {
           </div>
           <div class="cta-container">
             <button class="cta-button">${ctaText}</button>
-            <div class="trust-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-              Secure Application
-            </div>
           </div>
         </div>
       </body>

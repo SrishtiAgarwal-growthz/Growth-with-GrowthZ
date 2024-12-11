@@ -4,6 +4,7 @@ import {
   removeBackground,
   uploadToS3,
   extractBackgroundColor,
+  extractTextColor,
   fetchApprovedPhrases,
   fetchIconUrl,
   fetchWebsiteUrl,
@@ -52,7 +53,7 @@ export const processAppImages = async (appId, userId) => {
 
     // Fetch font family and font file
     const fontDetails = await fetchFont(websiteUrl);
-    console.log(`[processAppImages] Font Family fetched: ${fontDetails.fontFamily}, URL: ${fontDetails.fontUrl}`);
+    console.log(`[processAppImages] Font Family fetched: ${fontDetails.fontName}, URL: ${fontDetails.fontPath}`);
 
     // Save font URL in the app's document
     await appsCollection.updateOne(
@@ -60,8 +61,9 @@ export const processAppImages = async (appId, userId) => {
       {
         $set: {
           iconBackgroundColor: iconBackgroundColor,
-          fontUrl: fontDetails.fontUrl, // Save the URL instead of the local path
+          fontName: fontDetails.fontName,
           fontFamily: fontDetails.fontFamily,
+          fontUrl: fontDetails.fontUrl,
         },
       }
     );
@@ -97,10 +99,14 @@ export const processAppImages = async (appId, userId) => {
         console.log(`[processAppImages] Extracting background color for: ${image.screenshot}`);
         const backgroundColor = await extractBackgroundColor(image.screenshot);
 
+        console.log(`[processAppImages] Extracting text color for: ${image.screenshot}`);
+        const textColor = await extractTextColor(image.screenshot);
+
         updatedImages.push({
           originalUrl: image.screenshot,
           removedBgUrl: s3Url,
           backgroundColor: backgroundColor,
+          textColor: textColor,
         });
       } catch (error) {
         console.error(`[processAppImages] Error processing image: ${image.screenshot}`, error.message);
@@ -108,6 +114,7 @@ export const processAppImages = async (appId, userId) => {
           originalUrl: image.screenshot,
           removedBgUrl: null,
           backgroundColor: null,
+          textColor: null,
           error: error.message,
         });
       }
@@ -126,6 +133,7 @@ export const processAppImages = async (appId, userId) => {
       updatedImages,
       approvedPhrases,
       iconUrl,
+      fontName: fontDetails.fontName,
       fontFamily: fontDetails.fontFamily,
       fontUrl: fontDetails.fontUrl,
     };
@@ -193,10 +201,10 @@ export const generateAdImages = async (appId) => {
           bgColor: image.backgroundColor,
           adDimensions: { width: 160, height: 600 },
           fontSize: '24px',
-          textColor: "#000000",
+          textColor: image.textColor,
           ctaText: "Order Now",
           ctaColor: app.iconBackgroundColor,
-          ctaTextColor: "#FFFFFF"
+          ctaTextColor: image.textColor,
         };
 
         console.log(`[generateAdImages] Creating ad for image with options:`, {

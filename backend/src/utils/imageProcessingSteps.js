@@ -1,25 +1,72 @@
+import dotenv from "dotenv";
 import fetch from "node-fetch";
 import FormData from "form-data";
 import puppeteer from "puppeteer";
-import { s3 } from "../config/aws.js";
 import { connectToMongo } from "../config/db.js";
 import { ObjectId } from "mongodb";
+import { s3 } from "../config/aws.js";
 import { getBackgroundColor } from "./colorExtraction.js";
 import { saveFontToTemp } from "./fontDownload.js";
+import { createCanvas, loadImage } from 'canvas';
+dotenv.config();
 
 /**
  * Remove the background of an image using the remove-bg API.
  * @param {string} imageUrl - The URL of the image.
  * @returns {Promise<Buffer>} - Returns the processed image as a buffer.
  */
-export const removeBackground = async (imageUrl) => {
-  const apiKey = "6XJG4YtgBcBscredJ12i9rhW"; // Move to .env for better security
+export const removeBackground = async (imageUrl, options = {}) => {
+  const {
+    crop = true,
+    cropMargin = '10%',
+    scale = 'original',
+    position = scale !== 'original' ? 'center' : 'original'
+  } = options;
+
+  const apiKey = "PNgKBBQRtJSy5iCb8MrmvKQP"; // Move to .env for better security
+
   try {
-    console.log(`[removeBackground] Removing background for image URL: ${imageUrl}`);
+    console.log(`[removeBackground] Processing image URL: ${imageUrl} with options:`, options);
 
     const formData = new FormData();
+
+    // Basic parameters
     formData.append("size", "auto");
     formData.append("image_url", imageUrl);
+
+    // Cropping parameters
+    formData.append("crop", crop.toString());
+    if (crop && cropMargin) {
+      formData.append("crop_margin", cropMargin);
+    }
+
+    // Scaling parameter
+    if (scale !== 'original') {
+      if (!scale.endsWith('%')) {
+        throw new Error('Scale must be "original" or a percentage (e.g., "80%")');
+      }
+      const scaleValue = parseInt(scale);
+      if (scaleValue < 10 || scaleValue > 100) {
+        throw new Error('Scale percentage must be between 10% and 100%');
+      }
+      formData.append("scale", scale);
+    }
+
+    // Position parameter
+    if (position !== 'original') {
+      if (position === 'center') {
+        formData.append("position", position);
+      } else if (typeof position === 'string' && position.includes(',')) {
+        // Handle x,y positioning
+        const [x, y] = position.split(',').map(v => v.trim());
+        if (!x.endsWith('%') || !y.endsWith('%')) {
+          throw new Error('Position values must be percentages (e.g., "50%,50%")');
+        }
+        formData.append("position", `${x},${y}`);
+      } else {
+        throw new Error('Position must be "original", "center", or "x%,y%"');
+      }
+    }
 
     const response = await fetch("https://api.remove.bg/v1.0/removebg", {
       method: "POST",
@@ -35,13 +82,14 @@ export const removeBackground = async (imageUrl) => {
       throw new Error(`Remove-bg API failed: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
-    console.log(`[removeBackground] Successfully removed background for image: ${imageUrl}`);
+    console.log(`[removeBackground] Successfully processed image: ${imageUrl}`);
     return await response.arrayBuffer();
   } catch (error) {
     console.error(`[removeBackground] Error: ${error.message}`);
     throw error;
   }
 };
+
 
 /**
  * Upload an image to S3.
@@ -201,19 +249,27 @@ export const fetchFont = async (websiteUrl) => {
 
     // Extract the font family from <h1>
     console.log(`[fetchFont] Extracting font-family from <h1>`);
-    const fontFamily = await page.evaluate(() => {
+    const fontDetails = await page.evaluate(() => {
       const h1 = document.querySelector("h1");
       const computedStyle = h1 ? window.getComputedStyle(h1) : null;
-      return computedStyle ? computedStyle.fontFamily : "abc"; // Default to "abc" if no font is found
+      return {
+        fontFamily: computedStyle ? computedStyle.fontFamily : "abc",
+      };
     });
 
-    console.log(`[fetchFont] Font extracted: ${fontFamily}`);
+    const rawFontFamily = fontDetails.fontFamily;
+    const cleanFontFamily = rawFontFamily.replace(/['"]/g, "").split(",")[0].trim();
+    console.log(`[fetchFont] Font extracted: ${cleanFontFamily}`);
 
     // Call saveFontToTemp to download the font
-    const fontDetails = await saveFontToTemp(fontFamily, websiteUrl);
+    const fontData = await saveFontToTemp(cleanFontFamily, websiteUrl);
 
-    console.log(`[fetchFont] Font downloaded: ${fontDetails.fontName}, Path: ${fontDetails.fontPath}`);
-    return fontDetails;
+    console.log(`[fetchFont] Font downloaded: ${fontData.fontName}, Path: ${fontData.fontPath}`);
+    return {
+      fontName: fontData.fontName || cleanFontFamily,
+      fontFamily: rawFontFamily,
+      fontUrl: fontData.fontUrl, // This should be the URL logged during font download
+    };
   } catch (error) {
     console.error(`[fetchFont] Error fetching font: ${error.message}`);
     return { fontName: "abc", fontPath: null }; // Return default font on error
@@ -221,5 +277,56 @@ export const fetchFont = async (websiteUrl) => {
     if (browser) {
       await browser.close();
     }
+  }
+};
+
+/**
+ * Fetch the text color for an app from the image URL.
+ * @param {string} imageUrl - The image URL for which to fetch the text color.
+ * @returns {Promise<{textColor: string}>} - The text color of image.
+ */
+export const extractTextColor = async (imageUrl) => {
+  try {
+    console.log(`[extractTextColor] Analyzing image for text color: ${imageUrl}`);
+
+    const canvas = createCanvas(1, 1);
+    const ctx = canvas.getContext('2d');
+
+    const image = await loadImage(imageUrl);
+    canvas.width = image.width;
+    canvas.height = image.height;
+    ctx.drawImage(image, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+    // Calculate average color
+    let r = 0, g = 0, b = 0;
+    let count = 0;
+
+    for (let i = 0; i < imageData.length; i += 16) {
+      r += imageData[i];
+      g += imageData[i + 1];
+      b += imageData[i + 2];
+      count++;
+    }
+
+    const avgColor = {
+      r: Math.round(r / count),
+      g: Math.round(g / count),
+      b: Math.round(b / count)
+    };
+
+    // Calculate luminance
+    const luminance = (0.299 * avgColor.r + 0.587 * avgColor.g + 0.114 * avgColor.b) / 255;
+
+    // Determine text color based on luminance
+    const textColor = luminance > 0.5 ? '#000000' : '#FFFFFF';
+
+    console.log(`[extractTextColor] Analysis complete. Text Color: ${textColor}`);
+
+    return textColor;
+  } catch (error) {
+    console.error('[extractTextColor] Error:', error);
+    return '#000000';  // Default to black text
   }
 };
