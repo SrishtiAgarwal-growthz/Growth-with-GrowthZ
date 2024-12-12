@@ -61,9 +61,6 @@ export const processAppImages = async (appId, userId) => {
       {
         $set: {
           iconBackgroundColor: iconBackgroundColor,
-          fontName: fontDetails.fontName,
-          fontFamily: fontDetails.fontFamily,
-          fontUrl: fontDetails.fontUrl,
         },
       }
     );
@@ -133,9 +130,6 @@ export const processAppImages = async (appId, userId) => {
       updatedImages,
       approvedPhrases,
       iconUrl,
-      fontName: fontDetails.fontName,
-      fontFamily: fontDetails.fontFamily,
-      fontUrl: fontDetails.fontUrl,
     };
   } finally {
     await client.close();

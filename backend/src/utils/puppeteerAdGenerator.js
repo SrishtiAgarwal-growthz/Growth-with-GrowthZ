@@ -2,125 +2,51 @@ import axios from "axios";
 import puppeteer from "puppeteer";
 import { join } from "path";
 
-/**
- * Download and save the font file locally.
- * @param {string} fontUrl - The URL of the font file.
- * @param {string} fontFamily - The font family name.
- * @returns {string} - The local file path of the saved font.
- */
-async function downloadFont(fontUrl, fontFamily) {
-  const extension = extname(fontUrl).split("?")[0] || ".woff2";
-  const safeFontName = fontFamily.replace(/[^a-z0-9]/gi, "-").toLowerCase();
-  const fontFileName = `${safeFontName}${extension}`;
-  const fontPath = join(fontsDir, fontFileName);
-
-  if (existsSync(fontPath)) {
-    console.log(`[downloadFont] Font already exists: ${fontPath}`);
-    return fontPath;
-  }
-
-  console.log(`[downloadFont] Downloading font from: ${fontUrl}`);
-  const response = await axios.get(fontUrl, { responseType: "arraybuffer" });
-  writeFileSync(fontPath, response.data);
-  console.log(`[downloadFont] Font saved successfully: ${fontPath}`);
-
-  return fontPath;
-}
-
-function processAdText(text) {
-  try {
-    let processedText = text;
-
-    // Basic cleanup
-    processedText = processedText
-      .replace(/^\d+\.\s*/, '')        // Remove numbering
-      .replace(/\*+/g, '')             // Remove asterisks
-      .replace(/\s*\([^)]*\)/g, '')    // Remove parenthetical text
-      .replace(/\s+/g, ' ')            // Normalize spaces
-      .replace(/\.{2,}/g, '.')         // Fix multiple dots
-      .replace(/[""]/g, '"')           // Normalize quotes
-      .replace(/['']/g, "'");          // Normalize apostrophes
-
-    // Handle colon in text
-    const colonParts = processedText.split(':');
-    if (colonParts.length > 1 && colonParts[1].trim().length > 0) {
-      processedText = colonParts[1];
-    }
-
-    // Split into sentences using both . and ? as delimiters
-    const sentences = processedText
-      .split(/(?<=[.?])\s+/)           // Split after . or ?
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-
-    // For multiple sentences, apply different styles
-    if (sentences.length > 1) {
-      return sentences.map((sentence, index) => {
-        const wordCount = sentence.split(/\s+/).length;
-        const isCTA = /\b(get|order|try|start|download|subscribe|join)\b/i.test(sentence);
-
-        // First sentence gets larger font size
-        if (index === 0) {
-          return `<div style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">${sentence}</div>`;
-        }
-        // Second sentence gets smaller font size
-        return `<div style="font-size: 16px;">${sentence}</div>`;
-      }).join('');
-    }
-
-    // Return single sentences as is, with the larger font size
-    return `<div style="font-size: 22px;">${processedText.trim()}</div>`;
-
-  } catch (error) {
-    console.error('[processAdText] Error:', error);
-    return text;
-  }
-}
-
 export async function createAd(options = {}) {
   const {
     logoUrl,
     mainImageUrl,
-    fontFamily = 'system-ui, -apple-system, sans-serif',
-    fontUrl,
     phrase,
     outputDir,
     bgColor,
     adDimensions = { width: 160, height: 600 },
-    fontSize,
     textColor,
     ctaText = 'ORDER NOW',
     ctaColor,
     ctaTextColor,
+    fontFamily,
+    fontPath, // New option for the local font file path
   } = options;
 
   let browser;
   try {
-    // Process font with fallback handling
-    const { fontPath, fontFamily: resolvedFontFamily } = await fontHandler.downloadAndSaveFont(
-      fontUrl === 'Not present' ? null : fontUrl,
-      fontFamily
-    );
-
+    console.log('[createAd] Starting ad creation with phrase:', phrase);
     const processedPhrase = processAdText(phrase);
+    console.log('[createAd] Processed phrase:', processedPhrase);
 
-    // Construct font-face CSS only if we have a custom font
-    const fontFaceCSS = fontPath ? `
+    // Read the font file and convert it to base64
+    let fontFaceRule = "";
+    if (fontPath && fs.existsSync(fontPath)) {
+      const fontData = fs.readFileSync(fontPath);
+      const base64Font = fontData.toString("base64");
+      const fontFormat = fontPath.endsWith(".woff2") ? "woff2" : "woff";
+    
+      fontFaceRule = `
       @font-face {
-        font-family: '${resolvedFontFamily}';
-        src: url('file://${fontPath.replace(/\\/g, "/")}') format('woff2');
+        font-family: '${fontFamily}';
+        src: url(data:font/${fontFormat};base64,${base64Font}) format('${fontFormat}');
         font-weight: normal;
         font-style: normal;
-        font-display: swap;
       }
-    ` : '';
+    `;
+    }
 
     const html = `
     <!DOCTYPE html>
     <html>
       <head>
         <style>
-        ${fontFaceCSS}
+        ${fontFaceRule}
 
           body {
             margin: 0;
@@ -128,7 +54,7 @@ export async function createAd(options = {}) {
             width: ${adDimensions.width}px;
             height: ${adDimensions.height}px;
             overflow: hidden;
-            font-family: ${resolvedFontFamily}, system-ui, -apple-system, sans-serif;
+            font-family: ${fontFamily}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           }
 
           .ad-container {
@@ -138,84 +64,89 @@ export async function createAd(options = {}) {
             display: flex;
             flex-direction: column;
             position: relative;
-            font-family: '${fontFamily}', system-ui, -apple-system, sans-serif;
             box-sizing: border-box;
-            padding: 10px;
+            padding: 2px; 
           }
 
           .logo-container {
             position: absolute;
-            top: 7px;
-            right: 7px;
-            width: 40px;
-            height: 40px;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
             z-index: 2;
-            padding: 3px;
-            background: transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: transparent;
+            padding: 2px;
+            border-radius: 4px;
           }
 
           .logo {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+            display: block;
+          }
+
+          .text-section {
+            width: 100%;
+            padding: 64px 15px 20px 15px;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 1;
           }
 
           .text-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
             width: 100%;
-            height: 180px; /* Fixed height for text section */
-            padding: 45px 10px 0 10px;
-            box-sizing: border-box;
-            margin-bottom: 15px;
           }
 
-          .ad-text {
-            text-align: left;
-            line-height: 1.4;
+          .main-text {
             color: ${textColor};
             font-weight: 600;
             margin: 0;
-            padding-right: 10px;
+            padding: 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            text-align: left;
+            font-size: 20px;
+            line-height: 1.3;
           }
 
-          .ad-text br {
-            display: block;
-            margin: 8px 0;
-            content: "";
-          }
-
-          .ad-text div {
-            margin-bottom: 8px;
-          }
-          
-          .ad-text div:last-child {
-            margin-bottom: 0;
+          .secondary-text {
+            color: ${textColor};
+            font-size: 14px;
+            line-height: 1.4;
+            margin: 0;
+            opacity: 0.85;
+            font-weight: 400;
           }
 
           .main-image-container {
-            width: 100%;
-            height: 550px; /* Fixed height for image section */
+            flex: 1;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            margin-bottom: 5px;
-            overflow: hidden;
+            margin: 5px 0;
+            padding: 0 5px;
+            box-sizing: border-box;
           }
 
           .main-image {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Maintains aspect ratio */
+            object-fit: contain;
           }
 
           .cta-container {
-            width: 100%;
-            padding: 0 0 10px 0;
-            margin-top: auto; /* Pushes button to bottom */
-            box-sizing: border-box;
+            padding: 15px;
+            margin-top: auto;
           }
 
           .cta-button {
@@ -232,7 +163,7 @@ export async function createAd(options = {}) {
             text-transform: uppercase;
             font-size: 16px;
             letter-spacing: 0.5px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
         </style>
       </head>
@@ -241,8 +172,8 @@ export async function createAd(options = {}) {
           <div class="logo-container">
             <img src="${logoUrl}" alt="Logo" class="logo">
           </div>
-          <div class="text-container">
-            <div class="ad-text">${processedPhrase}</div>
+          <div class="text-section">
+            <div id="textContainer" class="text-container"></div>
           </div>
           <div class="main-image-container">
             <img src="${mainImageUrl}" alt="Main Image" class="main-image">
@@ -251,55 +182,161 @@ export async function createAd(options = {}) {
             <button class="cta-button">${ctaText}</button>
           </div>
         </div>
-      </body>
-    </html>
-  `;
+        <script>
+          function formatText() {
+            const text = ${JSON.stringify(processedPhrase)};
+            const container = document.getElementById('textContainer');
+            
+            if (!container) {
+              console.error('Text container not found');
+              return;
+            }
 
+            console.log('Original text:', text);
+            
+            // Split text at punctuation marks
+            const segments = text.split(/([.?!:])/).filter(Boolean);
+            let formattedSegments = [];
+            
+            // Process segments and preserve punctuation
+            for (let i = 0; i < segments.length; i++) {
+              let segment = segments[i].trim();
+              if (/^[.?!:]$/.test(segment)) {
+                if (formattedSegments.length > 0) {
+                  formattedSegments[formattedSegments.length - 1] += segment;
+                }
+              } else {
+                formattedSegments.push(segment);
+              }
+            }
+
+            console.log('Formatted segments:', formattedSegments);
+
+            // Create text blocks based on segments
+            if (formattedSegments.length > 1) {
+              const midpoint = Math.ceil(formattedSegments.length / 2);
+              const mainPart = formattedSegments.slice(0, midpoint).join(' ');
+              const secondaryPart = formattedSegments.slice(midpoint).join(' ');
+
+              console.log('Split text into parts:', { main: mainPart, secondary: secondaryPart });
+              
+              container.innerHTML = \`
+                <p class="main-text">\${mainPart}</p>
+                <p class="secondary-text">\${secondaryPart}</p>
+              \`;
+            } else {
+              console.log('Using single text block');
+              container.innerHTML = \`<p class="main-text">\${text}</p>\`;
+            }
+
+            // Adjust font sizes if needed
+            const mainText = container.querySelector('.main-text');
+            let fontSize = 22;
+            
+            if (mainText) {
+              console.log('Initial font size:', fontSize);
+              
+              while (
+                fontSize > 14 && 
+                (mainText.scrollHeight > mainText.clientHeight || 
+                 mainText.scrollWidth > mainText.clientWidth)
+              ) {
+                fontSize--;
+                mainText.style.fontSize = \`\${fontSize}px\`;
+                console.log('Adjusted font size:', fontSize);
+              }
+            }
+
+            console.log('Text formatting complete');
+          }
+
+          formatText();
+        </script>
+      </body>
+    </html>`;
+
+    console.log('[createAd] Launching browser...');
     browser = await puppeteer.launch({
       headless: "new",
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
     const page = await browser.newPage();
+    console.log('[createAd] Setting viewport...');
     await page.setViewport({
       width: adDimensions.width,
       height: adDimensions.height,
       deviceScaleFactor: 2
     });
 
+    console.log('[createAd] Setting page content...');
     await page.setContent(html, {
       waitUntil: ['domcontentloaded', 'networkidle0'],
-      timeout: 30000
+      timeout: 15000
     });
 
+    // Enable console log collection
+    page.on('console', msg => console.log('Browser console:', msg.text()));
+
+    console.log('[createAd] Waiting for content and images...');
     await page.evaluate(async () => {
       await Promise.all([
+        await document.fonts.ready,
+        console.log('Fonts loaded successfully.'),
         ...Array.from(document.images).map(img => {
           if (img.complete) return Promise.resolve();
           return new Promise((resolve, reject) => {
             img.addEventListener('load', resolve);
             img.addEventListener('error', reject);
           });
-        }),
-        document.fonts.ready
+        })
       ]);
     });
 
     const filename = `ad-${Date.now()}.png`;
     const filePath = join(outputDir, filename);
 
+    console.log('[createAd] Taking screenshot...');
     await page.screenshot({
       path: filePath,
       type: 'png'
     });
 
+    console.log('[createAd] Ad created successfully at:', filePath);
     return filePath;
   } catch (error) {
     console.error('[createAd] Error:', error);
     throw error;
   } finally {
     if (browser) {
+      console.log('[createAd] Closing browser...');
       await browser.close();
     }
+  }
+}
+
+function processAdText(text) {
+  console.log('[processAdText] Starting text processing');
+  try {
+    console.log('[processAdText] Original text:', text);
+    let processedText = text;
+
+    // Clean up text
+    processedText = processedText
+      .replace(/^\d+\.\s*/, '')
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      .replace(/\s*\([^)]*\)/g, '')
+      .replace(/\s+/g, ' ')
+      .replace(/\.{2,}/g, '.')
+      .replace(/[""]/g, '"')
+      .replace(/['']/g, "'")
+      .trim();
+
+    console.log('[processAdText] Processed text:', processedText);
+    return processedText;
+  } catch (error) {
+    console.error('[processAdText] Error:', error);
+    return text;
   }
 }
