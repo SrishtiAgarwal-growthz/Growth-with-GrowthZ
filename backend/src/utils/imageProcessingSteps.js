@@ -1,14 +1,21 @@
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
 import fetch from "node-fetch";
 import FormData from "form-data";
 import puppeteer from "puppeteer";
 import { connectToMongo } from "../config/db.js";
 import { ObjectId } from "mongodb";
 import { s3 } from "../config/aws.js";
+import { fileURLToPath } from "url";
 import { getBackgroundColor } from "./colorExtraction.js";
 import { saveFontToTemp } from "./fontDownload.js";
 import { createCanvas, loadImage } from 'canvas';
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const fontsDir = path.resolve(__dirname, "fonts");
 
 /**
  * Remove the background of an image using the remove-bg API.
@@ -23,7 +30,7 @@ export const removeBackground = async (imageUrl, options = {}) => {
     position = scale !== 'original' ? 'center' : 'original'
   } = options;
 
-  const apiKey = "PNgKBBQRtJSy5iCb8MrmvKQP"; // Move to .env for better security
+  const apiKey = "mXSte5gAQJdpoGfj8xTMdtkf"; // Move to .env for better security
 
   try {
     console.log(`[removeBackground] Processing image URL: ${imageUrl} with options:`, options);
@@ -257,22 +264,18 @@ export const fetchFont = async (websiteUrl) => {
       };
     });
 
-    const rawFontFamily = fontDetails.fontFamily;
-    const cleanFontFamily = rawFontFamily.replace(/['"]/g, "").split(",")[0].trim();
-    console.log(`[fetchFont] Font extracted: ${cleanFontFamily}`);
-
-    // Call saveFontToTemp to download the font
-    const fontData = await saveFontToTemp(cleanFontFamily, websiteUrl);
-
-    console.log(`[fetchFont] Font downloaded: ${fontData.fontName}, Path: ${fontData.fontPath}`);
+    fontFamily = fontDetails.fontFamily;
+    console.log(`Extracted font details: ${JSON.stringify(fontDetails)}`);
     return {
-      fontName: fontData.fontName || cleanFontFamily,
-      fontFamily: rawFontFamily,
-      fontUrl: fontData.fontUrl, // This should be the URL logged during font download
+      fontName: fontFamily,
+      website: websiteUrl,
     };
   } catch (error) {
     console.error(`[fetchFont] Error fetching font: ${error.message}`);
-    return { fontName: "abc", fontPath: null }; // Return default font on error
+    return {
+      website: null,
+      fontFamily: "abc",
+    }; // Return default font on error
   } finally {
     if (browser) {
       await browser.close();
