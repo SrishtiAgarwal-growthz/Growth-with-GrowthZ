@@ -2,6 +2,8 @@ import {
   fetchAppNameFromGooglePlay,
   scrapeGooglePlayReviews,
   scrapeAppleAppStoreReviews,
+  extractGooglePlayDescription,
+  extractAppStoreDescription,
   generateUSPhrases,
 } from "../services/reviewsService.js";
 import { scrapeWebsiteContent } from "../services/websiteScrapeService.js";
@@ -30,8 +32,9 @@ export const generateUSPhrasesHandler = async (req, res) => {
 
     // Step 2: Fetch app details and generate phrases
     let appName = "";
-    let contentSource = "";
     let combinedReviews = [];
+    let combinedDescription = [];
+    let combinedSummary = [];
     let keywords = [];
 
     if (website_link) {
@@ -45,7 +48,6 @@ export const generateUSPhrasesHandler = async (req, res) => {
       }
 
       appName = websiteContent.metadata.title || "Untitled Website";
-      contentSource = "website";
 
       combinedReviews = [
         websiteContent.metadata.metaDescription || "",
@@ -72,7 +74,6 @@ export const generateUSPhrasesHandler = async (req, res) => {
       if (!appName) {
         throw new Error("Unable to extract app name from Google Play URL.");
       }
-      contentSource = "google_play";
 
       console.log("[generateUSPhrasesHandler] Fetching Google Play reviews...");
       const googlePlayReviews = await scrapeGooglePlayReviews(google_play);
@@ -85,13 +86,33 @@ export const generateUSPhrasesHandler = async (req, res) => {
         console.log("[generateUSPhrasesHandler] Total Apple App Store reviews:", appleStoreReviews.length);
       }
 
+      console.log("[generateUSPhrasesHandler] Combining reviews...");
       combinedReviews = [...googlePlayReviews, ...appleStoreReviews];
       console.log("[generateUSPhrasesHandler] Combined reviews length:", combinedReviews.length);
+
+      console.log("[generateUSPhrasesHandler] Fetching Google Play description...");
+      const googlePlayDescription = await extractGooglePlayDescription(google_play);
+      console.log("[generateUSPhrasesHandler] Fetched Google Play description.");
+
+      let appleStoreDescription;
+      if (apple_app) {
+        console.log("[generateUSPhrasesHandler] Fetching Apple App Store description...");
+        appleStoreDescription = await extractAppStoreDescription(apple_app);
+        console.log("[generateUSPhrasesHandler] Fetched Apple App Store description.");
+      }
+
+      console.log("[generateUSPhrasesHandler] Combining description...");
+      combinedDescription = [...googlePlayDescription, ...appleStoreDescription];
+      console.log("[generateUSPhrasesHandler] Combined descriptions.");
+
+      console.log("[generateUSPhrasesHandler] Combining summary...");
+      combinedSummary = [...combinedReviews, ...combinedDescription];
+      console.log("[generateUSPhrasesHandler] Combined summary.");
     }
 
     // Extract meaningful keywords
     console.log("[generateUSPhrasesHandler] Extracting keywords...");
-    keywords = extractMeaningfulWords(combinedReviews);
+    keywords = extractMeaningfulWords(combinedSummary);
     console.log("[generateUSPhrasesHandler] Keywords extracted:", keywords);
 
     // Generate USP phrases
@@ -99,10 +120,10 @@ export const generateUSPhrasesHandler = async (req, res) => {
     const uspPhrases = await generateUSPhrases(appName, keywords);
     console.log("[generateUSPhrasesHandler] USP phrases generated:", uspPhrases);
 
-     // Step 3: Save generated phrases to the database
-     console.log("[generateUSPhrasesHandler] Saving phrases to database...");
-     const savedPhrases = await saveGeneratedPhrases(appId, task._id, uspPhrases);
-     console.log("[generateUSPhrasesHandler] Phrases saved successfully:", savedPhrases);
+    // Step 3: Save generated phrases to the database
+    console.log("[generateUSPhrasesHandler] Saving phrases to database...");
+    const savedPhrases = await saveGeneratedPhrases(appId, task._id, uspPhrases);
+    console.log("[generateUSPhrasesHandler] Phrases saved successfully:", savedPhrases);
 
     res.status(200).json({
       status: "success",

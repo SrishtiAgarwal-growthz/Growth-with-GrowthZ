@@ -14,8 +14,15 @@ export const extractMeaningfulWords = (reviews) => {
         "here", "there", "when", "where", "why", "how", "all", "any", "both", "each",
         "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only",
         "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just",
-        "don", "should", "now"
+        "don", "should", "now", "could", "would", "should", "might", "shall", "may", 
+        "must", "let", "lets", "however", "therefore", "thus", "hence", "whereas", 
+        "whenever", "wherever", "yet", "ever", "whatever", "whichever", "whoever", 
+        "whomever", "whose", "rather", "like", "unlike", "although", "though", "neither", 
+        "either", "whether", "besides", "anywhere", "everywhere", "somewhere", "nowhere",
+        "another", "every", "someone", "anyone", "everyone", "nobody", "anybody",
+        "somebody", "nothing", "something", "everything", "anything"
     ]);
+
 
     const meaningfulWords = new Set(); // Use a Set to store unique words
     reviews.forEach((review) => {

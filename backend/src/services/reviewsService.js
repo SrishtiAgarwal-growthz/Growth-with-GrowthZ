@@ -102,6 +102,64 @@ export const scrapeAppleAppStoreReviews = async (input) => {
   }
 };
 
+export const extractGooglePlayDescription = async (input) => {
+  console.log(`[extractGooglePlayDescription] Extracting Google Play App ID from URL: ${input}`);
+  const appId = extractGooglePlayAppId(input);
+  if (!appId) {
+    console.error("[extractGooglePlayDescription] Error: Invalid Google Play Store URL");
+    throw new Error("Invalid Google Play Store URL");
+  }
+  console.log(`[extractGooglePlayDescriptions] Extracted App ID: ${appId}`);
+
+  try {
+    console.log(`[extractGooglePlayDescription] Fetching description for App ID: ${appId}`);
+    const googlePlayData = await gplay.app({ appId });
+    const appDescription = [
+      googlePlayData.description,
+      googlePlayData.descriptionHTML,
+      googlePlayData.summary,
+    ]
+    console.log('[extractGooglePlayDescription] Fetched description');
+    return appDescription;
+  }
+  catch (error) {
+    console.error("[extractGooglePlayDescription] Error fetching description:", error.message);
+    return [];
+  }
+}
+
+export const extractAppStoreDescription = async (input) => {
+  let appId;
+
+  // If input is a URL, extract the App ID
+  if (input.includes("apple.com")) {
+    console.log(`[extractAppStoreDescription] Extracting Apple App ID from URL: ${input}`);
+    const match = input.match(/id(\d+)/); // Extract ID from URL pattern like ".../id123456789"
+    appId = match ? match[1] : null;
+  } else {
+    // If input is not a URL, assume it's an App ID
+    appId = input;
+  }
+
+  if (!appId) {
+    console.error("[extractAppStoreDescription] Error: Invalid Apple App Store URL or App ID");
+    throw new Error("Invalid Apple App Store URL or App ID");
+  }
+  console.log(`[extractAppStoreDescription] Extracted App ID: ${appId}`);
+
+  try {
+    console.log(`[extractAppStoreDescription] Fetching description for App ID: ${appId}`);
+    const appleData = await store.app({ id: appId });
+    const appDescription = appleData.description;
+    console.log('[extractAppStoreDescription] Fetched description.');
+    return appDescription;
+  }
+  catch (error) {
+    console.error("[extractAppStoreDescription] Error fetching description:", error.message);
+    return [];
+  }
+}
+
 // Generate USP phrases using Gemini API
 export const generateUSPhrases = async (appName, keywords) => {
   console.log(`[generateUSPhrases] Generating USP phrases for App: ${appName}`);
