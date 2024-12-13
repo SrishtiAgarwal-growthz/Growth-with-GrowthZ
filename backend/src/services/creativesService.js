@@ -188,7 +188,7 @@ export const generateAdImages = async (appId) => {
         const adOptions = {
           logoUrl: app.iconUrl,
           mainImageUrl: image.removedBgUrl,
-          fontFamily: app.fontFamily,
+          fontName: app.fontName,
           fontUrl: app.fontUrl,
           phrase: currentPhrase,
           outputDir,

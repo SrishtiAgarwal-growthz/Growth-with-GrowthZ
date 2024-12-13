@@ -1,6 +1,7 @@
 import axios from "axios";
 import puppeteer from "puppeteer";
-import { join } from "path";
+import fs from "fs";
+import path from "path";
 
 export async function createAd(options = {}) {
   const {
@@ -14,8 +15,7 @@ export async function createAd(options = {}) {
     ctaText = 'ORDER NOW',
     ctaColor,
     ctaTextColor,
-    fontFamily,
-    fontPath, // New option for the local font file path
+    fontName
   } = options;
 
   let browser;
@@ -24,23 +24,35 @@ export async function createAd(options = {}) {
     const processedPhrase = processAdText(phrase);
     console.log('[createAd] Processed phrase:', processedPhrase);
 
-    // Read the font file and convert it to base64
-    let fontFaceRule = "";
-    if (fontPath && fs.existsSync(fontPath)) {
-      const fontData = fs.readFileSync(fontPath);
-      const base64Font = fontData.toString("base64");
-      const fontFormat = fontPath.endsWith(".woff2") ? "woff2" : "woff";
-    
-      fontFaceRule = `
-      @font-face {
-        font-family: '${fontFamily}';
-        src: url(data:font/${fontFormat};base64,${base64Font}) format('${fontFormat}');
-        font-weight: normal;
-        font-style: normal;
-      }
-    `;
-    }
+  
+    // Font handling section
+    let fontFaceRule = '';
+    const fontDir = path.join(process.cwd(), 'font');
+    let fontPath = '';
 
+    const fontExtensions = ['.ttf', '.otf', '.woff', '.woff2'];
+    for (const ext of fontExtensions) {
+        const testPath = path.join(fontDir, `${fontName}${ext}`);
+        if (fs.existsSync(testPath)) {
+            fontPath = testPath;
+            break;
+        }
+    }
+    console.log(fontPath ? `Font path found: ${fontPath}` : 'No font path found. Using fallback font.');
+    console.log(`Using font: ${fontPath ? fontName : 'Inter (Fallback)'}`);
+      // Read font file and convert to base64
+      // const fontData = fs.readFileSync(fontPath);
+      // const base64Font = fontData.toString('base64');
+      
+      fontFaceRule = `
+        @font-face {
+          font-family: '${fontName}';
+         src: url('${fontPath}');
+        }
+      `;
+      
+      console.log(`[createAd] Font loaded: ${fontName}`);
+    
     const html = `
     <!DOCTYPE html>
     <html>
@@ -54,7 +66,6 @@ export async function createAd(options = {}) {
             width: ${adDimensions.width}px;
             height: ${adDimensions.height}px;
             overflow: hidden;
-            font-family: ${fontFamily}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           }
 
           .ad-container {
@@ -89,6 +100,7 @@ export async function createAd(options = {}) {
 
           .text-section {
             width: 100%;
+            font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
             padding: 64px 15px 20px 15px;
             min-height: 160px;
             display: flex;
@@ -108,6 +120,7 @@ export async function createAd(options = {}) {
 
           .main-text {
             color: ${textColor};
+            font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
             font-weight: 600;
             margin: 0;
             padding: 0;
@@ -121,6 +134,7 @@ export async function createAd(options = {}) {
 
           .secondary-text {
             color: ${textColor};
+            font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
             font-size: 14px;
             line-height: 1.4;
             margin: 0;
@@ -228,26 +242,6 @@ export async function createAd(options = {}) {
               console.log('Using single text block');
               container.innerHTML = \`<p class="main-text">\${text}</p>\`;
             }
-
-            // Adjust font sizes if needed
-            const mainText = container.querySelector('.main-text');
-            let fontSize = 22;
-            
-            if (mainText) {
-              console.log('Initial font size:', fontSize);
-              
-              while (
-                fontSize > 14 && 
-                (mainText.scrollHeight > mainText.clientHeight || 
-                 mainText.scrollWidth > mainText.clientWidth)
-              ) {
-                fontSize--;
-                mainText.style.fontSize = \`\${fontSize}px\`;
-                console.log('Adjusted font size:', fontSize);
-              }
-            }
-
-            console.log('Text formatting complete');
           }
 
           formatText();
@@ -275,13 +269,12 @@ export async function createAd(options = {}) {
       timeout: 15000
     });
 
-    // Enable console log collection
     page.on('console', msg => console.log('Browser console:', msg.text()));
 
     console.log('[createAd] Waiting for content and images...');
     await page.evaluate(async () => {
       await Promise.all([
-        await document.fonts.ready,
+        document.fonts.ready,
         console.log('Fonts loaded successfully.'),
         ...Array.from(document.images).map(img => {
           if (img.complete) return Promise.resolve();
@@ -294,7 +287,7 @@ export async function createAd(options = {}) {
     });
 
     const filename = `ad-${Date.now()}.png`;
-    const filePath = join(outputDir, filename);
+    const filePath = path.join(outputDir, filename);
 
     console.log('[createAd] Taking screenshot...');
     await page.screenshot({

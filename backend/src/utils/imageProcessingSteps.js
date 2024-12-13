@@ -260,21 +260,21 @@ export const fetchFont = async (websiteUrl) => {
       const h1 = document.querySelector("h1");
       const computedStyle = h1 ? window.getComputedStyle(h1) : null;
       return {
-        fontFamily: computedStyle ? computedStyle.fontFamily : "abc",
+        fontName: computedStyle ? computedStyle.fontName : "abc",
       };
     });
 
-    fontFamily = fontDetails.fontFamily;
+    fontName = fontDetails.fontName;
     console.log(`Extracted font details: ${JSON.stringify(fontDetails)}`);
     return {
-      fontName: fontFamily,
+      fontName: fontName,
       website: websiteUrl,
     };
   } catch (error) {
     console.error(`[fetchFont] Error fetching font: ${error.message}`);
     return {
       website: null,
-      fontFamily: "abc",
+      fontName: "abc",
     }; // Return default font on error
   } finally {
     if (browser) {

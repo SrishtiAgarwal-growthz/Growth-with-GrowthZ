@@ -6,6 +6,7 @@ const HomePage = () => {
     <div className="bg-black">
       <Navbar />
       <Hero />
+      
     </div>
   );
 };

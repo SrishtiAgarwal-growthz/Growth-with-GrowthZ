@@ -1,12 +1,19 @@
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import image from '../assets/image.png';
 
 const Hero = () => {
   const navigate = useNavigate();
+  const images = [
+    image,
+    image,
+    image,
+    image
+  ];
 
   return (
-    <div className="w-full bg-black h-[736px]">
-      <div className="max-w-[877px] mx-auto pt-20 text-center flex flex-col items-center">
+    <div className="w-full bg-black">
+      <div className="max-w-[877px] mx-auto pt-10 text-center flex flex-col items-center h-[300px]">
         <h1 className="text-6xl font-bold text-white">
           Powering the GROWTH
         </h1>
@@ -28,6 +35,45 @@ const Hero = () => {
           With Genius
         </p>
       </div>
+
+      <section className="w-full overflow-hidden">
+        <article className="flex w-[200%] animate-bannermove">
+          {[0, 1].map((groupIndex) => (
+            <div key={groupIndex} className="w-full flex">
+              <ul className="flex list-none p-0 m-0">
+                {images.map((img, index) => (
+                  <li 
+                    key={index} 
+                    className="flex-shrink-0 w-[470px] h-[300px] flex items-center justify-center"
+                  >
+                    <img 
+                      src={img}
+                      alt={`Slide ${index + 1}`}
+                      className="block w-[420px] h-[300px] rounded-lg object-cover"
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </article>
+      </section>
+
+      <style>
+        {`
+          @keyframes bannermove {
+            0% {
+              transform: translateX(0);
+            }
+            100% {
+              transform: translateX(-50%);
+            }
+          }
+          .animate-bannermove {
+            animation: bannermove 20s linear infinite;
+          }
+        `}
+      </style>
     </div>
   );
 };
