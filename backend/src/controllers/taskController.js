@@ -1,27 +1,32 @@
 import { saveTask, getTasksByUserId } from "../services/taskService.js";
 
+import { connectToMongo } from "../config/db.js";
+
 export const createTask = async (req, res) => {
-  console.log("[TaskController] Request to create task received:", req.body);
+  console.log("[TaskController] Request Body:", req.body);
 
   try {
-    // Extract userId and appId from the request body
-    const { appId, userId } = req.body;
+    const { appId, email } = req.body;
 
-    // Validate inputs
-    if (!appId) {
-      console.warn("[TaskController] Missing appId in request body.");
-      return res.status(400).json({ message: "App ID is required." });
+    if (!appId || !email) {
+      return res.status(400).json({ message: "App ID and email are required." });
     }
 
-    if (!userId) {
-      console.warn("[TaskController] Missing userId in request body.");
-      return res.status(400).json({ message: "User ID is required." });
+    const client = await connectToMongo();
+    const db = client.db("GrowthZ");
+    const usersCollection = db.collection("Users");
+
+    const user = await usersCollection.findOne({ email });
+    if (!user) {
+      console.error("[TaskController] User not found for email:", email);
+      return res.status(404).json({ message: "User not found." });
     }
 
-    // Create the task
+    const userId = user._id; // MongoDB ObjectId
+    console.log("[TaskController] Found userId:", userId);
+
     const task = await saveTask(userId, appId);
 
-    // Respond with success
     res.status(201).json({
       message: "Task created successfully.",
       task,

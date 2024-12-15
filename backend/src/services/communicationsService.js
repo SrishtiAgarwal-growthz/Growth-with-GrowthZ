@@ -6,7 +6,7 @@ import { connectToMongo } from "../config/db.js";
  * @param {string} text - The text of the phrase to approve.
  * @returns {Promise<Object>} - MongoDB update result.
  */
-export const approvePhraseService = async (appId, text) => {
+export const approvePhraseService = async (text, appId) => {
   const client = await connectToMongo();
   const db = client.db("GrowthZ");
   const adCopiesCollection = db.collection("AdCopies");
@@ -15,7 +15,7 @@ export const approvePhraseService = async (appId, text) => {
     console.log(`[approvePhraseService] Approving phrase: "${text}" for appId: ${appId}`);
 
     const result = await adCopiesCollection.updateOne(
-      { appId, "phrases.text": text },
+      { "phrases.text": text, appId },
       { $set: { "phrases.$.status": "approved" } }
     );
 
@@ -32,7 +32,7 @@ export const approvePhraseService = async (appId, text) => {
  * @param {string} text - The text of the phrase to reject.
  * @returns {Promise<Object>} - MongoDB update result.
  */
-export const rejectPhraseService = async (appId, text) => {
+export const rejectPhraseService = async (text, appId) => {
   const client = await connectToMongo();
   const db = client.db("GrowthZ");
   const adCopiesCollection = db.collection("AdCopies");
@@ -41,7 +41,7 @@ export const rejectPhraseService = async (appId, text) => {
     console.log(`[rejectPhraseService] Rejecting phrase: "${text}" for appId: ${appId}`);
 
     const result = await adCopiesCollection.updateOne(
-      { appId, "phrases.text": text },
+      { "phrases.text": text, appId },
       { $set: { "phrases.$.status": "rejected" } }
     );
 

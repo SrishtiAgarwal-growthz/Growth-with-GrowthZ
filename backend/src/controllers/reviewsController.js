@@ -5,10 +5,10 @@ import {
   extractGooglePlayDescription,
   extractAppStoreDescription,
   generateUSPhrases,
+  saveGeneratedPhrases,
 } from "../services/reviewsService.js";
 import { scrapeWebsiteContent } from "../services/websiteScrapeService.js";
 import { saveTask } from "../services/taskService.js";
-import { saveGeneratedPhrases } from "../services/phraseService.js";
 import { extractGooglePlayAppId } from "../utils/extractors.js";
 import { extractMeaningfulWords } from "../utils/word_extractor.js";
 
@@ -16,7 +16,14 @@ export const generateUSPhrasesHandler = async (req, res) => {
   console.log("[generateUSPhrasesHandler] Initial Request Body:", req.body);
 
   try {
-    const { google_play, apple_app, website_link, userId, appId } = req.body;
+    const { google_play, apple_app, website_link, appId, userId } = req.body;
+
+    if (!appId || !userId) {
+      console.error("[generateUSPhrasesHandler] Missing appId or userId in request body.");
+      return res.status(400).json({ message: "App ID and User ID are required." });
+    }
+
+    console.log("[generateUSPhrasesHandler] Received appId:", appId);
 
     // Ensure at least one input is provided
     if (!google_play && !apple_app && !website_link) {
@@ -26,9 +33,12 @@ export const generateUSPhrasesHandler = async (req, res) => {
       });
     }
 
-    // Step 1: Create a new task
+    // Step 1: Fetch or create the task
     console.log("[generateUSPhrasesHandler] Creating a new task...");
-    const task = await saveTask(userId, appId);
+    const task = await saveTask(userId, appId); // Create a new task if none exists
+    console.log("[generateUSPhrasesHandler] Task created:", task);
+
+    const taskId = task._id.toString(); // Extract the taskId for further use
 
     // Step 2: Fetch app details and generate phrases
     let appName = "";
@@ -122,12 +132,13 @@ export const generateUSPhrasesHandler = async (req, res) => {
 
     // Step 3: Save generated phrases to the database
     console.log("[generateUSPhrasesHandler] Saving phrases to database...");
-    const savedPhrases = await saveGeneratedPhrases(appId, task._id, uspPhrases);
+    const savedPhrases = await saveGeneratedPhrases(appId, taskId, uspPhrases);
     console.log("[generateUSPhrasesHandler] Phrases saved successfully:", savedPhrases);
 
     res.status(200).json({
+      appId,
       status: "success",
-      taskId: task._id,
+      taskId,
       phrases: savedPhrases,
       appName,
       totalReviews: combinedReviews.length,

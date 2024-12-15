@@ -14,10 +14,6 @@ export const saveAppDetails = async (req, res) => {
     // Fetch and save app details
     const appDetails = await saveAppDetailsInDb(google_play, apple_app);
 
-    // // Save task for the logged-in user
-    // const userId = req.user.id; // User ID from JWT token
-    // const task = await saveTask(userId, appDetails.appId);
-
     res.status(201).json({
       message: "App details saved successfully.",
       appDetails,

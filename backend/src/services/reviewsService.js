@@ -3,6 +3,7 @@ import gplay from "google-play-scraper";
 import store from "app-store-scraper";
 import path from "path";
 import { fileURLToPath } from "url";
+import { connectToMongo } from "../config/db.js";
 import { extractGooglePlayAppId } from "../utils/extractors.js";
 
 // Convert import.meta.url to __dirname equivalent
@@ -209,4 +210,27 @@ export const generateUSPhrases = async (appName, keywords) => {
     console.error("[generateUSPhrases] Error generating USP phrases:", error.message);
     throw new Error("Failed to generate USP phrases");
   }
+};
+
+export const saveGeneratedPhrases = async (appId, taskId, phrases) => {
+  console.log("[saveGeneratedPhrases] Saving generated phrases for app:", appId);
+
+  const client = await connectToMongo();
+  const db = client.db("GrowthZ");
+  const phrasesCollection = db.collection("AdCopies");
+
+  const document = {
+    appId: appId,
+    taskId: taskId,
+    phrases: phrases.map((phrase) => ({
+      text: phrase,
+      status: "pending",
+    })),
+    createdAt: new Date(),
+  };
+
+  const result = await phrasesCollection.insertOne(document);
+  console.log("[saveGeneratedPhrases] Phrases saved successfully:", result.insertedId);
+
+  return { ...document, _id: result.insertedId };
 };
