@@ -76,8 +76,10 @@ const LoginPage = () => {
 
           <div className="w-full lg:w-1/2 flex justify-center lg:justify-start px-4 sm:px-6 lg:px-8">
             <div className="w-full max-w-[430px] space-y-3">
-              <div className="mb-4">
-                <div className="text-purple-400 mb-2"><span className="">Genius</span></div>
+              <div className="mb-4 text-center">
+              <span className="bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-transparent bg-clip-text">
+                    Genius
+                  </span>
                 <h1 className="text-3xl font-bold mb-2">
                   {isSignUp ? "Welcome to GrowthZ" : "Welcome back !"}
                 </h1>
@@ -96,7 +98,7 @@ const LoginPage = () => {
                         type="text"
                         value={formData.fullName}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-gray-700 focus:border-purple-400 focus:outline-none"
+                        className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-purple-400 focus:border-green-500 focus:outline-none"
                         placeholder="Enter your name"
                       />
                     </div>
@@ -107,7 +109,7 @@ const LoginPage = () => {
                         type="text"
                         value={formData.companyName}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-gray-700 focus:border-purple-400 focus:outline-none"
+                        className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-purple-400 focus:border-green-500 focus:outline-none"
                         placeholder="Enter your company"
                       />
                     </div>
@@ -118,7 +120,7 @@ const LoginPage = () => {
                         type="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-gray-700 focus:border-purple-400 focus:outline-none"
+                        className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-purple-400 focus:border-green-500 focus:outline-none"
                         placeholder="Enter your email"
                       />
                     </div>
@@ -130,7 +132,7 @@ const LoginPage = () => {
                           type={showPassword ? "text" : "password"}
                           value={formData.password}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-gray-700 focus:border-purple-400 focus:outline-none"
+                          className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-purple-400 focus:border-green-500 focus:outline-none"
                           placeholder="Enter your password"
                         />
                         <Eye
@@ -150,7 +152,7 @@ const LoginPage = () => {
                         type="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-gray-700 focus:border-purple-400 focus:outline-none"
+                        className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-purple-400 focus:border-green-500 focus:outline-none"
                         placeholder="Enter your email"
                       />
                     </div>
@@ -162,7 +164,7 @@ const LoginPage = () => {
                           type={showPassword ? "text" : "password"}
                           value={formData.password}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-gray-700 focus:border-purple-400 focus:outline-none"
+                          className="w-full px-4 py-3 rounded-lg bg-[#1C1C1E] border-2 border-purple-400 focus:border-green-500 focus:outline-none"
                           placeholder="Enter your password"
                         />
                         <Eye
@@ -192,16 +194,15 @@ const LoginPage = () => {
                 </button>
 
                 <div className="text-center text-sm text-gray-400 pt-4">
-                  {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-                  <button
-                    type="button"
-                    onClick={() => setIsSignUp(!isSignUp)}
-                    className="text-purple-400 hover:text-purple-300 transition-colors"
-                  >
-                    Sign {isSignUp ? "In" : "Up"}
-                  </button>
-                </div>
-
+                {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-transparent bg-clip-text hover:opacity-90 transition-opacity"
+                >
+                  Sign {isSignUp ? "In" : "Up"}
+                </button>
+              </div>
                 <div className="text-center text-sm text-gray-400">
                   By creating an account, you agree to the{" "}
                   <a href="#" className="text-blue-500 hover:text-blue-400">
