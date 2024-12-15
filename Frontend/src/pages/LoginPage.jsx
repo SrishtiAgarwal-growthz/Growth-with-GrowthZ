@@ -58,7 +58,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0B] text-white">
+    <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 min-h-screen">
         <div className="flex min-h-screen items-center justify-center gap-20">
           <div className="hidden lg:flex lg:w-1/2 justify-end">
