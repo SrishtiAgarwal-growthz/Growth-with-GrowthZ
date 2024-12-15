@@ -1,5 +1,4 @@
 import { connectToMongo } from "../config/db.js";
-import { ObjectId } from "mongodb";
 
 export const saveTask = async (userId, appId) => {
   console.log("[TaskService] Saving task for user:", userId);
@@ -9,8 +8,8 @@ export const saveTask = async (userId, appId) => {
   const tasksCollection = db.collection("Tasks");
 
   const task = {
-    userId,
-    appId,
+    userId: userId,
+    appId: appId,
     createdAt: new Date(),
     tasks: ["AdCopies"],
   };
@@ -36,8 +35,8 @@ export const addCreativesTask = async (userId, appId, task) => {
       },
       {
         $setOnInsert: {
-          userId: new ObjectId(userId),
-          appId: new ObjectId(appId),
+          userId: userId,
+          appId: appId,
           createdAt: new Date(),
         },
         $addToSet: {
@@ -70,3 +69,5 @@ export const getTasksByUserId = async (userId) => {
 
   return tasks;
 };
+
+

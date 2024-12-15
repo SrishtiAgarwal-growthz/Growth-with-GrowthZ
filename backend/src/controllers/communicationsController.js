@@ -11,7 +11,7 @@ export const saveApprovedPhrase = async (req, res) => {
       return res.status(400).json({ message: "Both phrase text and appId are required." });
     }
 
-    const result = await approvePhraseService(appId, text);
+    const result = await approvePhraseService(text, appId);
 
     if (result.modifiedCount > 0) {
       return res.status(200).json({ message: "Phrase approved successfully." });
@@ -35,7 +35,7 @@ export const saveRejectedPhrase = async (req, res) => {
       return res.status(400).json({ message: "Both phrase text and appId are required." });
     }
 
-    const result = await rejectPhraseService(appId, text);
+    const result = await rejectPhraseService(text, appId);
 
     if (result.modifiedCount > 0) {
       return res.status(200).json({ message: "Phrase rejected successfully." });

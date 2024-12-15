@@ -70,7 +70,10 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl) => {
     { $set: appDetails }, // Update the document with appDetails
     { upsert: true } // Create a new document if it doesn’t exist
   );
+
+  // Fetch the document to ensure `_id` is returned
+  const savedApp = await collection.findOne({ appId: appDetails.appId });
   
-  console.log("[saveAppDetailsInDb] Saved app details to database.");
-  return { ...appDetails, _id: result.upsertedId || appDetails._id };
+  console.log("[saveAppDetailsInDb] Saved app details to database:", savedApp);
+  return savedApp; // Return the complete saved document, including `_id`
 };
