@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { Menu } from 'lucide-react';
 import logo from '../assets/logo.png'
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="w-full bg-black h-24 flex items-center"> {/* h-24 equals 96px */}
+    <nav className="w-full bg-black h-24 flex items-center">
       <div className="max-w-7xl mx-auto flex justify-between items-center px-8 w-full">
-        {/* Logo */}
+        {/* Logo - Responsive sizes */}
         <div className="flex items-center">
            <span className="relative">
             <img
               src={logo}
               alt="Logo"
-              className="w-[195px] h-[45px] "
-              // style={{ opacity: 0 }}
+              className="w-[140px] h-[35.24px] custom-md:w-[195px] custom-md:h-[45px]"
             />
           </span>
         </div>
