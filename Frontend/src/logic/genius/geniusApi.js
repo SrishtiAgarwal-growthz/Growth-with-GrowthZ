@@ -1,6 +1,6 @@
 // geniusApi.js
 
-const BASE_URL = 'http://localhost:8000/api';
+const BASE_URL = 'https://growth-with-growthz.onrender.com/api';
 
 /**
  * Save app details by making a POST request to the backend.

@@ -32,7 +32,7 @@ export const signUp = async (email, password, fullName, companyName) => {
 
     // Store in MongoDB by hitting the backend API
     try {
-        await axios.post("http://localhost:8000/auth/users", {
+        await axios.post("https://growth-with-growthz.onrender.com/auth/users", {
             email,
             fullName,
             companyName,

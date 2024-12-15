@@ -51,7 +51,7 @@ const GeniusMarketingForm = () => {
       console.log("User email:", userEmail);
 
       // Fetch userId from backend using email
-      const userResponse = await fetch('http://localhost:8000/api/users/get-user-by-email', {
+      const userResponse = await fetch('https://growth-with-growthz.onrender.com/api/users/get-user-by-email', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
