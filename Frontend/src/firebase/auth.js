@@ -8,6 +8,8 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
+const BASE_URL = process.env.REACT_APP_BASE_URL;
+
 const isBlockedEmailDomain = (email) => {
     const blockedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "aol.com", "icloud.com"];
     return blockedDomains.includes(email.split('@')[1]);
@@ -32,7 +34,7 @@ export const signUp = async (email, password, fullName, companyName) => {
 
     // Store in MongoDB by hitting the backend API
     try {
-        await axios.post("http://localhost:8000/auth/users", {
+        await axios.post(`${BASE_URL}/auth/users`, {
             email,
             fullName,
             companyName,
