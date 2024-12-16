@@ -1,6 +1,6 @@
 // geniusApi.js
 
-const BASE_URL = 'https://growth-with-growthz.onrender.com/api';
+const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 /**
  * Save app details by making a POST request to the backend.
@@ -10,7 +10,7 @@ const BASE_URL = 'https://growth-with-growthz.onrender.com/api';
  */
 export const saveAppDetails = async (formData) => {
     try {
-        const response = await fetch(`${BASE_URL}/app/save-app`, {
+        const response = await fetch(`${BASE_URL}/api/app/save-app`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ export const saveAppDetails = async (formData) => {
 export const createTask = async (appId, email) => {
     console.log("Sending appId:", appId, "and email:", email); // Log values
     try {
-        const response = await fetch(`${BASE_URL}/tasks/create`, {
+        const response = await fetch(`${BASE_URL}/api/tasks/create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ export const createTask = async (appId, email) => {
  */
 export const generatePhrases = async (formData, appId, userId) => {
     try {
-        const response = await fetch(`${BASE_URL}/reviews/generate-phrases`, {
+        const response = await fetch(`${BASE_URL}/api/reviews/generate-phrases`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ export const generatePhrases = async (formData, appId, userId) => {
 export const approvePhrase = async (text, appId) => {
     console.log("approvePhrase - Sending:", { text, appId }); // Verify appId and text
     try {
-        const response = await fetch(`${BASE_URL}/communications/approved`, {
+        const response = await fetch(`${BASE_URL}/api/communications/approved`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ export const approvePhrase = async (text, appId) => {
  */
 export const rejectPhrase = async (appId, text) => {
     try {
-        const response = await fetch(`${BASE_URL}/communications/rejected`, {
+        const response = await fetch(`${BASE_URL}/api/communications/rejected`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
 import { saveAppDetails, generatePhrases, approvePhrase, rejectPhrase } from "../logic/genius/geniusApi.js";
 
+const BASE_URL = process.env.REACT_APP_BASE_URL;
+
 const GeniusMarketingForm = () => {
   const [formData, setFormData] = useState({
     google_play: "",
@@ -51,7 +53,7 @@ const GeniusMarketingForm = () => {
       console.log("User email:", userEmail);
 
       // Fetch userId from backend using email
-      const userResponse = await fetch('https://growth-with-growthz.onrender.com/api/users/get-user-by-email', {
+      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
