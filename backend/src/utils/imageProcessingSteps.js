@@ -30,7 +30,7 @@ export const removeBackground = async (imageUrl, options = {}) => {
     position = scale !== 'original' ? 'center' : 'original'
   } = options;
 
-  const apiKey = "mXSte5gAQJdpoGfj8xTMdtkf"; // Move to .env for better security
+  const apiKey = "TnFtXFDKMGLS5xPUTmh13S5A"; // Move to .env for better security
 
   try {
     console.log(`[removeBackground] Processing image URL: ${imageUrl} with options:`, options);
@@ -240,42 +240,61 @@ export const fetchWebsiteUrl = async (appId) => {
  * @param {string} websiteUrl - The website URL for which to fetch the font.
  * @returns {Promise<{fontName: string, fontPath: string}>} - The font family and its local path.
  */
+const genericFonts = ["system-ui", "sans-serif", "serif", "monospace", "cursive", "fantasy"];
+
 export const fetchFont = async (websiteUrl) => {
   let browser = null;
   try {
     console.log(`[fetchFont] Fetching font for website: ${websiteUrl}`);
 
-    // Launch Puppeteer
     browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
 
-    // Navigate to the website
     console.log(`[fetchFont] Navigating to ${websiteUrl}`);
     await page.goto(websiteUrl, { waitUntil: "networkidle2", timeout: 60000 });
     console.log(`[fetchFont] Website loaded successfully.`);
 
-    // Extract the font family from <h1>
     console.log(`[fetchFont] Extracting font-family from <h1>`);
     const fontDetails = await page.evaluate(() => {
       const h1 = document.querySelector("h1");
-      const computedStyle = h1 ? window.getComputedStyle(h1) : null;
+      if (!h1) return { fontFamily: null };
+
+      const computedStyle = window.getComputedStyle(h1);
       return {
-        fontName: computedStyle ? computedStyle.fontName : "abc",
+        fontFamily: computedStyle.fontFamily || null,
       };
     });
 
-    fontName = fontDetails.fontName;
-    console.log(`Extracted font details: ${JSON.stringify(fontDetails)}`);
+    let fontName = fontDetails.fontFamily || "default";
+
+    fontName = fontName.replace(/['"]/g, "").split(",")[0].trim();
+
+    // Skip generic fonts
+    if (genericFonts.includes(fontName.toLowerCase())) {
+      console.warn(`[fetchFont] Generic font "${fontName}" detected. Using fallback font "Inter".`);
+      return {
+        fontName: "Inter",
+        fontPath: null,
+        fontUrl: null,
+      };
+    }
+
+    console.log(`[fetchFont] Extracted prioritized font: ${fontName}`);
+
+    const fontFile = await saveFontToTemp(fontName, websiteUrl);
+    console.log(`[fetchFont] Font saved at: ${fontFile.fontPath}`);
     return {
-      fontName: fontName,
-      website: websiteUrl,
+      fontName: fontFile.fontName,
+      fontPath: fontFile.fontPath,
+      fontUrl: fontFile.fontUrl,
     };
   } catch (error) {
     console.error(`[fetchFont] Error fetching font: ${error.message}`);
     return {
-      website: null,
-      fontName: "abc",
-    }; // Return default font on error
+      fontName: "Inter", // Default fallback font
+      fontPath: null,
+      fontUrl: null,
+    };
   } finally {
     if (browser) {
       await browser.close();

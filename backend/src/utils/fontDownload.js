@@ -108,7 +108,7 @@ export async function saveFontToTemp(fontName, websiteUrl = null) {
 
             if (googleFontUrl) {
                 const fontExtension = extname(googleFontUrl).split('?')[0] || '.woff2';
-                const outputPath = join(tempDir, `${fontName}${fontExtension}`);
+                const outputPath = join(targetDir, `${fontName.replace(/ /g, "_")}${fontExtension}`);
                 try {
                     console.log('Downloading font from Google Fonts...');
                     const response = await axios({

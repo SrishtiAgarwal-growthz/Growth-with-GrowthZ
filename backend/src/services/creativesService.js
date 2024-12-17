@@ -51,10 +51,6 @@ export const processAppImages = async (appId, userId) => {
     const websiteUrl = await fetchWebsiteUrl(appId);
     console.log(`[processAppImages] Website URL fetched: ${websiteUrl}`);
 
-    // Fetch font family and font file
-    const fontDetails = await fetchFont(websiteUrl);
-    console.log(`[processAppImages] Font Family fetched: ${fontDetails.fontName}, URL: ${fontDetails.fontPath}`);
-
     // Save font URL in the app's document
     await appsCollection.updateOne(
       { _id: new ObjectId(appId) },
@@ -166,6 +162,10 @@ export const generateAdImages = async (appId) => {
       throw new Error("[generateAdImages] No approved phrases available.");
     }
 
+    // Fetch font family and font file
+    const fontDetails = await fetchFont(app.websiteUrl);
+    console.log(`[processAppImages] Font Family fetched: ${fontDetails.fontName}, URL: ${fontDetails.fontPath}`);
+
     const ads = [];
     const outputDir = path.join(process.cwd(), "ads");
 
@@ -188,8 +188,8 @@ export const generateAdImages = async (appId) => {
         const adOptions = {
           logoUrl: app.iconUrl,
           mainImageUrl: image.removedBgUrl,
-          fontName: app.fontName,
-          fontUrl: app.fontUrl,
+          fontName: fontDetails.fontName,
+          fontUrl: fontDetails.fontPath,
           phrase: currentPhrase,
           outputDir,
           bgColor: image.backgroundColor,

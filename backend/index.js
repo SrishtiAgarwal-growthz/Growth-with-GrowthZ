@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import path from 'path';
 import { connectToMongo } from './src/config/db.js';
 import { configureCORS } from "./src/middlewares/cors.js";
 import authRoutes from "./src/routes/authRoutes.js"; 
@@ -19,6 +20,10 @@ app.use((req, res, next) => {
   console.log("[Server] Request Body:", req.body);
   next();
 });
+
+// Serve static files (fonts) from the 'fonts' directory
+const fontsPath = path.join(process.cwd(), 'src', 'utils', 'fonts');
+app.use('/static/fonts', express.static(fontsPath));
 
 app.get("/", (req, res) => {
   console.log("[Server] Health check route hit.");
