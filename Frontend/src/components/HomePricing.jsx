@@ -1,18 +1,27 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import image1 from "../assets/p1.png";
+import image2 from "../assets/p2.png";
+import image3 from "../assets/p3.png";
+import crown from "../assets/pricingcrown.png";
+import animation from "../assets/pricing.webm";
+import growth from "../assets/grow_animation.webm";
 
 const PricingTable = () => {
   const [pricingType, setPricingType] = useState("monthly");
   const [expandedItems, setExpandedItems] = useState({});
+  const scrollContainerRef = useRef(null);
 
   const pricingData = [
     {
-      suite: "Creative Suite",
+      suite: "",
+      imageUrl: image1, // Update with actual image path
       pricing: { free: "$0.00", average: "$100", maximum: "$500" },
       gradient: "from-blue-500 to-blue-700",
       items: [
         {
           name: "Genius",
-          color: "text-pink-500",
+          color:
+            "bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-transparent bg-clip-text",
           description:
             "Advanced AI-powered creative tools for professional content creation",
           features: [
@@ -23,7 +32,8 @@ const PricingTable = () => {
         },
         {
           name: "Rainbow",
-          color: "text-blue-500",
+          color:
+            "bg-gradient-to-r from-[#0163F8] to-[#04EEF1] text-transparent bg-clip-text",
           description: "Complete color grading and palette management system",
           features: [
             "Color schemes",
@@ -33,7 +43,8 @@ const PricingTable = () => {
         },
         {
           name: "Opus",
-          color: "text-purple-500",
+          color:
+            "bg-gradient-to-r from-[#6CFF7A] to-[#04EEF1] text-transparent bg-clip-text",
           description: "Professional audio editing and music creation suite",
           features: [
             "Multi-track editing",
@@ -44,19 +55,22 @@ const PricingTable = () => {
       ],
     },
     {
-      suite: "Media Suite",
+      suite: "",
+      imageUrl: image2, // Update with actual image path
       pricing: { free: "$0.00", average: "$100", maximum: "$500" },
-      gradient: "from-blue-400 to-blue-600",
+      gradient: "",
       items: [
         {
           name: "Wildcard",
-          color: "text-green-500",
+          color:
+            "bg-gradient-to-r from-[#0267F8] to-[#0AFF88] text-transparent bg-clip-text",
           description: "Versatile media management and organization tool",
           features: ["Asset organization", "Quick search", "Batch processing"],
         },
         {
           name: "Thrive",
-          color: "text-purple-500",
+          color:
+            "bg-gradient-to-r from-[#0267F8] to-[#DA0AFF] text-transparent bg-clip-text",
           description: "Social media management and analytics platform",
           features: [
             "Post scheduling",
@@ -66,20 +80,22 @@ const PricingTable = () => {
         },
         {
           name: "Hawkeye",
-          color: "text-blue-500",
+          color:
+            "bg-gradient-to-r from-[#E3FD1B] to-[#0163F8] text-transparent bg-clip-text",
           description: "Advanced image recognition and tagging system",
           features: ["Auto-tagging", "Visual search", "Image analytics"],
         },
       ],
     },
     {
-      suite: "Growth Suite",
+      suite: "",
+      imageUrl: image3, // Update with actual image path
       pricing: { free: "$0.00", average: "$100", maximum: "$500" },
       gradient: "from-pink-500 to-pink-700",
       items: [
         {
           name: "Creative",
-          color: "text-blue-500",
+          color: "text-[#015FF8]",
           description: "Complete creative workflow solution",
           features: [
             "Project management",
@@ -89,7 +105,7 @@ const PricingTable = () => {
         },
         {
           name: "Media",
-          color: "text-blue-400",
+          color: "text-[#015FF8]",
           description: "Comprehensive media management toolkit",
           features: ["Media library", "Distribution tools", "Analytics"],
         },
@@ -105,87 +121,117 @@ const PricingTable = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center p-6 sm:p-12">
+    <div className="min-h-screen bg-black text-gray-400 flex flex-col items-center p-4 md:p-6 lg:p-12">
       {/* Title Section */}
-      <h1 className="text-center text-3xl lg:text-4xl font-bold mb-6">
+      <h1 className="text-center text-2xl md:text-3xl lg:text-[25px] font-bold mb-2">
         Pricing
       </h1>
-      <p className="text-center text-gray-400 mb-12">
+      <p className="text-center text-white mb-8 md:mb-12 text-3xl md:text-4xl lg:text-[49px]">
         Lorem ipsum dolor sit amet consectetur.
       </p>
 
       {/* Toggle Pricing Options */}
-      <div className="flex justify-center items-center mb-8">
-        <button
-          onClick={() => setPricingType("monthly")}
-          className={`px-6 py-2 rounded-l-lg ${
-            pricingType === "monthly"
-              ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
-              : "bg-gray-800 text-gray-400"
-          }`}
-        >
-          Monthly Pricing
-        </button>
-        <button
-          onClick={() => setPricingType("yearly")}
-          className={`px-6 py-2 rounded-r-lg ${
-            pricingType === "yearly"
-              ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
-              : "bg-gray-800 text-gray-400"
-          }`}
-        >
-          Yearly Pricing
-        </button>
+      <div className="relative flex items-center justify-center mb-[40px] w-full max-w-md">
+        <div className="flex border border-white rounded-full overflow-hidden w-full">
+          <button
+            onClick={() => setPricingType("monthly")}
+            className={`flex-1 px-4 md:px-6 py-2 transition-all duration-300 text-sm md:text-base ${
+              pricingType === "monthly"
+                ? "bg-gradient-to-t from-[#013A92] to-[#0163F8] text-white"
+                : "bg-black text-gray-400"
+            }`}
+          >
+            Monthly Pricing
+          </button>
+          <button
+            onClick={() => setPricingType("yearly")}
+            className={`flex-1 px-4 md:px-6 py-2 transition-all duration-300 text-sm md:text-base ${
+              pricingType === "yearly"
+                ? "bg-gradient-to-t from-[#013A92] to-[#0163F8] text-white"
+                : "bg-black text-gray-400"
+            }`}
+          >
+            Yearly Pricing
+          </button>
+        </div>
+
+        <img
+          src={crown}
+          alt="20% Off"
+          className="absolute top-[-40px] right-[-20px] md:right-[-35px] w-[50px] md:w-[67.69px] h-auto"
+        />
       </div>
 
       {/* Pricing Table */}
-      <div className="space-y-16 max-w-5xl w-full">
+      <div className="space-y-8 md:space-y-16 w-full max-w-5xl">
         {pricingData.map((suite, index) => (
-          <div key={index} className="space-y-8">
+          <div key={index} className="space-y-6 md:space-y-8">
             {/* Suite Box and Pricing */}
-            <div className="flex items-center justify-between rounded-lg w-[997.5px] h-[114px] px-6">
-              {/* Suite Box */}
-              <div
-                className={`bg-gradient-to-r ${suite.gradient} rounded-lg flex items-center justify-center w-[300px] h-full`}
-              >
-                <h2 className="text-2xl font-bold text-white">{suite.suite}</h2>
+            <div className="flex flex-col lg:flex-row items-center gap-6 md:gap-8 px-4 md:px-6">
+              {/* Suite Box with Image */}
+              <div className="relative rounded-lg w-full lg:w-[292px] h-[114px]">
+                <img
+                  src={suite.imageUrl}
+                  alt={suite.suite}
+                  className="absolute inset-0 object-contain w-full h-full rounded-lg"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#00000080] to-transparent rounded-lg"></div>
+
+                {/* Animations */}
+                {index === 0 && (
+                  <div className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-[-58px]">
+                    <video
+                      src={animation}
+                      autoPlay
+                      loop
+                      muted
+                      className="w-[96px] h-[96px]"
+                    ></video>
+                  </div>
+                )}
+
+                {index === 2 && (
+                  <div className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-[-55px]">
+                    <video
+                      src={growth}
+                      autoPlay
+                      loop
+                      muted
+                      className="w-[96px] h-[96px]"
+                    ></video>
+                  </div>
+                )}
+
+                <h2 className="relative text-2xl font-bold text-white z-10 text-center">
+                  {suite.suite}
+                </h2>
               </div>
 
-              {/* Pricing Section */}
-              <div className="flex items-center justify-around w-[600px]">
-                <div className="text-center">
-                  <p className="text-xl text-gray-400 mb-1 pb-2">Free</p>
-                  <p className="text-3xl font-extrabold text-white">
-                    {suite.pricing.free}
-                    <span className="text-base text-gray-400">/mo</span>
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xl text-gray-400 mb-1 pb-2">Average</p>
-                  <p className="text-3xl font-extrabold text-white">
-                    {suite.pricing.average}
-                    <span className="text-base text-gray-400">/mo</span>
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xl text-gray-400 mb-1 pb-2">Maximum</p>
-                  <p className="text-3xl font-extrabold text-white">
-                    {suite.pricing.maximum}
-                    <span className="text-base text-gray-400">/mo</span>
-                  </p>
-                </div>
+              {/* Pricing Section - Hidden on Mobile and Tablet */}
+              <div className="hidden lg:grid grid-cols-3 gap-4 md:gap-8 w-full lg:flex-1">
+                {["free", "average", "maximum"].map((type) => (
+                  <div key={type} className="text-center">
+                    <p className="text-sm md:text-xl text-gray-400 mb-1 pb-2 capitalize">
+                      {type}
+                    </p>
+                    <p className="text-xl md:text-3xl font-extrabold text-white">
+                      {suite.pricing[type]}
+                      <span className="text-xs md:text-base text-gray-400">/mo</span>
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Suite Items */}
-            <div className="space-y-4 pl-4">
+            {/* Suite Items Dropdown */}
+            <div className="space-y-4 px-4 md:pl-4">
               {suite.items.map((item, idx) => (
                 <div key={idx} className="rounded-lg overflow-hidden">
                   <div
                     className="flex justify-between items-center px-4 py-3 bg-gradient-to-t from-[#59759566] to-[#1C252F66] cursor-pointer transition-colors duration-200 hover:bg-[#59759588]"
                     onClick={() => toggleItem(suite.suite, item.name)}
                   >
-                    <span className={`${item.color} text-lg font-medium`}>
+                    <span className={`${item.color} text-base md:text-lg font-medium`}>
                       {item.name}
                     </span>
                     <button
@@ -197,7 +243,7 @@ const PricingTable = () => {
                       }}
                     >
                       <svg
-                        className="w-5 h-5"
+                        className="w-4 h-4 md:w-5 md:h-5"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -220,63 +266,92 @@ const PricingTable = () => {
                         : "max-h-0 opacity-0"
                     } overflow-hidden bg-gradient-to-t from-[#59759566] to-[#1C252F66] rounded-b-lg`}
                   >
-                    <div className="p-6">
-                      {/* Description and Features Grid */}
-                      <div className="grid grid-cols-12 gap-4">
-                        {/* Description Column */}
+                    <div className="p-4 md:p-6">
+                      {/* Description */}
+                      <p className="text-gray-300 mb-6">{item.description}</p>
+
+                      {/* Mobile and Tablet Pricing Scroll Container */}
+                      <div 
+                        ref={scrollContainerRef}
+                        className="lg:hidden overflow-x-auto pb-4 -mx-4 px-4"
+                      >
+                        <div className="flex gap-4 min-w-max">
+                          {["Free", "Average", "Maximum"].map((type, typeIdx) => (
+                            <div key={typeIdx} className="w-[280px] space-y-4">
+                              <div className="text-center mb-6">
+                                <p className="text-gray-400 mb-1">{type}</p>
+                                <p className="text-2xl font-bold text-white">
+                                  {suite.pricing[type.toLowerCase()]}
+                                  <span className="text-sm text-gray-400">/mo</span>
+                                </p>
+                              </div>
+                              <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 w-full justify-center">
+                                GET STARTED
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 12h14m0 0l-7-7m7 7l-7 7"
+                                  />
+                                </svg>
+                              </button>
+                              {item.features.map((feature, featureIdx) => (
+                                <div key={featureIdx} className="flex items-start gap-2">
+                                  <div className={`w-2 h-2 mt-2 rounded-full ${
+                                    type === "Free" ? "bg-gray-600" : "bg-green-500"
+                                  }`}></div>
+                                  <span className="text-gray-400 text-sm">
+                                    {feature}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Desktop Features Grid */}
+                      <div className="hidden lg:grid grid-cols-12 gap-6">
                         <div className="col-span-4">
                           <p className="text-gray-300">{item.description}</p>
                         </div>
-
-                        {/* Features Columns */}
-                        <div className="col-span-8 grid grid-cols-3 gap-4">
-                          {/* Free Column */}
-                          <div className="space-y-4">
-                            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 w-full justify-center">
-                              GET STARTED
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14m0 0l-7-7m7 7l-7 7" />
-                              </svg>
-                            </button>
-                            {item.features.map((feature, featureIdx) => (
-                              <div key={featureIdx} className="flex items-start gap-2">
-                                <div className="w-2 h-2 mt-2 rounded-full bg-gray-600"></div>
-                                <span className="text-gray-400 text-sm">{feature}</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Average Column */}
-                          <div className="space-y-4">
-                            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 w-full justify-center">
-                              GET STARTED
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14m0 0l-7-7m7 7l-7 7" />
-                              </svg>
-                            </button>
-                            {item.features.map((feature, featureIdx) => (
-                              <div key={featureIdx} className="flex items-start gap-2">
-                                <div className="w-2 h-2 mt-2 rounded-full bg-green-500"></div>
-                                <span className="text-gray-400 text-sm">{feature}</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Maximum Column */}
-                          <div className="space-y-4">
-                            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 w-full justify-center">
-                              GET STARTED
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14m0 0l-7-7m7 7l-7 7" />
-                              </svg>
-                            </button>
-                            {item.features.map((feature, featureIdx) => (
-                              <div key={featureIdx} className="flex items-start gap-2">
-                                <div className="w-2 h-2 mt-2 rounded-full bg-green-500"></div>
-                                <span className="text-gray-400 text-sm">{feature}</span>
-                              </div>
-                            ))}
-                          </div>
+                        <div className="col-span-8 grid grid-cols-3 gap-6">
+                          {["free", "average", "maximum"].map((type, typeIdx) => (
+                            <div key={typeIdx} className="space-y-4">
+                              <button className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 w-full justify-center">
+                                GET STARTED
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 12h14m0 0l-7-7m7 7l-7 7"
+                                  />
+                                </svg>
+                              </button>
+                              {item.features.map((feature, featureIdx) => (
+                                <div key={featureIdx} className="flex items-start gap-2">
+                                  <div className={`w-2 h-2 mt-2 rounded-full ${
+                                    type === "free" ? "bg-gray-600" : "bg-green-500"
+                                  }`}></div>
+                                  <span className="text-gray-400 text-sm">
+                                    {feature}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
