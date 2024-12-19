@@ -6,12 +6,12 @@ import Footer from '../components/Footer';
 
 const HomePage = () => {
   return (
-    <div className="bg-black">
+    <div className="bg-black overflow-y-">
       <Navbar />
       <Hero />
       <Carousel />
       <Pricing />
-      <Footer />
+     <Footer /> 
     </div>
   );
 };

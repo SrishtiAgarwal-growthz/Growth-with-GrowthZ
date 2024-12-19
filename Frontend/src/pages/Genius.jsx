@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
 import { saveAppDetails, generatePhrases, approvePhrase, rejectPhrase } from "../logic/genius/geniusApi.js";
 
-const BASE_URL = process.env.REACT_APP_BASE_URL;
+const BASE_URL = "http://localhost:8000";
 
 const GeniusMarketingForm = () => {
   const [formData, setFormData] = useState({
