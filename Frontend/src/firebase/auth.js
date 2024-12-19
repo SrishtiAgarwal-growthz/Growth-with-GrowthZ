@@ -8,7 +8,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "https://growth-with-growthz.onrender.com";
 
 const isBlockedEmailDomain = (email) => {
     const blockedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "aol.com", "icloud.com"];
