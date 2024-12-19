@@ -9,7 +9,7 @@ const BASE_URL = "https://growth-with-growthz.onrender.com";
  * @returns {Promise<Object>} - The saved app data from the backend.
  */
 export const saveAppDetails = async (formData) => {
-    try {
+try {
         const response = await fetch(`${BASE_URL}/api/app/save-app`, {
             method: 'POST',
             headers: {
