@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logo from "../assets/logo.png";
 import menuIcon from "../assets/Hamburger.png";
 import { useNavigate } from "react-router-dom";
@@ -6,19 +6,32 @@ import { useNavigate } from "react-router-dom";
 const Navbar = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setHasScrolled(window.scrollY > 0);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <nav className="w-full bg-black h-[82px] md:h-[96px] relative z-50">
+    <nav
+      className={`fixed top-0 left-0 w-full z-50 h-[82px] md:h-[96px] flex items-center transition-colors duration-300 ${
+        hasScrolled
+          ? "bg-black/60 backdrop-blur-xl" // When scrolled
+          : "bg-black" // At the top (no scroll)
+      }`}
+    >
       <div className="max-w-7xl mx-auto flex justify-between items-center px-8 w-full h-full">
         {/* Logo */}
         <div className="flex items-center">
-          <span className="relative">
-            <img
-              src={logo}
-              alt="Logo"
-              className="w-[120px] h-[32.24px] md:w-[185px] md:h-[40px]"
-            />
-          </span>
+          <img
+            src={logo}
+            alt="Logo"
+            className="w-[120px] h-[32.24px] md:w-[185px] md:h-[40px]"
+          />
         </div>
 
         {/* Desktop Menu */}
@@ -63,13 +76,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <button
-          onClick={() => {
-            console.log("Menu isOpen:", !isOpen);
-            setIsOpen(!isOpen);
-          }}
-          className="md:hidden flex items-center justify-center"
-        >
+        <button onClick={() => setIsOpen(!isOpen)} className="md:hidden flex items-center justify-center">
           <img
             src={menuIcon}
             alt={isOpen ? "Close menu" : "Open menu"}

@@ -263,7 +263,7 @@ const GeniusMarketingForm = () => {
               disabled={
                 loading || (!formData.google_play && !formData.apple_app)
               }
-              className="w-full h-[70px] rounded-[16px] bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-black font-bold text=[20px] flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full h-[70px] rounded-[16px] bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-white font-bold text-[20px] flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? (
                 "Processing..."
