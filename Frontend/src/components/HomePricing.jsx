@@ -4,7 +4,7 @@ import image2 from "../assets/p2.png";
 import image3 from "../assets/p3.png";
 import crown from "../assets/pricingcrown.png";
 import animation from "../assets/pricing.webm";
-import growth from "../assets/grow_animation.webm";
+import growth from "../assets/growth.mp4";
 
 const PricingTable = () => {
   const [pricingType, setPricingType] = useState("monthly");
@@ -179,27 +179,32 @@ const PricingTable = () => {
 
                 {/* Animations */}
                 {index === 0 && (
-                  <div className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-[-58px]">
-                    <video
-                      src={animation}
-                      autoPlay
-                      loop
-                      muted
-                      className="w-[96px] h-[96px]"
-                    ></video>
-                  </div>
+                 <div className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-[-58px]">
+                 <video
+                   src={animation}
+                   autoPlay
+                   loop
+                   muted
+                   playsInline
+                   className="w-[96px] h-[96px] pointer-events-none"
+                 ></video>
+               </div>
                 )}
 
                 {index === 2 && (
-                  <div className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-[-55px]">
-                    <video
-                      src={growth}
-                      autoPlay
-                      loop
-                      muted
-                      className="w-[96px] h-[96px]"
-                    ></video>
-                  </div>
+                  <div className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-[-58px]">
+                  <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                   
+                    className="w-[96px] h-[96px]"
+                  >
+                    <source src={growth} type="video/mp4" />
+                   
+                  </video>
+                </div>
                 )}
 
                 <h2 className="relative text-2xl font-bold text-white z-10 text-center">
