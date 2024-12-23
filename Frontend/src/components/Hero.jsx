@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import image1 from "../assets/GC.png";
-import image2 from "../assets/GR.png";
-import image3 from "../assets/GO.png";
-import image4 from "../assets/GW.png";
-import image5 from "../assets/GT.png";
-import image6 from "../assets/GH.png";
+import image1 from "../assets/image1.png";
+import image2 from "../assets/image2.png";
+import image3 from "../assets/image3.png";
+import image4 from "../assets/image4.png";
+import image5 from "../assets/image5.png";
+import image6 from "../assets/image6.png";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -35,19 +35,19 @@ const Hero = () => {
       {/* Combined Content Container */}
       <div className="relative z-10 flex flex-col items-center">
         {/* Hero Content */}
-        <div className="w-full max-w-[877px] mx-auto px-4 sm:px-6 pt-8 sm:pt-[36px] pb-2 sm:pb-12 text-center">
+        <div className="w-full max-w-[877px] mx-auto px-4 sm:px-6 pt-8 sm:pt-[36px] pb-2 sm:pb-8 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white">
             Powering the <span style={growthStyle}>&ldquo;Growth&rdquo;</span>
           </h1>
 
           <p className="text-gray-300 text-base sm:text-lg lg:text-[20px] mt-3 sm:mt-4">
-            Creative to Campaign to Scalable Conversions
+            Campaign &mdash;{">"} Scalable &mdash;{">"} Conversions
           </p>
 
           <div className="flex justify-center mt-4 sm:mt-6">
             <div
               onClick={() => navigate("/login")}
-              className="bg-[#015FF8] p-[2px] rounded-full w-[128px] md:w-[180px]"
+              className="bg-[#015FF8] p-[2px] rounded-full w-[128px] md:w-[180px] hover:shadow-[0_0_20px_4px_rgba(1,95,248,0.7)] transition-all duration-300"
             >
               <button className="bg-[#015FF8] w-full h-[44px] md:h-[62px] px-4 rounded-full text-[12px] md:text-xl flex items-center justify-between text-white">
                 <span className="ml-3 font-bold pr-[2px]">TRY ME</span>
@@ -68,17 +68,17 @@ const Hero = () => {
         </div>
 
         {/* Carousel Container */}
-        <div className="w-full">
-          <article className="flex w-[200%] animate-bannermove">
-            {[0, 1].map((groupIndex) => (
+        <div className="w-full ">
+          <article className="flex w-[300%] animate-bannermove">
+            {[0, 1, 2].map((groupIndex) => (
               <div key={groupIndex} className="w-full flex">
-                <ul className="flex list-none p-0 m-0">
+                <ul className="flex list-none p-0 m-2 lg:m-0">
                   {images.map((img, index) => (
                     <li
                       key={index}
-                      className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[350px] lg:w-[550px] 
-                               h-[250px] sm:h-[200px] md:h-[250px] lg:h-[400px] 
-                               flex items-center justify-center px-2"
+                      className="flex-shrink-0 w-[300px] sm:w-[300px] md:w-[400px] lg:w-[400px] 
+                               h-[290px] sm:h-[200px] md:h-[400px] lg:h-[400px] 
+                               flex items-center justify-center px-[6px]"
                     >
                       <div className="w-full h-full rounded-lg overflow-hidden relative">
                         <img
@@ -105,11 +105,11 @@ const Hero = () => {
               transform: translateX(0);
             }
             100% {
-              transform: translateX(-50%);
+              transform: translateX(-66.666%);
             }
           }
           .animate-bannermove {
-            animation: bannermove 20s linear infinite;
+            animation: bannermove 40s linear infinite;
           }
           
           @media (hover: hover) {
@@ -120,7 +120,7 @@ const Hero = () => {
           
           @media (max-width: 640px) {
             .animate-bannermove {
-              animation-duration: 15s;
+              animation-duration: 20s;
             }
           }
         `}

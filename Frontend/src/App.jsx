@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";  // Changed from "./pages/HomePage"
 import LoginPage from "./pages/LoginPage"; 
 import Genius from "./pages/Genius"; 
+import Rainbow from "./pages/Rainbow"; 
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/genius" element={<Genius />} />
+        <Route path="/rainbow" element={<Rainbow />} />
       </Routes>
     </BrowserRouter>
   );
