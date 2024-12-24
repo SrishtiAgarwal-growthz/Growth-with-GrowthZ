@@ -1,6 +1,5 @@
 import { addCreativesTask } from "../services/taskService.js";
-import { processAppImages } from "../services/creativesService.js";
-import { generateAdImages } from "../services/creativesService.js";
+import { processAppImages, generateAdImages } from "../services/creativesService.js";
 
 export const processImagesForApp = async (req, res) => {
   try {
@@ -41,6 +40,8 @@ export const addCreativeToTasks = async (req, res) => {
 
 export const createAds = async (req, res) => {
   try {
+    console.log("[CreativesController] Received request to create ads.");
+    
     const { appId } = req.body;
 
     if (!appId) {
@@ -51,13 +52,18 @@ export const createAds = async (req, res) => {
 
     // Call service to generate ads
     const ads = await generateAdImages(appId);
+    console.log(`[CreativesController] Ads generated successfully for app ID: ${appId}`, ads);
 
     res.status(200).json({
       message: "Ads generated successfully.",
       ads,
     });
   } catch (error) {
-    console.error("[CreativesController] Error generating ads:", error.message);
+    // Log the error details for debugging
+    console.error("[CreativesController] Error occurred while generating ads:", error.message);
+    console.error("[CreativesController] Error stack trace:", error.stack);
+
+    // Respond with a 500 status code and the error message
     res.status(500).json({ message: "Error generating ads.", error: error.message });
   }
 };

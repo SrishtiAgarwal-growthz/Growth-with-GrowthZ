@@ -1,6 +1,5 @@
 import express from 'express';
-import { saveApprovedPhrase } from '../controllers/communicationsController.js';
-import { saveRejectedPhrase } from '../controllers/communicationsController.js';
+import { saveApprovedPhrase, saveRejectedPhrase } from '../controllers/reviewsStatusController.js';
 
 const router = express.Router();
 
