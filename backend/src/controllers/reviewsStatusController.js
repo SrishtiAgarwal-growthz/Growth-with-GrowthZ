@@ -1,4 +1,4 @@
-import { approvePhraseService, rejectPhraseService } from "../services/communicationsService.js";
+import { approvePhraseService, rejectPhraseService  } from "../services/reviewsStatusService.js";
 
 /**
  * Approve a phrase by its text and appId.

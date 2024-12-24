@@ -30,7 +30,7 @@ export const removeBackground = async (imageUrl, options = {}) => {
     position = scale !== 'original' ? 'center' : 'original'
   } = options;
 
-  const apiKey = "TnFtXFDKMGLS5xPUTmh13S5A"; // Move to .env for better security
+  const apiKey = process.env.REMOVE_BG_API_KEY; // Move to .env for better security
 
   try {
     console.log(`[removeBackground] Processing image URL: ${imageUrl} with options:`, options);
@@ -105,17 +105,18 @@ export const removeBackground = async (imageUrl, options = {}) => {
  * @param {string} filename - The name of the file to save in S3.
  * @returns {Promise<string>} - Returns the public URL of the uploaded image.
  */
-export const uploadToS3 = async (buffer, appId, filename) => {
-  const key = `apps/${appId}/removed_bg/${filename}`;
-  try {
-    console.log(`[uploadToS3] Uploading image to S3: ${key}`);
+export const uploadToS3 = async (buffer, bucketFolder, fileName) => {
 
+  try {
     const params = {
-      Bucket: "performace-extracted-images",
-      Key: key,
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: `${bucketFolder}/${fileName}`,
       Body: Buffer.from(buffer),
       ContentType: "image/png",
       ACL: "public-read",
+      Metadata: {
+        FileType: bucketFolder.includes("creatives") ? "Creative" : "ExtractedImage",
+      },
     };
 
     const data = await s3.upload(params).promise();
@@ -307,48 +308,113 @@ export const fetchFont = async (websiteUrl) => {
  * @param {string} imageUrl - The image URL for which to fetch the text color.
  * @returns {Promise<{textColor: string}>} - The text color of image.
  */
-export const extractTextColor = async (imageUrl) => {
+export const extractTextColor = (backgroundColor) => {
   try {
-    console.log(`[extractTextColor] Analyzing image for text color: ${imageUrl}`);
+    console.log(`[extractTextColor] Analyzing background color: ${backgroundColor}`);
 
-    const canvas = createCanvas(1, 1);
-    const ctx = canvas.getContext('2d');
-
-    const image = await loadImage(imageUrl);
-    canvas.width = image.width;
-    canvas.height = image.height;
-    ctx.drawImage(image, 0, 0);
-
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-
-    // Calculate average color
-    let r = 0, g = 0, b = 0;
-    let count = 0;
-
-    for (let i = 0; i < imageData.length; i += 16) {
-      r += imageData[i];
-      g += imageData[i + 1];
-      b += imageData[i + 2];
-      count++;
+    // Parse the RGB color format: "rgb(r, g, b)"
+    const rgbMatch = backgroundColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (!rgbMatch) {
+      throw new Error("Invalid RGB format");
     }
 
-    const avgColor = {
-      r: Math.round(r / count),
-      g: Math.round(g / count),
-      b: Math.round(b / count)
-    };
+    const r = parseInt(rgbMatch[1], 10); // Red value
+    const g = parseInt(rgbMatch[2], 10); // Green value
+    const b = parseInt(rgbMatch[3], 10); // Blue value
 
     // Calculate luminance
-    const luminance = (0.299 * avgColor.r + 0.587 * avgColor.g + 0.114 * avgColor.b) / 255;
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
     // Determine text color based on luminance
     const textColor = luminance > 0.5 ? '#000000' : '#FFFFFF';
 
     console.log(`[extractTextColor] Analysis complete. Text Color: ${textColor}`);
-
     return textColor;
   } catch (error) {
     console.error('[extractTextColor] Error:', error);
-    return '#000000';  // Default to black text
+    return '#000000'; // Default to black text
+  }
+};
+
+// Mapping of categories to CTAs (Alphabetically Ordered)
+const categoryToCTAMapping = {
+  "Action": "Play Now",
+  "Adventure": "Explore Now",
+  "Arcade": "Play Now",
+  "Art & Design": "Create Now",
+  "Auto & Vehicles": "Book a Test Drive",
+  "Beauty": "Shop Now",
+  "Board": "Challenge Yourself",
+  "Books & Reference": "Read Now",
+  "Business": "Boost Productivity",
+  "Card": "Deal Now",
+  "Casino": "Spin & Win Now",
+  "Casual": "Play Anytime",
+  "Comics": "Read Now",
+  "Communication": "Connect Now",
+  "Dating": "Find Your Match",
+  "Developer Tools": "Code Now",
+  "Education": "Learn More",
+  "Entertainment": "Enjoy Now",
+  "Events": "Book a Ticket Now",
+  "Family": "Fun for Everyone",
+  "Finance": "Invest Now",
+  "Food & Drink": "Order Now",
+  "Gaming": "Play Now",
+  "Graphics & Design": "Design Now",
+  "Health & Fitness": "Start Now",
+  "House & Home": "Upgrade Now",
+  "Kids": "Fun and Learn",
+  "Libraries & Demo": "Explore Now",
+  "Lifestyle": "Buy Now",
+  "Maps & Navigation": "Navigate Now",
+  "Medical": "Manage Health Now",
+  "Music": "Play to the Beat",
+  "Music & Audio": "Listen Now",
+  "News & Magazines": "Stay Informed",
+  "Parenting": "Help Your Family",
+  "Personalization": "Customize Now",
+  "Photography": "Capture the Moment",
+  "Productivity": "Get Things Done",
+  "Puzzle": "Solve Now",
+  "Racing": "Race Now",
+  "Reference": "Explore Now",
+  "Role Playing": "Begin Your Journey",
+  "Shopping": "Buy Now",
+  "Simulation": "Build Your World",
+  "Social": "Connect Now",
+  "Sports": "Track Your Team",
+  "Stickers": "Express Yourself",
+  "Strategy": "Plan and Win",
+  "Tools": "Upgrade Your Tasks",
+  "Travel & Local": "Book Now",
+  "Trivia": "Test Your Knowledge",
+  "Video Players": "Watch Now",
+  "Weather": "Stay Updated",
+  "Word": "Expand Your Vocabulary"
+};
+
+// Function to return CTA based on category
+export const fetchCTAForCategory = async (appId) => {
+  const client = await connectToMongo();
+  const db = client.db("GrowthZ");
+  const appsCollection = db.collection("Apps");
+
+  try {
+    console.log(`[fetchCTA] Fetching CTA for appId: ${appId}`);
+
+    const app = await appsCollection.findOne({ _id: new ObjectId(appId) });
+    if (!app) {
+      throw new Error(`[fetchCTA] App with ID ${appId} not found.`);
+    }
+
+    const CTA = categoryToCTAMapping[app.category];
+    console.log(`[fetchCTA] Fetched CTA: ${CTA}`);
+    return CTA || "CTA Not Found";
+  } catch (error) {
+    console.error("[fetchCTA] Error fetching CTA:", error.message);
+    throw error;
+  } finally {
+    await client.close();
   }
 };

@@ -1,6 +1,5 @@
-import { saveTask, getTasksByUserId } from "../services/taskService.js";
-
 import { connectToMongo } from "../config/db.js";
+import { saveTask, getTasksByUserId } from "../services/taskService.js";
 
 export const createTask = async (req, res) => {
   console.log("[TaskController] Request Body:", req.body);
@@ -22,7 +21,7 @@ export const createTask = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    const userId = user._id; // MongoDB ObjectId
+    const userId = user._id.toString(); // MongoDB ObjectId
     console.log("[TaskController] Found userId:", userId);
 
     const task = await saveTask(userId, appId);

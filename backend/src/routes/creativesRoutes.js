@@ -1,12 +1,15 @@
 import express from "express";
-import { addCreativeToTasks } from "../controllers/creativesController.js";
-import { processImagesForApp } from "../controllers/creativesController.js";
-import { createAds } from "../controllers/creativesController.js";
+import { addCreativeToTasks, processImagesForApp, createAds } from "../controllers/creativesController.js";
 
 const router = express.Router();
 
-router.post("/addToTasks", addCreativeToTasks);
+// Add "Creative" to tasks
+router.post("/addCreativeToTasks", addCreativeToTasks);
+
+// Process creative elements
 router.post("/process-images", processImagesForApp);
-router.post("/create-ads", createAds);
+
+// Create Ads
+router.post("/createAd", createAds);
 
 export default router;
