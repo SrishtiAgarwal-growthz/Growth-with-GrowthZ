@@ -12,6 +12,7 @@
   "dependencies": {
     "autoprefixer": "^10.4.20",
     "axios": "^1.7.9",
+    "facebook-nodejs-business-sdk": "^21.0.5",
     "firebase": "^11.0.2",
     "framer-motion": "^11.14.4",
     "lucide-react": "^0.462.0",
