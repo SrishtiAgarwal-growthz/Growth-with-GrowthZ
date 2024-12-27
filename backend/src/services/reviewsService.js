@@ -1,194 +1,152 @@
+// src/services/reviewsService.js
+
 import axios from "axios";
 import gplay from "google-play-scraper";
 import store from "app-store-scraper";
 import path from "path";
 import { fileURLToPath } from "url";
 import { connectToMongo } from "../config/db.js";
-import { extractGooglePlayAppId } from "../utils/extractors.js";
+import { extractGooglePlayAppId, extractAppleAppId } from "../utils/extractors.js";
 
-// Convert import.meta.url to __dirname equivalent
+// so we can get __dirname if needed
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Fetch app name (title) from Google Play Store
+// ----------------------------------------------------------------
+// 1) Original scraping & LLM-based phrase generation code
+// ----------------------------------------------------------------
+
+// 1.1) Google Play app name
 export const fetchAppNameFromGooglePlay = async (appId) => {
-  console.log(`[fetchAppNameFromGooglePlay] Fetching app name for App ID: ${appId}`);
-  if (!appId) {
-    throw new Error("[fetchAppNameFromGooglePlay] App ID is invalid or missing.");
-  }
+  console.log(`[fetchAppNameFromGooglePlay] appId=${appId}`);
+  if (!appId) throw new Error("Missing appId for fetchAppNameFromGooglePlay");
 
   try {
     const appDetails = await gplay.app({ appId });
     const appName = appDetails.title;
-    console.log(`[fetchAppNameFromGooglePlay] App Name fetched: ${appName}`);
+    console.log(`[fetchAppNameFromGooglePlay] extracted appName => ${appName}`);
     return appName;
   } catch (error) {
-    console.error(`[fetchAppNameFromGooglePlay] Failed to fetch app name for App ID: ${appId}`, error.message);
-    throw new Error(`Unable to fetch app name for App ID: ${appId}`);
+    console.error("[fetchAppNameFromGooglePlay] error =>", error.message);
+    throw new Error("Unable to fetch app name from Google Play");
   }
 };
 
-// Scrape reviews from Google Play Store
+// 1.2) Scrape Google Play reviews
 export const scrapeGooglePlayReviews = async (url) => {
-  console.log(`[scrapeGooglePlayReviews] Extracting Google Play App ID from URL: ${url}`);
+  console.log(`[scrapeGooglePlayReviews] url=${url}`);
   const appId = extractGooglePlayAppId(url);
-  if (!appId) {
-    console.error("[scrapeGooglePlayReviews] Error: Invalid Google Play Store URL");
-    throw new Error("Invalid Google Play Store URL");
-  }
-  console.log(`[scrapeGooglePlayReviews] Extracted App ID: ${appId}`);
+  if (!appId) throw new Error("Invalid Google Play URL or missing appId");
+  console.log(`[scrapeGooglePlayReviews] appId => ${appId}`);
 
   try {
-    console.log(`[scrapeGooglePlayReviews] Fetching reviews for App ID: ${appId}`);
     const reviews = await gplay.reviews({
-      appId: appId,
+      appId,
       lang: "en",
       country: "in",
       sort: gplay.sort.RATING,
-      num: 5000, // Fetch up to 500 reviews
+      num: 5000,
     });
-
-    // Filter 5-star reviews and extract only the 'reviewText' field
-    const fiveStarReviews = reviews.data
-      .filter((review) => review.score === 5) // Only 5-star reviews
-      .map((review) => review.text || ""); // Extract only 'reviewText' field, default to empty string if missing
-
-    console.log(`[scrapeGooglePlayReviews] Fetched ${fiveStarReviews.length} 5-star reviews for App ID: ${appId}`);
-    return fiveStarReviews.slice(0, 5000); // Limit to the first 150 reviews
+    const fiveStarReviews = reviews.data.filter(r => r.score === 5).map(r => r.text || "");
+    console.log(`[scrapeGooglePlayReviews] => ${fiveStarReviews.length} 5-star reviews`);
+    return fiveStarReviews.slice(0, 5000);
   } catch (error) {
-    console.error("[scrapeGooglePlayReviews] Error fetching reviews:", error.message);
+    console.error("[scrapeGooglePlayReviews] error =>", error.message);
     return [];
   }
 };
 
-// Scrape reviews from Apple App Store
+// 1.3) Scrape Apple App Store reviews
 export const scrapeAppleAppStoreReviews = async (input) => {
-  let appId;
-
-  // If input is a URL, extract the App ID
+  let appId = null;
   if (input.includes("apple.com")) {
-    console.log(`[scrapeAppleAppStoreReviews] Extracting Apple App ID from URL: ${input}`);
-    const match = input.match(/id(\d+)/); // Extract ID from URL pattern like ".../id123456789"
-    appId = match ? match[1] : null;
+    console.log(`[scrapeAppleAppStoreReviews] input => apple.com`);
+    const match = input.match(/id(\d+)/);
+    if (match) {
+      appId = match[1];
+    }
   } else {
-    // If input is not a URL, assume it's an App ID
     appId = input;
   }
 
   if (!appId) {
-    console.error("[scrapeAppleAppStoreReviews] Error: Invalid Apple App Store URL or App ID");
+    console.error("[scrapeAppleAppStoreReviews] invalid or missing apple ID");
     throw new Error("Invalid Apple App Store URL or App ID");
   }
-  console.log(`[scrapeAppleAppStoreReviews] Extracted App ID: ${appId}`);
 
   try {
-    console.log(`[scrapeAppleAppStoreReviews] Fetching reviews for App ID: ${appId}`);
     const reviews = await store.reviews({
       id: appId,
-      country: "in", // Set to India; adjust if needed
-      page: 1, // Start with the first page of reviews
-      sort: store.sort.RECENT, // Sort by most recent reviews
+      country: "in",
+      page: 1,
+      sort: store.sort.RECENT,
     });
-
-    // Filter 5-star reviews and extract only the 'text' field
     const fiveStarReviews = reviews
-      .filter((review) => review.score === 5) // Only 5-star reviews
-      .map((review) => review.text || ""); // Extract only 'text' field, default to empty string if missing
-
-    console.log(`[scrapeAppleAppStoreReviews] Fetched ${fiveStarReviews.length} 5-star reviews for App ID: ${appId}`);
-    return fiveStarReviews.slice(0, 5000); // Limit to the first 150 reviews
+      .filter(r => r.score === 5)
+      .map(r => r.text || "");
+    console.log(`[scrapeAppleAppStoreReviews] => ${fiveStarReviews.length} 5-star reviews`);
+    return fiveStarReviews.slice(0, 5000);
   } catch (error) {
-    console.error("[scrapeAppleAppStoreReviews] Error fetching reviews:", error.message);
+    console.error("[scrapeAppleAppStoreReviews] error =>", error.message);
     return [];
   }
 };
 
-export const extractGooglePlayDescription = async (input) => {
-  console.log(`[extractGooglePlayDescription] Extracting Google Play App ID from URL: ${input}`);
-  const appId = extractGooglePlayAppId(input);
-  if (!appId) {
-    console.error("[extractGooglePlayDescription] Error: Invalid Google Play Store URL");
-    throw new Error("Invalid Google Play Store URL");
-  }
-  console.log(`[extractGooglePlayDescriptions] Extracted App ID: ${appId}`);
-
+// 1.4) Extract store descriptions
+export const extractGooglePlayDescription = async (url) => {
+  console.log(`[extractGooglePlayDescription] url => ${url}`);
+  const appId = extractGooglePlayAppId(url);
+  if (!appId) throw new Error("Invalid Google Play URL or missing appId");
   try {
-    console.log(`[extractGooglePlayDescription] Fetching description for App ID: ${appId}`);
-    const googlePlayData = await gplay.app({ appId });
-    const appDescription = [
-      googlePlayData.description,
-      googlePlayData.descriptionHTML,
-      googlePlayData.summary,
-    ]
-    console.log('[extractGooglePlayDescription] Fetched description');
-    return appDescription;
-  }
-  catch (error) {
-    console.error("[extractGooglePlayDescription] Error fetching description:", error.message);
+    const data = await gplay.app({ appId });
+    return [data.description, data.descriptionHTML, data.summary];
+  } catch (error) {
+    console.error("[extractGooglePlayDescription] error =>", error.message);
     return [];
   }
-}
+};
 
-export const extractAppStoreDescription = async (input) => {
-  let appId;
-
-  // If input is a URL, extract the App ID
-  if (input.includes("apple.com")) {
-    console.log(`[extractAppStoreDescription] Extracting Apple App ID from URL: ${input}`);
-    const match = input.match(/id(\d+)/); // Extract ID from URL pattern like ".../id123456789"
+export const extractAppStoreDescription = async (url) => {
+  let appId = null;
+  if (url.includes("apple.com")) {
+    const match = url.match(/id(\d+)/);
     appId = match ? match[1] : null;
   } else {
-    // If input is not a URL, assume it's an App ID
-    appId = input;
+    appId = url; // fallback
   }
-
-  if (!appId) {
-    console.error("[extractAppStoreDescription] Error: Invalid Apple App Store URL or App ID");
-    throw new Error("Invalid Apple App Store URL or App ID");
-  }
-  console.log(`[extractAppStoreDescription] Extracted App ID: ${appId}`);
-
+  if (!appId) throw new Error("Invalid Apple App Store URL or App ID");
   try {
-    console.log(`[extractAppStoreDescription] Fetching description for App ID: ${appId}`);
-    const appleData = await store.app({ id: appId });
-    const appDescription = appleData.description;
-    console.log('[extractAppStoreDescription] Fetched description.');
-    return appDescription;
-  }
-  catch (error) {
-    console.error("[extractAppStoreDescription] Error fetching description:", error.message);
+    const data = await store.app({ id: appId });
+    return [data.description];
+  } catch (error) {
+    console.error("[extractAppStoreDescription] error =>", error.message);
     return [];
   }
-}
+};
 
-// Generate USP phrases using Gemini API
+// 1.5) Generate USP phrases with Gemini or your LLM
 export const generateUSPhrases = async (appName, keywords) => {
-  console.log(`[generateUSPhrases] Generating USP phrases for App: ${appName}`);
+  console.log("[generateUSPhrases] appName =>", appName);
   const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
   const prompt = `
-    Generate 20 unique selling propositions (USPs) for the following app. 
-    Make the USPs concise, engaging, and user-centric. Highlight the app's benefits and unique features.
-    
-    - App Name: ${appName}
-    - Keywords: ${keywords.slice(0, 5000).join(", ")} 
-    
-    Focus on making these USPs persuasive and tailored to potential users.
-  `;
+Generate 20 unique selling propositions (USPs) for the following app. 
+Make them concise and user-centric, highlighting the app's benefits/features.
+
+- App Name: ${appName}
+- Keywords: ${keywords.slice(0, 1000).join(", ")} 
+
+Write them in plain English.
+`;
 
   try {
-    console.log("[generateUSPhrases] Sending request to Gemini API...");
-    const response = await axios.post(
-      apiUrl,
+    console.log("[generateUSPhrases] calling Gemini with prompt...");
+    const response = await axios.post(apiUrl,
       {
         contents: [
           {
             role: "user",
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
+            parts: [{ text: prompt }],
           },
         ],
       },
@@ -199,38 +157,96 @@ export const generateUSPhrases = async (appName, keywords) => {
         },
       }
     );
-
-    const phrases = response.data.candidates[0].content.parts[0].text
-      .trim()
-      .split("\n")
-      .filter((phrase) => phrase.trim() !== "");
-    console.log("[generateUSPhrases] Generated USP Phrases:", phrases);
-    return phrases;
+    const rawText = response.data.candidates[0].content.parts[0].text.trim();
+    const lines = rawText.split("\n").filter(Boolean);
+    console.log(`[generateUSPhrases] got ${lines.length} lines from Gemini`);
+    return lines;
   } catch (error) {
-    console.error("[generateUSPhrases] Error generating USP phrases:", error.message);
-    throw new Error("Failed to generate USP phrases");
+    console.error("[generateUSPhrases] Error =>", error.message);
+    throw new Error("Failed to generate USP phrases via Gemini");
   }
 };
 
+// 1.6) Save phrases in AdCopies collection for this user
 export const saveGeneratedPhrases = async (appId, taskId, phrases) => {
-  console.log("[saveGeneratedPhrases] Saving generated phrases for app:", appId);
+  console.log("[saveGeneratedPhrases] appId =>", appId, "taskId =>", taskId);
 
   const client = await connectToMongo();
   const db = client.db("GrowthZ");
-  const phrasesCollection = db.collection("AdCopies");
+  const adCopiesCollection = db.collection("AdCopies");
 
-  const document = {
-    appId: appId,
-    taskId: taskId,
-    phrases: phrases.map((phrase) => ({
-      text: phrase,
-      status: "pending",
-    })),
-    createdAt: new Date(),
-  };
+  try {
+    const doc = {
+      appId,
+      taskId,
+      phrases: phrases.map(text => ({
+        text,
+        status: "pending",
+      })),
+      createdAt: new Date(),
+    };
 
-  const result = await phrasesCollection.insertOne(document);
-  console.log("[saveGeneratedPhrases] Phrases saved successfully:", result.insertedId);
+    const result = await adCopiesCollection.insertOne(doc);
+    console.log("[saveGeneratedPhrases] Inserted =>", result.insertedId);
+    return { ...doc, _id: result.insertedId };
+  } finally {
+    await client.close();
+  }
+};
 
-  return { ...document, _id: result.insertedId };
+/**
+ * fetchUserAdCopies:
+ *   Checks if there's an AdCopies doc for a given user+app.
+ *   If you store userId in AdCopies, we can find it. 
+ *   (Below uses the 'AdCopies' collection with "userId" included.)
+ */
+export const fetchUserAdCopies = async (userId, appId) => {
+  console.log("[fetchUserAdCopies] userId:", userId, "appId:", appId);
+  const client = await connectToMongo();
+  const db = client.db("GrowthZ");
+  const adCopiesCollection = db.collection("AdCopies");
+
+  try {
+    const doc = await adCopiesCollection.findOne({ userId, appId });
+    if (doc) {
+      console.log("[fetchUserAdCopies] Found existing AdCopies doc:", doc._id);
+    } else {
+      console.log("[fetchUserAdCopies] No AdCopies found for this user+app.");
+    }
+    return doc;
+  } finally {
+    await client.close();
+  }
+};
+
+/**
+ * saveGeneratedPhrasesForUser:
+ *   If you want to store userId in AdCopies, so each user can have their own phrases,
+ *   this is a variant of your 'saveGeneratedPhrases' but also includes userId.
+ */
+export const saveGeneratedPhrasesForUser = async (userId, appId, taskId, phrases) => {
+  console.log("[saveGeneratedPhrasesForUser] userId:", userId, "appId:", appId, "taskId:", taskId);
+
+  const client = await connectToMongo();
+  const db = client.db("GrowthZ");
+  const adCopiesCollection = db.collection("AdCopies");
+
+  try {
+    const doc = {
+      userId,
+      appId,
+      taskId,
+      phrases: phrases.map((text) => ({
+        text,
+        status: "pending",
+      })),
+      createdAt: new Date(),
+    };
+
+    const result = await adCopiesCollection.insertOne(doc);
+    console.log("[saveGeneratedPhrasesForUser] Inserted =>", result.insertedId);
+    return { ...doc, _id: result.insertedId };
+  } finally {
+    await client.close();
+  }
 };

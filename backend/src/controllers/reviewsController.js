@@ -6,41 +6,79 @@ import {
   extractAppStoreDescription,
   generateUSPhrases,
   saveGeneratedPhrases,
+  fetchUserAdCopies,
+  saveGeneratedPhrasesForUser,
 } from "../services/reviewsService.js";
+
+import { fetchOrCreateApp } from "../services/appService.js";
 import { scrapeWebsiteContent } from "../services/websiteScrapeService.js";
 import { saveTask } from "../services/taskService.js";
 import { extractGooglePlayAppId } from "../utils/extractors.js";
 import { extractMeaningfulWords } from "../utils/word_extractor.js";
 
+/**
+ * POST /api/reviews/generate-phrases
+ * Main route to handle the flow:
+ *  - Check if app exists, if not => scrape & remove-bg once.
+ *  - Then generate phrases for (user, app).
+ *  - Store them in AdCopies so user can see them on subsequent logins.
+ */
 export const generateUSPhrasesHandler = async (req, res) => {
   console.log("[generateUSPhrasesHandler] Initial Request Body:", req.body);
 
   try {
     const { google_play, apple_app, website_link, appId, userId } = req.body;
 
-    if (!appId || !userId) {
-      console.error("[generateUSPhrasesHandler] Missing appId or userId in request body.");
-      return res.status(400).json({ message: "App ID and User ID are required." });
+    if (!userId) {
+      console.error("[generateUSPhrasesHandler] Missing userId in request body.");
+      return res.status(400).json({ message: "User ID is required." });
     }
 
-    console.log("[generateUSPhrasesHandler] Received appId:", appId);
+    // Attempt to resolve appId
+    let finalAppId = appId || null;
 
-    // Ensure at least one input is provided
-    if (!google_play && !apple_app && !website_link) {
-      console.warn("[generateUSPhrasesHandler] Missing required input.");
+    if (!google_play && !apple_app && !website_link && !finalAppId) {
+      console.warn("[generateUSPhrasesHandler] No store link or website link or appId provided.");
       return res.status(400).json({
-        message: "Please provide either Google Play and/or Apple App Store link or a Website link.",
+        message: "Please provide either Google Play/Apple link, website link, or existing appId.",
       });
     }
 
-    // Step 1: Fetch or create the task
-    console.log("[generateUSPhrasesHandler] Creating a new task...");
-    const task = await saveTask(userId, appId); // Create a new task if none exists
-    console.log("[generateUSPhrasesHandler] Task created:", task);
+    // If no appId given, call fetchOrCreateApp
+    if (!finalAppId) {
+      console.log("[generateUSPhrasesHandler] No appId => fetchOrCreateApp...");
+      const appDoc = await fetchOrCreateApp(google_play, apple_app, website_link);
+      finalAppId = appDoc && appDoc._id ? appDoc._id.toString() : null;
+      console.log("[generateUSPhrasesHandler] finalAppId =>", finalAppId);
+    }
 
-    const taskId = task._id.toString(); // Extract the taskId for further use
+    if (!finalAppId) {
+      throw new Error("Unable to resolve or create an appId.");
+    }
 
-    // Step 2: Fetch app details and generate phrases
+    // 2) Check if user already has AdCopies for (userId, finalAppId)
+    const existingAdCopy = await fetchUserAdCopies(userId, finalAppId);
+    if (existingAdCopy) {
+      console.log("[generateUSPhrasesHandler] User already has AdCopies. Returning existing phrases...");
+      return res.status(200).json({
+        status: "already_exists",
+        appId: finalAppId,
+        phrases: existingAdCopy,
+        message: "Phrases already exist for this user & app.",
+      });
+    }
+
+    // 3) Otherwise, create/fetch the Task for (userId, finalAppId) 
+    console.log("[generateUSPhrasesHandler] Creating or fetching Task doc...");
+    const task = await saveTask(userId, finalAppId);
+    console.log("[generateUSPhrasesHandler] Task doc found/created =>", task);
+    const taskId = task._id.toString();
+
+    console.log("[generateUSPhrasesHandler] finalAppId to use:", finalAppId);
+
+    // Now do your usual text-scraping or website-scraping logic
+    // so we can generate new phrases.
+
     let appName = "";
     let combinedReviews = [];
     let combinedDescription = [];
@@ -48,12 +86,12 @@ export const generateUSPhrasesHandler = async (req, res) => {
     let keywords = [];
 
     if (website_link) {
-      // Handle Website Link
+      // (A) If user gave website link
       console.log("[generateUSPhrasesHandler] Scraping website content:", website_link);
       const websiteContent = await scrapeWebsiteContent(website_link);
 
       if (!websiteContent || !websiteContent.metadata) {
-        console.error("[generateUSPhrasesHandler] Failed to scrape website content.");
+        console.error("[generateUSPhrasesHandler] Could not scrape website content.");
         throw new Error("Unable to scrape content from the website.");
       }
 
@@ -62,92 +100,79 @@ export const generateUSPhrasesHandler = async (req, res) => {
       combinedReviews = [
         websiteContent.metadata.metaDescription || "",
         websiteContent.metadata.keywords || "",
-        ...websiteContent.headings.map((heading) => heading.text),
+        ...websiteContent.headings.map((h) => h.text),
         ...websiteContent.tables.flat().join(" "),
       ];
 
-      console.log("[generateUSPhrasesHandler] Scraped content length:", combinedReviews.length);
+      console.log("[generateUSPhrasesHandler] Website content => combinedReviews length:", combinedReviews.length);
     } else {
-      // Handle Google Play and Apple App Store Links
+      // (B) If user gave Google/Apple store links
       if (!google_play) {
-        throw new Error("Google Play Store URL is mandatory if no Website Link is provided.");
+        throw new Error("Google Play store link is required if no website link is provided.");
       }
 
       const googleAppId = extractGooglePlayAppId(google_play);
       if (!googleAppId) {
-        console.error("[generateUSPhrasesHandler] Invalid Google Play App ID.");
-        throw new Error("Invalid Google Play App ID.");
+        throw new Error("Invalid Google Play Store URL or unable to extract ID.");
       }
 
-      console.log("[generateUSPhrasesHandler] Fetching app name for Google App ID:", googleAppId);
+      console.log(`[generateUSPhrasesHandler] Google Play ID => ${googleAppId}`);
       appName = await fetchAppNameFromGooglePlay(googleAppId);
-      if (!appName) {
-        throw new Error("Unable to extract app name from Google Play URL.");
-      }
+      console.log("[generateUSPhrasesHandler] appName from GP =>", appName);
 
-      console.log("[generateUSPhrasesHandler] Fetching Google Play reviews...");
+      console.log("[generateUSPhrasesHandler] Scraping Google Play reviews...");
       const googlePlayReviews = await scrapeGooglePlayReviews(google_play);
-      console.log("[generateUSPhrasesHandler] Total Google Play reviews:", googlePlayReviews.length);
+      console.log(`[generateUSPhrasesHandler] Got ${googlePlayReviews.length} googlePlayReviews`);
 
       let appleStoreReviews = [];
       if (apple_app) {
-        console.log("[generateUSPhrasesHandler] Fetching Apple App Store reviews...");
+        console.log("[generateUSPhrasesHandler] Scraping Apple App Store reviews...");
         appleStoreReviews = await scrapeAppleAppStoreReviews(apple_app);
-        console.log("[generateUSPhrasesHandler] Total Apple App Store reviews:", appleStoreReviews.length);
+        console.log(`[generateUSPhrasesHandler] Got ${appleStoreReviews.length} appleStoreReviews`);
       }
 
-      console.log("[generateUSPhrasesHandler] Combining reviews...");
       combinedReviews = [...googlePlayReviews, ...appleStoreReviews];
-      console.log("[generateUSPhrasesHandler] Combined reviews length:", combinedReviews.length);
+      console.log(`[generateUSPhrasesHandler] Combined => ${combinedReviews.length} reviews total`);
 
-      console.log("[generateUSPhrasesHandler] Fetching Google Play description...");
+      // Also fetch store descriptions if desired
       const googlePlayDescription = await extractGooglePlayDescription(google_play);
-      console.log("[generateUSPhrasesHandler] Fetched Google Play description.");
-
-      let appleStoreDescription;
+      let appleStoreDescription = [];
       if (apple_app) {
-        console.log("[generateUSPhrasesHandler] Fetching Apple App Store description...");
         appleStoreDescription = await extractAppStoreDescription(apple_app);
-        console.log("[generateUSPhrasesHandler] Fetched Apple App Store description.");
       }
-
-      console.log("[generateUSPhrasesHandler] Combining description...");
       combinedDescription = [...googlePlayDescription, ...appleStoreDescription];
-      console.log("[generateUSPhrasesHandler] Combined descriptions.");
-
-      console.log("[generateUSPhrasesHandler] Combining summary...");
       combinedSummary = [...combinedReviews, ...combinedDescription];
-      console.log("[generateUSPhrasesHandler] Combined summary.");
+      console.log("[generateUSPhrasesHandler] combinedSummary =>", combinedSummary.length, "items");
     }
 
     // Extract meaningful keywords
-    console.log("[generateUSPhrasesHandler] Extracting keywords...");
-    keywords = extractMeaningfulWords(combinedSummary);
-    console.log("[generateUSPhrasesHandler] Keywords extracted:", keywords);
+    console.log("[generateUSPhrasesHandler] Extracting meaningful words from summary...");
+    keywords = extractMeaningfulWords([...combinedSummary]);
+    console.log("[generateUSPhrasesHandler] Keywords => count:", keywords.length);
 
-    // Generate USP phrases
-    console.log("[generateUSPhrasesHandler] Generating USP phrases...");
+    // Generate USP phrases with your LLM
+    console.log("[generateUSPhrasesHandler] Calling generateUSPhrases...");
     const uspPhrases = await generateUSPhrases(appName, keywords);
-    console.log("[generateUSPhrasesHandler] USP phrases generated:", uspPhrases);
+    console.log("[generateUSPhrasesHandler] uspPhrases =>", uspPhrases.length);
 
-    // Step 3: Save generated phrases to the database
-    console.log("[generateUSPhrasesHandler] Saving phrases to database...");
-    const savedPhrases = await saveGeneratedPhrases(appId, taskId, uspPhrases);
-    console.log("[generateUSPhrasesHandler] Phrases saved successfully:", savedPhrases);
+    // Save them in AdCopies with "pending" status for this user + task
+    console.log("[generateUSPhrasesHandler] Saving to AdCopies => appId:", finalAppId, "taskId:", taskId);
+    // 5) Save them in AdCopies (with userId)
+    const savedDoc = await saveGeneratedPhrasesForUser(userId, finalAppId, taskId, uspPhrases);
+    console.log("[generateUSPhrasesHandler] savedDoc =>", savedDoc._id);
 
-    res.status(200).json({
-      appId,
+    return res.status(200).json({
       status: "success",
+      appId: finalAppId,
       taskId,
-      phrases: savedPhrases,
+      phrases: savedDoc,
       appName,
-      totalReviews: combinedReviews.length,
-      // keywords,
-      uspPhrases,
+      totalReviews: combinedReviews.length || 0,
+      message: "Phrases newly generated for this user & app",
     });
   } catch (error) {
-    console.error("[generateUSPhrasesHandler] Error:", error.message);
-    res.status(500).json({
+    console.error("[generateUSPhrasesHandler] Error:", error);
+    return res.status(500).json({
       message: "Error generating USP phrases.",
       error: error.message,
     });

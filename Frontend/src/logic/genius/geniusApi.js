@@ -112,7 +112,7 @@ export const generatePhrases = async (formData, appId, userId) => {
 export const approvePhrase = async (text, appId) => {
     console.log("approvePhrase - Sending:", { text, appId }); // Verify appId and text
     try {
-        const response = await fetch(`${BASE_URL}/api/communications/approved`, {
+        const response = await fetch(`${BASE_URL}/api/adCopyStatus/approved`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ export const approvePhrase = async (text, appId) => {
  */
 export const rejectPhrase = async (appId, text) => {
     try {
-        const response = await fetch(`${BASE_URL}/api/communications/rejected`, {
+        const response = await fetch(`${BASE_URL}/api/adCopyStatus/rejected`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

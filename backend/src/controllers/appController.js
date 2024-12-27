@@ -1,5 +1,12 @@
 import { saveAppDetailsInDb } from "../services/appService.js";
+import { processAppImages } from "../services/creativesService.js";
 
+/**
+ * POST /api/app/save-app
+ * - Scrapes the app (Google/Apple) with saveAppDetailsInDb
+ * - Then calls processAppImages once
+ * - If imagesProcessed is set, next time it won't re-run remove-bg
+ */
 export const saveAppDetails = async (req, res) => {
   try {
     const { google_play, apple_app } = req.body;
@@ -11,16 +18,23 @@ export const saveAppDetails = async (req, res) => {
       });
     }
 
-    // Fetch and save app details
+    console.log("[AppController] saveAppDetails => body:", req.body);
+
+    // 1) Scrape & store app details. This sets imagesProcessed = false initially if new
     const appDetails = await saveAppDetailsInDb(google_play, apple_app);
 
-    res.status(201).json({
+    // 2) Immediately call remove-bg (only if not done). 
+    // processAppImages itself checks appDoc.imagesProcessed and decides.
+    const result = await processAppImages(appDetails._id);
+
+    return res.status(201).json({
       message: "App details saved successfully.",
       appDetails,
+      processResult: result,
     });
   } catch (error) {
     console.error("[saveAppDetails] Error:", error.message);
-    res.status(500).json({
+    return res.status(500).json({
       message: "Error saving app details.",
       error: error.message,
     });

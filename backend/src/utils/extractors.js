@@ -4,7 +4,7 @@ export const extractGooglePlayAppId = (url) => {
 };
 
 export const extractAppleAppId = (url) => {
-    const match = url.match(/\/id(\d+)/); // Extract the numeric App ID
+    const match = url.match(/id(\d+)/); // Extract the numeric App ID
     return match ? match[1] : null;
 };
 

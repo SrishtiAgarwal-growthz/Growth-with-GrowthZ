@@ -1,24 +1,43 @@
 import { connectToMongo } from "../config/db.js";
 
+/**
+ * saveTask:
+ *  - Previously, you always did an `insertOne` for each request, creating multiple tasks.
+ *  - Now, check if a Task doc for (userId, appId) already exists.
+ *  - If yes, just return it. If not, create a new doc.
+ */
 export const saveTask = async (userId, appId) => {
-  console.log("[TaskService] Saving task for user:", userId);
+  console.log("[TaskService] Checking for existing task for user:", userId, "and app:", appId);
 
   const client = await connectToMongo();
   const db = client.db("GrowthZ");
   const tasksCollection = db.collection("Tasks");
 
-  const task = {
-    userId: userId,
-    appId: appId,
-    createdAt: new Date(),
-    tasks: ["AdCopies"],
-  };
+  try {
+    // 1) Find if there's already a task for this user+app
+    const existingTask = await tasksCollection.findOne({ userId, appId });
+    if (existingTask) {
+      console.log("[TaskService] Task already exists. Returning existing doc:", existingTask._id);
+      return existingTask;
+    }
 
-  const result = await tasksCollection.insertOne(task);
-  console.log("[TaskService] Task saved successfully:", result.insertedId);
+    // 2) Otherwise, create a brand-new Task doc
+    const newTask = {
+      userId,
+      appId,
+      createdAt: new Date(),
+      tasks: ["AdCopies"], // or any default
+    };
 
-  return { ...task, _id: result.insertedId };
+    const result = await tasksCollection.insertOne(newTask);
+    console.log("[TaskService] New Task created with _id:", result.insertedId);
+
+    return { ...newTask, _id: result.insertedId };
+  } finally {
+    await client.close();
+  }
 };
+
 
 export const addCreativesTask = async (userId, appId, task) => {
   try {
