@@ -47,7 +47,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-gray-900 text-white py-8">
+    <footer className="bg-gradient-to-t from-[#59759566] to-[#1C252F66] text-[#015FF8] py-8">
       <div className="max-w-6xl mx-auto px-4">
         {/* Logo and Navigation sections */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
@@ -65,13 +65,13 @@ const Footer = () => {
           {/* Navigation Links - 2x2 on mobile, 4 columns on desktop */}
           {Object.entries(footerData.sections).map(([section, links]) => (
             <div key={section} className="text-center md:text-left">
-              <h3 className="text-lg font-semibold mb-4">{section}</h3>
+              <h3 className="text-lg font-semibold mb-4 ">{section}</h3>
               <ul className="space-y-2">
                 {links.map((link, i) => (
                   <li key={i} className="flex justify-center md:justify-start">
                     <a
                       href="#"
-                      className="text-gray-400 hover:text-white transition-colors"
+                      className="text-white hover:text-blue-500 transition-colors"
                     >
                       {link}
                     </a>
@@ -97,13 +97,13 @@ const Footer = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Your Email Address"
-                  className="w-full bg-black/20 text-white px-6 py-3 rounded-full border-2 border-blue-500/30 focus:outline-none focus:border-blue-500 pr-32"
+                  className="w-full bg-black/20 text-white px-6 py-3 rounded-full border-2 border-blue-700 focus:outline-none focus:border-blue-500 pr-32"
                   required
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center">
                   <button
                     type="submit"
-                    className="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors flex items-center space-x-2 mr-1"
+                    className="bg-blue-700 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors flex items-center space-x-2 mr-1"
                   >
                     <span>Subscribe</span>
                     <svg

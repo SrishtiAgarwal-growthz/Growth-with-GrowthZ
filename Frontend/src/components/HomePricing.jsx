@@ -3,6 +3,9 @@ import image1 from "../assets/p1.png";
 import image2 from "../assets/p2.png";
 import image3 from "../assets/p3.png";
 import crown from "../assets/pricingcrown.png";
+// import animation from "../assets/pricing.webm";
+// import growth from "../assets/grow_animation.webm";
+
 
 const PricingTable = () => {
   const [pricingType, setPricingType] = useState("monthly");
@@ -129,36 +132,35 @@ const PricingTable = () => {
       </p>
 
       {/* Toggle Pricing Options */}
-      <div className="relative flex items-center justify-center mb-[40px] w-full max-w-md">
-        <div className="flex border border-white rounded-full overflow-hidden w-full">
-          <button
-            onClick={() => setPricingType("monthly")}
-            className={`flex-1 px-4 md:px-6 py-2 transition-all duration-300 text-sm md:text-base ${
-              pricingType === "monthly"
-                ? "bg-gradient-to-t from-[#013A92] to-[#0163F8] text-white"
-                : "bg-black text-gray-400"
-            }`}
-          >
-            Monthly Pricing
-          </button>
-          <button
-            onClick={() => setPricingType("yearly")}
-            className={`flex-1 px-4 md:px-6 py-2 transition-all duration-300 text-sm md:text-base ${
-              pricingType === "yearly"
-                ? "bg-gradient-to-t from-[#013A92] to-[#0163F8] text-white"
-                : "bg-black text-gray-400"
-            }`}
-          >
-            Yearly Pricing
-          </button>
-        </div>
-
-        <img
-          src={crown}
-          alt="20% Off"
-          className="absolute top-[-40px] right-[-20px] md:right-[-35px] w-[50px] md:w-[67.69px] h-auto"
-        />
+      <div className="relative flex items-center justify-center mb-[40px] w-full max-w-md mt-8">
+      <div className="flex border border-white rounded-[10px] overflow-hidden w-[282px] h-[39px] p-1 bg-black">
+        <button
+          onClick={() => setPricingType("monthly")}
+          className={`flex-1 px-2 md:px-2 py-2 transition-all duration-300 text-sm flex items-center justify-center md:text-base ${
+            pricingType === "monthly"
+              ? "bg-gradient-to-t from-[#013A92] to-[#0163F8] text-white rounded-[10px]"
+              : "bg-black text-gray-400"
+          }`}
+        >
+          Monthly Pricing
+        </button>
+        <button
+          onClick={() => setPricingType("yearly")}
+          className={`flex-1 px-2 md:px-2 py-2 transition-all duration-300 text-sm flex items-center justify-center md:text-base ${
+            pricingType === "yearly"
+              ? "bg-gradient-to-t from-[#013A92] to-[#0163F8] text-white rounded-[10px]"
+              : "bg-black text-gray-400"
+          }`}
+        >
+          Yearly Pricing
+        </button>
       </div>
+      <img
+        src={crown}
+        alt="20% Off"
+        className="absolute top-[-32px] right-[3px] sm:top-[-32px] sm:right-[45px] md:top-[-40px] md:right-[30px] w-[50px] md:w-[67.69px] h-auto"
+      />
+    </div>
 
       {/* Pricing Table */}
       <div className="space-y-8 md:space-y-16 w-full max-w-5xl">
@@ -176,7 +178,34 @@ const PricingTable = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#00000080] to-transparent rounded-lg"></div>
 
                 {/* Animations */}
-                
+                {/* {index === 0 && (
+                 <div className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-[-58px]">
+                 <video
+                   src={animation}
+                   autoPlay
+                   loop
+                   muted
+                   playsInline
+                      className="w-[96px] h-[96px] pointer-events-none"
+                      style={{ backgroundColor: 'transparent' }}
+                 ></video>
+               </div>
+                )}
+
+                {index === 2 && (
+                  <div className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-[-58px]">
+                  <video
+                    src={growth}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                      className="w-[96px] h-[96px] pointer-events-none"
+                      style={{ backgroundColor: 'transparent' }}
+                  ></video>
+                </div>
+                )} */}
+
                 <h2 className="relative text-2xl font-bold text-white z-10 text-center">
                   {suite.suite}
                 </h2>
