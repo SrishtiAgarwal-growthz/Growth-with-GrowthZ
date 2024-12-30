@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
 import image1 from "../assets/image1.png";
 import image2 from "../assets/image2.png";
 import image3 from "../assets/image3.png";
@@ -8,15 +9,28 @@ import image6 from "../assets/image6.png";
 
 const Hero = () => {
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(false);
+
   const images = [image1, image2, image3, image4, image5, image6];
+
   const growthStyle = {
     color: "#007bff",
     fontWeight: "bold",
     fontFamily: "sans-serif",
   };
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
-    <div className="relative w-full bg-black min-h-[510px] md:min-h-[680px] lg:min-h-screen overflow-hidden mt-[80px] lg:mt-[96px]">
+    <div className="relative w-full bg-black min-h-[510px]  md:min-h-[680px] lg:min-h-screen overflow-hidden mt-[80px] lg:mt-[96px]">
       {/* Gradient Background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="w-full h-full relative">
@@ -47,13 +61,13 @@ const Hero = () => {
           <div className="flex justify-center mt-4 sm:mt-6">
             <div
               onClick={() => navigate("/login")}
-              className="bg-[#015FF8] p-[2px] rounded-full w-[128px] md:w-[180px] hover:shadow-[0_0_20px_4px_rgba(1,95,248,0.7)] transition-all duration-300"
+              className="bg-[#015FF8] p-[2px] rounded-full w-[128px] md:w-[180px] hover:shadow-lg transition-all duration-300 cursor-pointer"
             >
               <button className="bg-[#015FF8] w-full h-[44px] md:h-[62px] px-4 rounded-full text-[12px] md:text-xl flex items-center justify-between text-white">
-                <span className="ml-3 font-bold pr-[2px]">TRY ME</span>
-                <div className="w-8 md:w-12 h-8 md:h-12 rounded-full bg-black flex items-center justify-center transition-colors duration-200 hover:bg-black group">
+                <span className="ml-3 font-bold">TRY ME</span>
+                <div className="w-8 md:w-12 h-8 md:h-12 rounded-full bg-black flex items-center justify-center">
                   <svg
-                    className="w-6 md:w-8 h-6 md:h-8 text-white transform -rotate-45 transition-colors duration-200"
+                    className="w-6 md:w-8 h-6 md:h-8 text-white transform -rotate-45"
                     fill="none"
                     strokeWidth="2"
                     stroke="currentColor"
@@ -68,60 +82,97 @@ const Hero = () => {
         </div>
 
         {/* Carousel Container */}
-        <div className="w-full ">
-          <article className="flex w-[300%] animate-bannermove">
-            {[0, 1, 2].map((groupIndex) => (
-              <div key={groupIndex} className="w-full flex">
-                <ul className="flex list-none p-0 m-2 lg:m-0">
-                  {images.map((img, index) => (
-                    <li
-                      key={index}
-                      className="flex-shrink-0 w-[300px] sm:w-[300px] md:w-[400px] lg:w-[400px] 
-                               h-[290px] sm:h-[200px] md:h-[400px] lg:h-[400px] 
-                               flex items-center justify-center px-[6px]"
-                    >
-                      <div className="w-full h-full rounded-lg overflow-hidden relative">
-                        <img
-                          src={img}
-                          alt={`Slide ${index + 1}`}
-                          className="block w-full h-full object-contain"
-                        />
-                        {/* Card Glow Effect */}
-                        <div className="absolute inset-0 rounded-lg ring-1 ring-blue-500/20" />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </article>
+        <div className="w-full overflow-hidden">
+          <div className="carousel-container">
+            <div className="carousel-track">
+              {/* First set of images */}
+              {images.map((img, index) => (
+                <div key={`first-${index}`} className="carousel-item">
+                  <div className="carousel-image-container">
+                    <img
+                      src={img}
+                      alt={`Slide ${index + 1}`}
+                      className="carousel-image"
+                    />
+                    <div className="absolute inset-0 rounded-lg ring-1 ring-blue-500/20" />
+                  </div>
+                </div>
+              ))}
+              {/* Duplicate set for smooth infinite scroll */}
+              {images.map((img, index) => (
+                <div key={`second-${index}`} className="carousel-item">
+                  <div className="carousel-image-container">
+                    <img
+                      src={img}
+                      alt={`Slide ${index + 1}`}
+                      className="carousel-image"
+                    />
+                    <div className="absolute inset-0 rounded-lg ring-1 ring-blue-500/20" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
       <style>
         {`
-          @keyframes bannermove {
+          .carousel-container {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+          }
+
+          .carousel-track {
+            display: flex;
+            width: max-content;
+            animation: smoothScroll 30s linear infinite;
+          }
+
+          .carousel-item {
+            flex-shrink: 0;
+            padding: 0.;
+            width: ${isMobile ? '280px' : '400px'};
+          }
+
+          .carousel-image-container {
+            width: 100%;
+            height: ${isMobile ? '280px' : '400px'};
+            position: relative;
+            border-radius: 0.5rem;
+            overflow: hidden;
+          }
+
+          .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+          }
+
+          @keyframes smoothScroll {
             0% {
               transform: translateX(0);
             }
             100% {
-              transform: translateX(-66.666%);
+              transform: translateX(-50%);
             }
           }
-          .animate-bannermove {
-            animation: bannermove 40s linear infinite;
+
+          .carousel-track:hover {
+            animation-play-state: paused;
           }
-          
-          @media (hover: hover) {
-            .animate-bannermove:hover {
-              animation-play-state: paused;
-            }
-          }
-          
-          @media (max-width: 640px) {
-            .animate-bannermove {
-              animation-duration: 20s;
-            }
+
+          /* Add smooth transition when animation restarts */
+          .carousel-track::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 100px;
+            background: linear-gradient(to right, transparent, black);
+            pointer-events: none;
           }
         `}
       </style>
