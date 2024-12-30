@@ -11,7 +11,7 @@ const Footer = () => {
       Solutions: ['Marketing', 'Analytics', 'Commerce', 'Insights', 'Support', 'Security'],
       About: ['Company', 'Customers', 'Careers', 'Press', 'Partners', 'Contact']
     },
-    socialIcons : [
+    socialIcons: [
       {
         name: "Instagram",
         href: "#",
@@ -49,21 +49,21 @@ const Footer = () => {
   return (
     <footer className="bg-gray-900 text-white py-8">
       <div className="max-w-6xl mx-auto px-4">
-        {/* Logo and Navigation sections remain the same */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
-      {/* Logo Section */}
-      <div className="col-span-1">
-        <div className="flex items-center space-x-2">
-          <img
-            src={logo}
-            alt="Logo"
-            className="w-[140px] h-[35.24px] custom-md:w-[169px] custom-md:h-[41px]"
-          />
-        </div>
-      </div>
+        {/* Logo and Navigation sections */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+          {/* Logo Section - Full width on mobile */}
+          <div className="col-span-2 md:col-span-1">
+            <div className="flex items-center space-x-2">
+              <img
+                src={logo}
+                alt="Logo"
+                className="w-[140px] h-[35.24px] custom-md:w-[169px] custom-md:h-[41px]"
+              />
+            </div>
+          </div>
 
-      {/* Navigation Links */}
-      {Object.entries(footerData.sections).map(([section, links]) => (
+          {/* Navigation Links - 2x2 on mobile, 4 columns on desktop */}
+          {Object.entries(footerData.sections).map(([section, links]) => (
             <div key={section} className="col-span-1">
               <h3 className="text-lg font-semibold mb-4">{section}</h3>
               <ul className="space-y-2">
@@ -88,7 +88,7 @@ const Footer = () => {
             © {new Date().getFullYear()} All Rights Reserved
           </div>
 
-          {/* Updated Email Subscription Box */}
+          {/* Email Subscription Box */}
           <form onSubmit={handleSubmit} className="relative mb-4 md:mb-0 w-full md:w-auto">
             <div className="relative flex w-full md:w-[420px]">
               <div className="relative w-full">

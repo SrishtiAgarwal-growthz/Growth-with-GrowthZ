@@ -3,9 +3,6 @@ import image1 from "../assets/p1.png";
 import image2 from "../assets/p2.png";
 import image3 from "../assets/p3.png";
 import crown from "../assets/pricingcrown.png";
-import animation from "../assets/pricing.webm";
-import growth from "../assets/grow_animation.webm";
-
 
 const PricingTable = () => {
   const [pricingType, setPricingType] = useState("monthly");
@@ -179,34 +176,7 @@ const PricingTable = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#00000080] to-transparent rounded-lg"></div>
 
                 {/* Animations */}
-                {index === 0 && (
-                 <div className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-[-58px]">
-                 <video
-                   src={animation}
-                   autoPlay
-                   loop
-                   muted
-                   playsInline
-                      className="w-[96px] h-[96px] pointer-events-none"
-                      style={{ backgroundColor: 'transparent' }}
-                 ></video>
-               </div>
-                )}
-
-                {index === 2 && (
-                  <div className="absolute z-20 left-1/2 transform -translate-x-1/2 bottom-[-58px]">
-                  <video
-                    src={growth}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                      className="w-[96px] h-[96px] pointer-events-none"
-                      style={{ backgroundColor: 'transparent' }}
-                  ></video>
-                </div>
-                )}
-
+                
                 <h2 className="relative text-2xl font-bold text-white z-10 text-center">
                   {suite.suite}
                 </h2>

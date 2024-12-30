@@ -26,16 +26,18 @@ const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto flex justify-between items-center px-8 w-full h-full">
         {/* Logo */}
-        <div className="flex items-center">
+        <button
+          onClick={()=> navigate("/")}
+          className="flex items-center">
           <img
             src={logo}
             alt="Logo"
             className="w-[120px] h-[32.24px] md:w-[185px] md:h-[40px]"
           />
-        </div>
+        </button>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center space-x-14">
+        <div className="hidden custom-md:flex items-center space-x-14">
           <div className="flex space-x-8 text-[16px]">
             <a
               href="#products"
@@ -76,7 +78,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <button onClick={() => setIsOpen(!isOpen)} className="md:hidden flex items-center justify-center">
+        <button onClick={() => setIsOpen(!isOpen)} className="custom-md:hidden flex items-center justify-center">
           <img
             src={menuIcon}
             alt={isOpen ? "Close menu" : "Open menu"}
