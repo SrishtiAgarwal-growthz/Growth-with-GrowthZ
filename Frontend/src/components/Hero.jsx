@@ -132,7 +132,9 @@ const Hero = () => {
 
           .carousel-item {
             flex-shrink: 0;
-            padding: 0.;
+            padding: 0;
+            margin-right: ${isMobile ? '16px' : '0'};
+            margin-top: ${isMobile ? '16px' : '0'};
             width: ${isMobile ? '280px' : '400px'};
           }
 

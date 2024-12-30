@@ -53,7 +53,7 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Logo Section - Full width on mobile */}
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-center md:justify-start">
               <img
                 src={logo}
                 alt="Logo"
@@ -64,11 +64,11 @@ const Footer = () => {
 
           {/* Navigation Links - 2x2 on mobile, 4 columns on desktop */}
           {Object.entries(footerData.sections).map(([section, links]) => (
-            <div key={section} className="col-span-1">
+            <div key={section} className="text-center md:text-left">
               <h3 className="text-lg font-semibold mb-4">{section}</h3>
               <ul className="space-y-2">
                 {links.map((link, i) => (
-                  <li key={i}>
+                  <li key={i} className="flex justify-center md:justify-start">
                     <a
                       href="#"
                       className="text-gray-400 hover:text-white transition-colors"
