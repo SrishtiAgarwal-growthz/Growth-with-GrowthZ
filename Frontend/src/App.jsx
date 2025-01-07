@@ -3,6 +3,7 @@ import HomePage from "./pages/HomePage";  // Changed from "./pages/HomePage"
 import LoginPage from "./pages/LoginPage"; 
 import Genius from "./pages/Genius"; 
 import Rainbow from "./pages/Rainbow"; 
+import Privacy from "./pages/PrivacyPolicy"
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/genius" element={<Genius />} />
         <Route path="/rainbow" element={<Rainbow />} />
+        <Route path="/privacy_policy" element={<Privacy />} />
       </Routes>
     </BrowserRouter>
   );
