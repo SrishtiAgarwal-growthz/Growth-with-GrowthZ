@@ -1,73 +1,73 @@
 function processAdText(text) {
-    try {
-        if (!text || typeof text !== 'string') {
-            console.error('[processAdText] Invalid text input:', text);
-            return { primaryText: '', secondaryText: '' };
-        }
-
-        let processedText = text
-            .replace(/^\d+\.\s*/, '')        // Remove numbering
-            .replace(/\*+/g, '')             // Remove asterisks
-            .replace(/\s*\([^)]*\)/g, '')    // Remove parenthetical text
-            .replace(/\s+/g, ' ')            // Normalize spaces
-            .replace(/\.{2,}/g, '.')         // Fix multiple dots
-            .replace(/[""]/g, '"')           // Normalize quotes
-            .replace(/['']/g, "'")           // Normalize apostrophes
-            .trim();
-
-        // Handle colon in text
-        const colonParts = processedText.split(':');
-        if (colonParts.length > 1 && colonParts[1].trim().length > 0) {
-            processedText = colonParts[1].trim();
-        }
-
-        // Split into sentences
-        const sentences = processedText
-            .split(/(?<=[.!?])\s+/)
-            .map(s => s.trim())
-            .filter(s => s.length > 0);
-
-        // Format the text based on number of sentences
-        if (sentences.length > 1) {
-            const midpoint = Math.ceil(sentences.length / 2);
-            return {
-                primaryText: sentences.slice(0, midpoint).join(' '),
-                secondaryText: sentences.slice(midpoint).join(' ')
-            };
-        }
-
-        return {
-            primaryText: processedText,
-            secondaryText: ''
-        };
-    } catch (error) {
-        console.error('[processAdText] Error processing text:', error);
-        return {
-            primaryText: text || '',
-            secondaryText: ''
-        };
+  try {
+    if (!text || typeof text !== 'string') {
+      console.error('[processAdText] Invalid text input:', text);
+      return { primaryText: '', secondaryText: '' };
     }
+
+    let processedText = text
+      .replace(/^\d+\.\s*/, '')        // Remove numbering
+      .replace(/\*+/g, '')             // Remove asterisks
+      .replace(/\s*\([^)]*\)/g, '')    // Remove parenthetical text
+      .replace(/\s+/g, ' ')            // Normalize spaces
+      .replace(/\.{2,}/g, '.')         // Fix multiple dots
+      .replace(/[""]/g, '"')           // Normalize quotes
+      .replace(/['']/g, "'")           // Normalize apostrophes
+      .trim();
+
+    // Handle colon in text
+    const colonParts = processedText.split(':');
+    if (colonParts.length > 1 && colonParts[1].trim().length > 0) {
+      processedText = colonParts[1].trim();
+    }
+
+    // Split into sentences
+    const sentences = processedText
+      .split(/(?<=[.!?])\s+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    // Format the text based on number of sentences
+    if (sentences.length > 1) {
+      const midpoint = Math.ceil(sentences.length / 2);
+      return {
+        primaryText: sentences.slice(0, midpoint).join(' '),
+        secondaryText: sentences.slice(midpoint).join(' ')
+      };
+    }
+
+    return {
+      primaryText: processedText,
+      secondaryText: ''
+    };
+  } catch (error) {
+    console.error('[processAdText] Error processing text:', error);
+    return {
+      primaryText: text || '',
+      secondaryText: ''
+    };
+  }
 }
 
 export const adTemplates = {
 
-    "300x250": (options) => {
-        const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+  "300x250": (options) => {
+    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
 
-        const processedPhrase = processAdText(phrase);
-        console.log('[createAd] Processed phrase:', processedPhrase);
+    const processedPhrase = processAdText(phrase);
+    console.log('[createAd] Processed phrase:', processedPhrase);
 
-        // Generate the font-face rule only if fontPath is available
-        const fontFaceRule = fontPath
-            ? `
-            @font-face {
-                font-family: '${fontName}';
-                src: url('${fontPath}');
-            }
+    // Generate the font-face rule only if fontPath is available
+    const fontFaceRule = fontPath
+      ? `
+          @font-face {
+            font-family: '${fontName}';
+            src: url('${fontPath}');
+          }
         `
-            : ''; // No font-face if fontPath is null
+      : ''; // No font-face if fontPath is null
 
-        return `
+    return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -88,25 +88,26 @@ export const adTemplates = {
         background-color: ${bgColor};
         box-sizing: border-box;
         display: flex;
+        align-items: center;
         flex-direction: column;
-        padding: 2px;
         position: relative;
       }
 
       .content-wrapper {
+        width: 100%;
+        height: 100%;
         display: flex;
         flex-direction: column;
-        height: 100%;
-        justify-content: space-between;
-        padding: 2px 2px;
+        justify-content: flex-start;
+        padding-top: 34px;
       }
 
       .logo-container {
         position: absolute;
         top: 8px;
         right: 8px;
-        width: 26px;
-        height: 26px;
+        width: 30px;
+        height: 30px;
         z-index: 2;
       }
 
@@ -119,9 +120,7 @@ export const adTemplates = {
       .text-section {
         font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
         margin: 0 auto;
-        max-width: 80%;
-        padding-right: 2px;
-        padding-top: 4px;
+        max-width: 95%;
         position: relative;
         z-index: 1;
       }
@@ -166,29 +165,32 @@ export const adTemplates = {
       }
 
       .image-and-cta-container {
+        flex: 1;
         display: flex;
         align-items: center;
-        justify-content: center;
-        flex: 1;
         flex-direction: column;
-        gap: 2px;
-        margin-top: 2px;
+        justify-content: center;
       }
 
       .main-image-container {
         width: 100%;
-        height: 120px;
+        max-width: 120px;
         display: flex;
         align-items: center;
         justify-content: center;
+        margin: 0 auto;
         position: relative;
       }
 
       .main-image {
-        width: auto;
-        height: 100%;
+        width: 100%;
+        height: auto;
         object-fit: contain;
+        display: block;
+        max-height: 110px;
+        vertical-align: bottom;
         filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));  // Add subtle shadow
+        margin-bottom: 0;
       }
 
       .cta-container {
@@ -208,7 +210,7 @@ export const adTemplates = {
         align-items: center;
         justify-content: center;
         font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-        font-size: 6px;
+        font-size: 12px;
         font-weight: 600;
         letter-spacing: 1px;
         margin: 0 auto;
@@ -217,21 +219,9 @@ export const adTemplates = {
         text-transform: uppercase;
         transform: translateY(0);
         transition: transform 0.2s ease;
-      }
-
-      /* Adding professional touches */
-      .gradient-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 120px;
-        background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 100%);
-        pointer-events: none;
-      }
-        
-      </style>
-      </head>
+      } 
+    </style>
+    </head>
       <body>
         <div class="ad-container">
           <div class="logo-container">
@@ -252,82 +242,82 @@ export const adTemplates = {
           </div>
         </div>
 
-       <script>
-    function formatText() {
+      <script>
+       function formatText() {
         const processedText = ${JSON.stringify(processedPhrase)};
         const container = document.getElementById('textContainer');
         
         if (!container) {
-            console.error('Text container not found');
-            return;
+          console.error('Text container not found');
+          return;
         }
 
         console.log('Formatting text:', processedText);
         
         const html = processedText.secondaryText 
-            ? \`
-                <p class="primary-text">\${processedText.primaryText}</p>
-                <p class="secondary-text">\${processedText.secondaryText}</p>
-              \`
-            : \`<p class="primary-text">\${processedText.primaryText}</p>\`;
+          ? \`
+              <p class="primary-text">\${processedText.primaryText}</p>
+              <p class="secondary-text">\${processedText.secondaryText}</p>
+            \`
+          : \`<p class="primary-text">\${processedText.primaryText}</p>\`;
         
         container.innerHTML = html;
         
         // Dynamic font size adjustment
         const primaryText = container.querySelector('.primary-text');
         if (primaryText) {
-            let fontSize = parseInt(window.getComputedStyle(primaryText).fontSize);
-            const minFontSize = 12;
+          let fontSize = parseInt(window.getComputedStyle(primaryText).fontSize);
+          const minFontSize = 12;
             
-            while (
-                fontSize > minFontSize && 
-                (primaryText.scrollHeight > primaryText.clientHeight || 
-                primaryText.scrollWidth > primaryText.clientWidth)
-            ) {
-                fontSize -= 2;
-                primaryText.style.fontSize = \`\${fontSize}px\`;
-            }
+          while (
+            fontSize > minFontSize && 
+            (primaryText.scrollHeight > primaryText.clientHeight || 
+            primaryText.scrollWidth > primaryText.clientWidth)
+          ) {
+            fontSize -= 2;
+            primaryText.style.fontSize = \`\${fontSize}px\`;
+          }
         }
 
         const secondaryText = container.querySelector('.secondary-text');
         if (secondaryText) {
-            let fontSize = parseInt(window.getComputedStyle(secondaryText).fontSize);
-            const minFontSize = 10;
+          let fontSize = parseInt(window.getComputedStyle(secondaryText).fontSize);
+          const minFontSize = 10;
             
-            while (
-                fontSize > minFontSize && 
-                (secondaryText.scrollHeight > secondaryText.clientHeight || 
-                secondaryText.scrollWidth > secondaryText.clientWidth)
-            ) {
-                fontSize -= 2;
-                secondaryText.style.fontSize = \`\${fontSize}px\`;
-            }
+          while (
+              fontSize > minFontSize && 
+              (secondaryText.scrollHeight > secondaryText.clientHeight || 
+              secondaryText.scrollWidth > secondaryText.clientWidth)
+          ) {
+              fontSize -= 2;
+              secondaryText.style.fontSize = \`\${fontSize}px\`;
+          }
         }
-    }
+      }
 
-    // Run when DOM is ready and after fonts are loaded
-    formatText();
-    document.fonts.ready.then(formatText);
-</script>
+      // Run when DOM is ready and after fonts are loaded
+      formatText();
+      document.fonts.ready.then(formatText);
+      </script>
       </body>
     </html>`;
-    },
+  },
 
-    // 160 x 600
-    "160x600": (options) => {
+  // 160 x 600
+  "160x600": (options) => {
     const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
 
     const processedPhrase = processAdText(phrase);
     console.log('[createAd] Processed phrase:', processedPhrase);
 
     const fontFaceRule = fontPath
-        ? `
+      ? `
         @font-face {
-            font-family: '${fontName}';
-            src: url('${fontPath}');
+          font-family: '${fontName}';
+          src: url('${fontPath}');
         }
     `
-        : '';
+      : '';
 
     return `
     <!DOCTYPE html>
@@ -348,48 +338,41 @@ export const adTemplates = {
         width: 100%;
         height: 100%;
         background-color: ${bgColor};
+        box-sizing: border-box;
         display: flex;
+        align-items: center;
         flex-direction: column;
         position: relative;
-        box-sizing: border-box;
-        padding: 4px;
       }
 
       .logo-container {
         position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 32px;
-        height: 32px;
+        top: 8px;
+        right: 8px;
+        width: 36px;
+        height: 36px;
         z-index: 2;
-        background-color: transparent;
-        padding: 2px;
-        border-radius: 4px;
       }
 
       .logo {
         width: 100%;
         height: 100%;
         object-fit: contain;
-        display: block;
       }
 
       .content-wrapper {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-      }
-
-      .text-section {
         width: 100%;
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-        padding: 56px 12px 16px 12px;
-        min-height: 140px;
+        height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        box-sizing: border-box;
+        padding-top: 50px;
+      }
+
+      .text-section {
+        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        margin: 0 auto;
+        max-width: 85%;
         position: relative;
         z-index: 1;
       }
@@ -397,91 +380,116 @@ export const adTemplates = {
       .text-container {
         display: flex;
         flex-direction: column;
-        gap: 12px;
         width: 100%;
       }
 
       .primary-text {
         color: ${textColor};
         font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-size: 18px;
         font-weight: 600;
-        margin: 0;
-        padding: 0;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
         hyphens: auto;
-        text-align: left;
-        font-size: 24px;
-        line-height: 1.2;
         letter-spacing: -0.02em;
+        line-height: 1.2;
+        margin: 0 0 4 0;
+        max-width: 95%;
+        overflow-wrap: break-word;
+        text-align: left;
+        word-wrap: break-word;
       }
 
       .secondary-text {
         color: ${textColor};
         font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-        font-size: 16px;
-        line-height: 1.3;
+        font-size: 14px;
+        font-weight: 500;
+        hyphens: auto;
+        letter-spacing: 1.2px;
+        line-height: 1;
         margin: 0;
-        font-weight: 400;
+        max-width: 90%;
+        opacity: 0.9;
+        overflow-wrap: break-word;
+        padding: 0;
+        text-align: left;
+        word-wrap: break-word;  
       }
 
-      .main-image-container {
+      .image-and-cta-container {
         flex: 1;
         display: flex;
         align-items: center;
+        flex-direction: column;
         justify-content: center;
-        margin: 12px 0;
-        padding: 0 8px;
-        box-sizing: border-box;
-        max-height: 280px;
       }
 
-      .main-image {
+      .main-image-container {
         width: 100%;
-        height: auto;
-        object-fit: contain;
-        max-height: 260px;
-        position: relative;
-        z-index: 1;
-      }
-
-      .cta-container {
-        padding: 12px;
-        margin-top: auto;
-        margin-bottom: 8px;
-      }
-
-      .cta-button {
-        width: 100%;
-        height: 44px;
-        background: ${ctaColor};
-        color: ${ctaTextColor};
-        border: none;
-        border-radius: 8px;
-        font-weight: 700;
+        height: 320px;
         display: flex;
         align-items: center;
         justify-content: center;
+        margin: 0 auto;
+        position: relative;
+      }
+
+      .main-image {
+        width: 90%;
+        height: auto;
+        object-fit: contain;
+        display: block;
+        max-height: 340px;
+        vertical-align: bottom;
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));  // Add subtle shadow
+        margin-bottom: 0;
+      }
+
+      .cta-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 16px;
+      }
+
+      .cta-button {
+        background: ${ctaColor};
+        border: none;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        color: ${ctaTextColor};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 2px;
+        margin: 0;
+        min-width: 70px;
+        padding: 6px 6px;
         text-transform: uppercase;
-        font-size: 16px;
-        letter-spacing: 0.5px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transform: translateY(0);
+        transition: transform 0.2s ease;
       }
     </style>
-  </head>
-  <body>
+    </head>
+    <body>
     <div class="ad-container">
       <div class="logo-container">
         <img src="${logoUrl}" alt="Logo" class="logo">
       </div>
-      <div class="text-section">
-        <div id="textContainer" class="text-container"></div>
-      </div>
-      <div class="main-image-container">
-        <img src="${mainImageUrl}" alt="Main Image" class="main-image">
-      </div>
-      <div class="cta-container">
-        <button class="cta-button">${ctaText}</button>
+      <div class="content-wrapper">
+        <div class="text-section">
+          <div id="textContainer" class="text-container"></div>
+        </div>
+        <div class="image-and-cta-container">
+          <div class="main-image-container">
+            <img src="${mainImageUrl}" alt="Main Image" class="main-image">
+          </div>
+          <div class="cta-container">
+            <button class="cta-button">${ctaText}</button>
+          </div>
+        </div>
       </div>
     </div>
     <script>
@@ -512,12 +520,12 @@ export const adTemplates = {
             const minFontSize = 16;
             
             while (
-                fontSize > minFontSize && 
-                (primaryText.scrollHeight > primaryText.clientHeight || 
-                primaryText.scrollWidth > primaryText.clientWidth)
+              fontSize > minFontSize && 
+              (primaryText.scrollHeight > primaryText.clientHeight || 
+              primaryText.scrollWidth > primaryText.clientWidth)
             ) {
-                fontSize -= 2;
-                primaryText.style.fontSize = \`\${fontSize}px\`;
+              fontSize -= 2;
+              primaryText.style.fontSize = \`\${fontSize}px\`;
             }
         }
 
@@ -527,12 +535,12 @@ export const adTemplates = {
             const minFontSize = 12;
             
             while (
-                fontSize > minFontSize && 
-                (secondaryText.scrollHeight > secondaryText.clientHeight || 
-                secondaryText.scrollWidth > secondaryText.clientWidth)
+              fontSize > minFontSize && 
+              (secondaryText.scrollHeight > secondaryText.clientHeight || 
+              secondaryText.scrollWidth > secondaryText.clientWidth)
             ) {
-                fontSize -= 2;
-                secondaryText.style.fontSize = \`\${fontSize}px\`;
+              fontSize -= 2;
+              secondaryText.style.fontSize = \`\${fontSize}px\`;
             }
         }
     }
@@ -541,27 +549,27 @@ export const adTemplates = {
     formatText();
     document.fonts.ready.then(formatText);
     </script>
-  </body>
-</html>`;
-},
+    </body>
+    </html>`;
+  },
 
-    "320x480": (options) => {
-        const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+  "320x480": (options) => {
+    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
 
-        const processedPhrase = processAdText(phrase);
-        console.log('[createAd] Processed phrase:', processedPhrase);
+    const processedPhrase = processAdText(phrase);
+    console.log('[createAd] Processed phrase:', processedPhrase);
 
-        // Generate the font-face rule only if fontPath is available
-        const fontFaceRule = fontPath
-            ? `
+    // Generate the font-face rule only if fontPath is available
+    const fontFaceRule = fontPath
+      ? `
             @font-face {
                 font-family: '${fontName}';
                 src: url('${fontPath}');
             }
         `
-            : ''; // No font-face if fontPath is null
+      : ''; // No font-face if fontPath is null
 
-        return `
+    return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -582,24 +590,26 @@ export const adTemplates = {
         background-color: ${bgColor};
         box-sizing: border-box;
         display: flex;
+        align-items: center;
         flex-direction: column;
         position: relative;
       }
 
       .content-wrapper {
+        width: 100%;
+        height: 100%;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-        margin-top: 20px;
-        padding: 12px;
+        justify-content: flex-start;
+        padding-top: 44px;
       }
 
       .logo-container {
         position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 40px;
-        height: 40px;
+        top: 10px;
+        right: 10px;
+        width: 46px;
+        height: 46px;
         z-index: 2;
       }
 
@@ -612,9 +622,7 @@ export const adTemplates = {
       .text-section {
         font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
         margin: 0 auto;
-        max-width: 80%;
-        padding-right: 2px;
-        padding-top: 8px;
+        max-width: 95%;
         position: relative;
         z-index: 1;
       }
@@ -659,12 +667,11 @@ export const adTemplates = {
       }
 
       .image-and-cta-container {
+        flex: 1;
         display: flex;
         align-items: center;
-        justify-content: center;
-        flex: 1;
         flex-direction: column;
-        margin: 10px;
+        justify-content: center;
       }
 
       .main-image-container {
@@ -673,19 +680,26 @@ export const adTemplates = {
         display: flex;
         align-items: center;
         justify-content: center;
+        margin: 0 auto;
         position: relative;
       }
 
       .main-image {
-        width: auto;
-        height: 100%;
+        width: 100%;
+        height: auto;
         object-fit: contain;
+        display: block;
+        max-height: 250px;
+        vertical-align: bottom;
         filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));  // Add subtle shadow
+        margin-bottom: 0;
       }
 
       .cta-container {
-        padding: 16px;
-        margin-bottom: 80px; /* Space from bottom */
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 12px;
       }
 
       .cta-button {
@@ -707,17 +721,6 @@ export const adTemplates = {
         text-transform: uppercase;
         transform: translateY(0);
         transition: transform 0.2s ease;
-      }
-
-      /* Adding professional touches */
-      .gradient-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 120px;
-        background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 100%);
-        pointer-events: none;
       }
       </style>
       </head>
@@ -741,14 +744,14 @@ export const adTemplates = {
           </div>
         </div>
 
-       <script>
-    function formatText() {
+      <script>
+       function formatText() {
         const processedText = ${JSON.stringify(processedPhrase)};
         const container = document.getElementById('textContainer');
         
         if (!container) {
-            console.error('Text container not found');
-            return;
+          console.error('Text container not found');
+          return;
         }
 
         console.log('Formatting text:', processedText);
@@ -769,12 +772,12 @@ export const adTemplates = {
             const minFontSize = 12;
             
             while (
-                fontSize > minFontSize && 
-                (primaryText.scrollHeight > primaryText.clientHeight || 
-                primaryText.scrollWidth > primaryText.clientWidth)
+              fontSize > minFontSize && 
+              (primaryText.scrollHeight > primaryText.clientHeight || 
+              primaryText.scrollWidth > primaryText.clientWidth)
             ) {
-                fontSize -= 2;
-                primaryText.style.fontSize = \`\${fontSize}px\`;
+              fontSize -= 2;
+              primaryText.style.fontSize = \`\${fontSize}px\`;
             }
         }
 
@@ -784,12 +787,12 @@ export const adTemplates = {
             const minFontSize = 10;
             
             while (
-                fontSize > minFontSize && 
-                (secondaryText.scrollHeight > secondaryText.clientHeight || 
-                secondaryText.scrollWidth > secondaryText.clientWidth)
+              fontSize > minFontSize && 
+              (secondaryText.scrollHeight > secondaryText.clientHeight || 
+              secondaryText.scrollWidth > secondaryText.clientWidth)
             ) {
-                fontSize -= 2;
-                secondaryText.style.fontSize = \`\${fontSize}px\`;
+              fontSize -= 2;
+              secondaryText.style.fontSize = \`\${fontSize}px\`;
             }
         }
     }
@@ -797,198 +800,187 @@ export const adTemplates = {
     // Run when DOM is ready and after fonts are loaded
     formatText();
     document.fonts.ready.then(formatText);
-</script>
-      </body>
+    </script>
+    </body>
     </html>`;
-    },
+  },
 
-    "1080x1080": (options) => {
-        const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+  "1080x1080": (options) => {
+    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
 
-        const processedPhrase = processAdText(phrase);
-        console.log('[createAd] Processed phrase:', processedPhrase);
+    const processedPhrase = processAdText(phrase);
+    console.log('[createAd] Processed phrase:', processedPhrase);
 
-        // Generate the font-face rule only if fontPath is available
-        const fontFaceRule = fontPath
-            ? `
+    // Generate the font-face rule only if fontPath is available
+    const fontFaceRule = fontPath
+      ? `
             @font-face {
                 font-family: '${fontName}';
                 src: url('${fontPath}');
             }
         `
-            : ''; // No font-face if fontPath is null
+      : ''; // No font-face if fontPath is null
 
-        return `
-        <!DOCTYPE html>
-        <html>
+    return `
+    <!DOCTYPE html>
+     <html>
         <head>
-        <style>
+           <style>
             ${fontFaceRule}
 
             body {
-                margin: 0;
-                padding: 0;
-                width: ${adDimensions.width}px;
-                height: ${adDimensions.height}px;
-                overflow: hidden;
+              margin: 0;
+              padding: 0;
+              width: ${adDimensions.width}px;
+              height: ${adDimensions.height}px;
+              overflow: hidden;
             }
 
             .ad-container {
-                width: 100%;
-                height: 100%;
-                background-color: ${bgColor};
-                box-sizing: border-box;
-                display: flex;
-                flex-direction: column;
-                padding: 20px;
-                position: relative;
+              width: 100%;
+              height: 100%;
+              background-color: ${bgColor};
+              box-sizing: border-box;
+              display: flex;
+              align-items: center;
+              flex-direction: column;
+              position: relative;
             }
 
             .content-wrapper {
-                display: flex;
-                flex-direction: column;
-                height: 100%;
-                justify-content: space-between;
-                margin-top: 40px;
-                padding: 40px 20px;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              flex-direction: column;
+              justify-content: flex-start;
+              padding-top: 140px;
             }
 
-            .cta-button {
-                background: ${ctaColor};
-                border: none;
-                border-radius: 12px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-                color: ${ctaTextColor};
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-                font-size: 28px;
-                font-weight: 700;
-                letter-spacing: 1px;
-                margin: 0 auto;
-                min-width: 300px;
-                padding: 24px 48px;
-                text-transform: uppercase;
-                transform: translateY(0);
-                transition: transform 0.2s ease;
-            }
+            // .cta-button {
+            //   background: ${ctaColor};
+            //   border: none;
+            //   border-radius: 12px;
+            //   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            //   color: ${ctaTextColor};
+            //   display: flex;
+            //   align-items: center;
+            //   justify-content: center;
+            //   font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+            //   font-size: 40px;
+            //   font-weight: 600;
+            //   height: 150px;
+            //   letter-spacing: 2px;
+            //   margin: 0 auto;
+            //   min-width: 300px;
+            //   padding: 4px;
+            //   text-transform: uppercase;
+            //   transform: translateY(0);
+            //   transition: transform 0.2s ease;
+            // }
 
-            .cta-container {
-                width: 100%;
-                display: flex;
-                justify-content: center;
-                margin-top: 10px;
-            }
+            // .cta-container {
+            //   width: 100%;
+            //   display: flex;
+            //   justify-content: center;
+            //   padding: 0;
+            //   position: relative;
+            // }
 
             .image-and-cta-container {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex: 1;
-                flex-direction: column;
-                gap: 20px;
-                margin-top: 40px;
+              flex: 1;
+              display: flex;
+              align-items: center;
+              flex-direction: column;
+              justify-content: center;
             }
 
             .logo {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
             }
 
             .logo-container {
-                position: absolute;
-                top: 32px;
-                right: 32px;
-                width: 80px;
-                height: 80px;
-                z-index: 2;
+              position: absolute;
+              top: 32px;
+              right: 32px;
+              width: 100px;
+              height: 100px;
+              z-index: 2;
             }
 
             .main-image {
-                width: 100%;
-                height: auto;
-                object-fit: contain;
-                max-height: 500px;
-                filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));  // Add subtle shadow
+              width: 100%;
+              height: auto;
+              object-fit: contain;
+              display: block;
+              max-height: 650px;
+              vertical-align: bottom;
+              filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));  // Add subtle shadow
+              margin-bottom: 0;
             }
 
             .main-image-container {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                position: relative;
-                width: 100%;
-                max-width: 90%;
-            }
-
-            .main-text {
-                color: ${textColor};
-                font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-                font-size: 56px;
-                font-weight: 600;
-                hyphens: auto;
-                letter-spacing: -0.02em;
-                line-height: 1.2;
-                margin: 0;
-                max-width: 100%;
-                overflow-wrap: break-word;
-                padding: 0;
-                text-align: center;
-                word-wrap: break-word; 
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              position: relative;
+              width: 100%;
+              max-width: 1000px;
+              margin: 0 auto;
             }
 
             .primary-text {
-                color: ${textColor};
-                font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-                font-size: 56px;
-                font-weight: 600;
-                hyphens: auto;
-                letter-spacing: -0.02em;
-                line-height: 1.15;
-                margin: 0 0 32px 0;
-                max-width: 95%;
-                overflow-wrap: break-word;
-                padding: 0;
-                text-align: center;
-                word-wrap: break-word;
+              color: ${textColor};
+              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-size: 56px;
+              font-weight: 600;
+              hyphens: auto;
+              letter-spacing: -0.02em;
+              line-height: 1.15;
+              margin: 0 0 32px 0;
+              max-width: 95%;
+              overflow-wrap: break-word;
+              padding: 0;
+              text-align: center;
+              word-wrap: break-word;
             }
                 
             .secondary-text {
-                color: ${textColor};
-                font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-                font-size: 46px;
-                font-weight: 400;
-                hyphens: auto;
-                line-height: 1.2;
-                margin: 0;
-                max-width: 90%;
-                opacity: 0.9;
-                overflow-wrap: break-word;
-                padding: 0;
-                text-align: center;
-                word-wrap: break-word;  
+              color: ${textColor};
+              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-size: 46px;
+              font-weight: 400;
+              hyphens: auto;
+              line-height: 1.2;
+              margin: 0;
+              max-width: 90%;
+              opacity: 0.9;
+              overflow-wrap: break-word;
+              padding: 0;
+              text-align: center;
+              word-wrap: break-word;  
             }
 
             .text-container {
-                display: flex;
-                flex-direction: column;
-                gap: 20px;
-                width: 100%;
+              display: flex;
+              flex-direction: column;
+              width: 100%;
             }
 
             .text-section {
-                font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-                margin: 0 auto;
-                max-width: 80%;
-                padding-right: 30px;  // Added padding for logo
-                padding-top: 60px;
-                position: relative;
-                z-index: 1;
+              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              margin-top: 0
+              margin-bottom: 0;
+              margin: 0 auto;
+              max-width: 95%;
+              padding-top: 0;
+              position: relative;
+              text-align: center;
+              z-index: 1;
             }
-        </style>
-        </head>
+           </style>
+          </head>
         <body>
         <div class="ad-container">
             <div class="logo-container">
@@ -1002,20 +994,18 @@ export const adTemplates = {
                     <div class="main-image-container">
                         <img src="${mainImageUrl}" alt="Main Image" class="main-image">
                     </div>
-                    <div class="cta-container">
-                        <button class="cta-button">${ctaText}</button>
-                    </div>
                 </div>
             </div>
         </div>
+
         <script>
-    function formatText() {
+        function formatText() {
         const processedText = ${JSON.stringify(processedPhrase)};
         const container = document.getElementById('textContainer');
         
         if (!container) {
-            console.error('Text container not found');
-            return;
+          console.error('Text container not found');
+          return;
         }
 
         console.log('Formatting text:', processedText);
@@ -1032,60 +1022,60 @@ export const adTemplates = {
         // Dynamic font size adjustment
         const primaryText = container.querySelector('.primary-text');
         if (primaryText) {
-            let fontSize = parseInt(window.getComputedStyle(primaryText).fontSize);
-            const minFontSize = 12;
+          let fontSize = parseInt(window.getComputedStyle(primaryText).fontSize);
+          const minFontSize = 12;
             
             while (
-                fontSize > minFontSize && 
-                (primaryText.scrollHeight > primaryText.clientHeight || 
-                primaryText.scrollWidth > primaryText.clientWidth)
+              fontSize > minFontSize && 
+              (primaryText.scrollHeight > primaryText.clientHeight || 
+              primaryText.scrollWidth > primaryText.clientWidth)
             ) {
-                fontSize -= 2;
-                primaryText.style.fontSize = \`\${fontSize}px\`;
+              fontSize -= 2;
+              primaryText.style.fontSize = \`\${fontSize}px\`;
             }
         }
 
         const secondaryText = container.querySelector('.secondary-text');
         if (secondaryText) {
-            let fontSize = parseInt(window.getComputedStyle(secondaryText).fontSize);
-            const minFontSize = 10;
-            
-            while (
-                fontSize > minFontSize && 
-                (secondaryText.scrollHeight > secondaryText.clientHeight || 
-                secondaryText.scrollWidth > secondaryText.clientWidth)
-            ) {
-                fontSize -= 2;
-                secondaryText.style.fontSize = \`\${fontSize}px\`;
-            }
+          let fontSize = parseInt(window.getComputedStyle(secondaryText).fontSize);
+          const minFontSize = 10;
+          
+          while (
+            fontSize > minFontSize && 
+            (secondaryText.scrollHeight > secondaryText.clientHeight || 
+            secondaryText.scrollWidth > secondaryText.clientWidth)
+          ) {
+            fontSize -= 2;
+            secondaryText.style.fontSize = \`\${fontSize}px\`;
+          }
         }
-    }
+      }
 
     // Run when DOM is ready and after fonts are loaded
     formatText();
     document.fonts.ready.then(formatText);
-</script>
-        </body>
-        </html>`;
-    },
+    </script>
+    </body>
+    </html>`;
+  },
 
-    "1440x1440": (options) => {
-        const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+  "1440x1440": (options) => {
+    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
 
-        const processedPhrase = processAdText(phrase);
-        console.log('[createAd] Processed phrase:', processedPhrase);
+    const processedPhrase = processAdText(phrase);
+    console.log('[createAd] Processed phrase:', processedPhrase);
 
-        // Generate the font-face rule only if fontPath is available
-        const fontFaceRule = fontPath
-            ? `
+    // Generate the font-face rule only if fontPath is available
+    const fontFaceRule = fontPath
+      ? `
             @font-face {
                 font-family: '${fontName}';
                 src: url('${fontPath}');
             }
         `
-            : ''; // No font-face if fontPath is null
+      : ''; // No font-face if fontPath is null
 
-        return `
+    return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -1322,28 +1312,28 @@ export const adTemplates = {
     // Run when DOM is ready and after fonts are loaded
     formatText();
     document.fonts.ready.then(formatText);
-</script>
-        </body>
-        </html>`;
-    },
+  </script>
+  </body>
+  </html>`;
+  },
 
-    "1440x1800": (options) => {
-        const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+  "1440x1800": (options) => {
+    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
 
-        const processedPhrase = processAdText(phrase);
-        console.log('[createAd] Processed phrase:', processedPhrase);
+    const processedPhrase = processAdText(phrase);
+    console.log('[createAd] Processed phrase:', processedPhrase);
 
-        // Generate the font-face rule only if fontPath is available
-        const fontFaceRule = fontPath
-            ? `
+    // Generate the font-face rule only if fontPath is available
+    const fontFaceRule = fontPath
+      ? `
             @font-face {
                 font-family: '${fontName}';
                 src: url('${fontPath}');
             }
         `
-            : ''; // No font-face if fontPath is null
+      : ''; // No font-face if fontPath is null
 
-        return `
+    return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -1366,7 +1356,6 @@ export const adTemplates = {
               display: flex;
               align-items: center;
               flex-direction: column;
-              padding: 40px;
               position: relative;
             }
 
@@ -1374,10 +1363,9 @@ export const adTemplates = {
               width: 100%;
               height: 100%;
               display: flex;
-              align-items: center;
               flex-direction: column;
               justify-content: flex-start;
-              margin-top: 100px;
+              padding-top: 240px;
             }
 
             .cta-button {
@@ -1390,13 +1378,13 @@ export const adTemplates = {
               align-items: center;
               justify-content: center;
               font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-              font-size: 40px;
+              font-size: 80px;
               font-weight: 600;
-              height: 100px;
-              letter-spacing: 1px;
+              height: 150px;
+              letter-spacing: 2px;
               margin: 0 auto;
               min-width: 600px;
-              padding: 30px 40px;
+              padding: 4px;
               text-transform: uppercase;
               transform: translateY(0);
               transition: transform 0.2s ease;
@@ -1413,10 +1401,9 @@ export const adTemplates = {
             .image-and-cta-container {
               flex: 1;
               display: flex;
+              align-items: center;
               flex-direction: column;
               justify-content: center;
-              gap: 20px;
-              padding: 40px 0;
             }
 
             .logo {
@@ -1429,8 +1416,8 @@ export const adTemplates = {
               position: absolute;
               top: 40px;
               right: 40px;
-              width: 120px;
-              height: 120px;
+              width: 200px;
+              height: 200px;
               z-index: 2;
             }
 
@@ -1439,19 +1426,19 @@ export const adTemplates = {
               height: auto;
               object-fit: contain;
               display: block;
-              max-height: 900px;
+              max-height: 1100px;
+              vertical-align: bottom;
               filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));  // Add subtle shadow
+              margin-bottom: 0;
             }
 
             .main-image-container {
               width: 100%;
-              max-width: 800px;
-              height: auto;
-              flex: 1;
+              max-width: 1000px;
               display: flex;
               align-items: center;
               justify-content: center;
-              margin-bottom: 10px;
+              margin: 0 auto;
               position: relative;
             }
 
@@ -1490,15 +1477,15 @@ export const adTemplates = {
             .text-container {
               display: flex;
               flex-direction: column;
-              gap: 24px;
               width: 100%;
             }
 
             .text-section {
               font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-              margin-bottom: 40px;
-              max-width: 80%;
-              padding-top: 40px;
+              margin-top: 0
+              margin-bottom: 0;
+              max-width: 95%;
+              padding-top: 0;
               position: relative;
               text-align: center;
               z-index: 1;
@@ -1580,28 +1567,28 @@ export const adTemplates = {
     // Run when DOM is ready and after fonts are loaded
     formatText();
     document.fonts.ready.then(formatText);
-</script>
-        </body>
-        </html>`;
-    },
+    </script>
+    </body>
+    </html>`;
+  },
 
-    "1440x2560": (options) => {
-        const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+  "1440x2560": (options) => {
+    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
 
-        const processedPhrase = processAdText(phrase);
-        console.log('[createAd] Processed phrase:', processedPhrase);
+    const processedPhrase = processAdText(phrase);
+    console.log('[createAd] Processed phrase:', processedPhrase);
 
-        // Generate the font-face rule only if fontPath is available
-        const fontFaceRule = fontPath
-            ? `
+    // Generate the font-face rule only if fontPath is available
+    const fontFaceRule = fontPath
+      ? `
             @font-face {
                 font-family: '${fontName}';
                 src: url('${fontPath}');
             }
         `
-            : ''; // No font-face if fontPath is null
+      : ''; // No font-face if fontPath is null
 
-        return `
+    return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -1831,8 +1818,8 @@ export const adTemplates = {
     // Run when DOM is ready and after fonts are loaded
     formatText();
     document.fonts.ready.then(formatText);
-</script>
-        </body>
-        </html>`;
-    },
+    </script>
+    </body>
+    </html>`;
+  },
 };

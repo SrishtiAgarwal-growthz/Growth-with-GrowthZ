@@ -44,20 +44,21 @@ export const createAds = async (req, res) => {
   try {
     console.log("[CreativesController] Received request to create ads.");
     
-    const { appId } = req.body;
+    const { appId, userId } = req.body;
 
-    if (!appId) {
-      return res.status(400).json({ message: "App ID is required." });
+    if (!appId || !userId) {
+      return res.status(400).json({ message: "App ID and User ID is required." });
     }
 
     console.log(`[CreativesController] Creating ads for app: ${appId}`);
 
     // Call service to generate ads
-    const ads = await generateAdImages(appId);
+    const ads = await generateAdImages(appId, userId);
     console.log(`[CreativesController] Ads generated successfully for app ID: ${appId}`, ads);
 
     res.status(200).json({
       message: "Ads generated successfully.",
+      userId,
       ads,
     });
   } catch (error) {
@@ -73,26 +74,27 @@ export const createAds = async (req, res) => {
 export const createAnimations = async (req, res) => {
   try {
     console.log("[CreativesController] Received request to create animations.");
+    
+    const { appId, userId } = req.body;
 
-    const { appId } = req.body;
-
-    if (!appId) {
-      return res.status(400).json({ message: "App ID is required." });
+    if (!appId || !userId) {
+      return res.status(400).json({ message: "App ID and User ID is required." });
     }
 
-    console.log(`[CreativesController] Generating animations for app: ${appId}`);
+    console.log(`[CreativesController] Creating animated ads for app: ${appId}`);
 
-    // Call service to generate animations
-    const animationAds = await generateAdAnimation(appId);
-    console.log(`[CreativesController] Animation ads generated successfully for app ID: ${appId}`, animationAds);
+    // Call service to generate ads
+    const animations = await generateAdAnimation(appId, userId);
+    console.log(`[CreativesController] Animations generated successfully for app ID: ${appId}`, animations);
 
     res.status(200).json({
-      message: "Animation creatives generated successfully.",
-      animationAds,
+      message: "Animations generated successfully.",
+      userId,
+      animations,
     });
   } catch (error) {
     // Log the error details for debugging
-    console.error("[CreativesController] Error occurred while generating ads:", error.message);
+    console.error("[CreativesController] Error occurred while generating animations:", error.message);
     console.error("[CreativesController] Error stack trace:", error.stack);
 
     // Respond with a 500 status code and the error message

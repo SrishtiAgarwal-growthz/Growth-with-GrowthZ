@@ -25,7 +25,7 @@ const fontsDir = path.resolve(__dirname, "fonts");
 export const removeBackground = async (imageUrl, options = {}) => {
   const {
     crop = true,
-    cropMargin = '10%',
+    cropMargin = '0%',
     scale = 'original',
     position = scale !== 'original' ? 'center' : 'original'
   } = options;

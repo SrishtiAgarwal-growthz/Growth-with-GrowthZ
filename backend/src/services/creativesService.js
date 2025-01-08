@@ -21,8 +21,9 @@ import {
   getOptimalTextColor,
 } from "../utils/colorUtils.js";
 import { createAd } from "../utils/puppeteerAdGenerator.js";
-import { generateAnimationCreative } from "../utils/animationGenerator.js";
 import { adDimensionsConfig } from "../utils/adDimensions.js";
+import { animationDimensionsConfig } from "../utils/animationsDimensions.js";
+import { createAnimations } from "../utils/animationGenerator.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -171,7 +172,7 @@ export const processAppImages = async (appId, userId) => {
   }
 };
 
-export const generateAdImages = async (appId) => {
+export const generateAdImages = async (appId, userId) => {
   const client = await connectToMongo();
   const db = client.db("GrowthZ");
   const appsCollection = db.collection("Apps");
@@ -295,17 +296,16 @@ export const generateAdImages = async (appId) => {
       }
     }
 
-    console.log(
-      "[generateAdImages] Ad generation and upload process completed. Total ads:",
-      ads.length
-    );
+    console.log("[generateAdImages] Ad generation and upload process completed. Total ads:", ads.length);
 
     // Save to Creatives Collection
     const creativesDocument = {
       appId,
+      userId,
       phrases: approvedPhrases.map((text) => ({ text, status: "used" })),
       adUrls: ads.map((ad) => ({
         creativeUrl: ad,
+        phraseUsed: approvedPhrases.map((text) => ({ text })),
         status: "pending",
       })),
       createdAt: new Date(),
@@ -324,12 +324,12 @@ export const generateAdImages = async (appId) => {
   }
 };
 
-export const generateAdAnimation = async (appId) => {
+export const generateAdAnimation = async (appId, userId) => {
   const client = await connectToMongo();
   const db = client.db("GrowthZ");
   const appsCollection = db.collection("Apps");
   const adCopiesCollection = db.collection("AdCopies");
-  const creativesCollection = db.collection("Animations");
+  const animationCollection = db.collection("Animations");
 
   try {
     console.log(`[generateAdAnimation] Fetching app and phrases for appId: ${appId}`);
@@ -342,13 +342,16 @@ export const generateAdAnimation = async (appId) => {
 
     // Fetch approved phrases
     const adCopy = await adCopiesCollection.findOne({ appId });
-    if (!adCopy) {
+    if (!adCopy || !Array.isArray(adCopy.phrases)) {
       throw new Error("[generateAdAnimation] No phrases found for appId: " + appId);
     }
 
-    const approvedPhrases = adCopy.phrases.filter((p) => p.status === "approved");
-    if (!approvedPhrases.length) {
-      throw new Error("[generateAdImages] No approved phrases available.");
+    const approvedPhrases = adCopy.phrases
+      .filter((p) => p.status === "approved")
+      .map((p) => p.text);
+
+    if (approvedPhrases.length === 0) {
+      throw new Error("[generateAdAnimation] No approved phrases available.");
     }
 
     console.log("[generateAdAnimation] Approved phrases fetched successfully:", approvedPhrases);
@@ -361,7 +364,7 @@ export const generateAdAnimation = async (appId) => {
       `[generateAdAnimation] Font Family fetched: ${fontDetails.fontName}, URL: ${fontDetails.fontPath}`
     );
 
-    const ads = [];
+    const animations = [];
     let phraseIndex = 0;
 
     // Use only the first three images with `removedBgUrl`
@@ -377,14 +380,14 @@ export const generateAdAnimation = async (appId) => {
         continue;
       }
 
-      for (const { width, height, name } of adDimensionsConfig) {
+      for (const { width, height, name } of animationDimensionsConfig) {
         const currentPhrase = approvedPhrases[phraseIndex];
         phraseIndex = (phraseIndex + 1) % approvedPhrases.length;
 
         // Get optimal text color based on background
         let adjustedTextColor = getOptimalTextColor(image.backgroundColor);
 
-        // Adjust if needed
+        // Verify and adjust text color if needed
         if (areColorsSimilar(image.backgroundColor, adjustedTextColor)) {
           adjustedTextColor = getContrastingColor(image.backgroundColor);
         }
@@ -393,11 +396,12 @@ export const generateAdAnimation = async (appId) => {
         let adjustedCTAColor = app.iconBackgroundColor;
         let adjustedCTATextColor = adjustedTextColor; // Start with the main text color
 
-        // Check if CTA background is similar
+        // Check if CTA background is similar to image background
         if (areColorsSimilar(image.backgroundColor, adjustedCTAColor)) {
           adjustedCTAColor = getContrastingColor(image.backgroundColor);
         }
 
+        // Ensure CTA text has good contrast with CTA background
         if (areColorsSimilar(adjustedCTAColor, adjustedCTATextColor)) {
           adjustedCTATextColor = getContrastingColor(adjustedCTAColor);
         }
@@ -407,8 +411,8 @@ export const generateAdAnimation = async (appId) => {
           mainImageUrl: image.removedBgUrl,
           fontName: fontDetails.fontName,
           fontPath: fontDetails.fontPath,
-          phrase: currentPhrase.replace(/\*\*/g, ""),
-          outputDir: path.join(process.cwd(), "generated_animations", name),
+          phrase: currentPhrase,
+          outputDir: path.join(process.cwd(), "animations", name),
           bgColor: image.backgroundColor,
           adDimensions: { width, height },
           fontSize: width > 300 ? "24px" : "16px",
@@ -418,46 +422,51 @@ export const generateAdAnimation = async (appId) => {
           ctaTextColor: adjustedCTATextColor,
         };
 
-        console.log("[CreativeService] Generating ad with options:", adOptions);
+        console.log("[CreativeService] Generating animations with options:", adOptions);
 
         try {
-          fs.mkdirSync(adOptions.outputDir, { recursive: true });
-          const adPath = await generateAnimationCreative(adOptions);
+          const adPath = await createAnimations(adOptions);
 
-          ads.push({
-            filePath: adPath,
+          // // If you want to upload to S3:
+          // const s3Url = await uploadToS3(
+          //   fs.readFileSync(adPath),
+          //   `creatives/${appId}`,
+          //   `ad-${appId}-${name}-${Date.now()}.png`
+          // );
+
+          animations.push({
             phrase: currentPhrase,
+            animationUrl: adPath,
             size: name,
           });
 
-          console.log(`[CreativeService] Ad generated successfully for size ${name}:`, adPath);
-          console.log(`[CreativeService] Ad uploaded to S3 successfully for size ${name}:`, "s3UrlOrN/A");
+          console.log(`[CreativeService] Animations generated successfully for size ${name}:`, adPath);
+          // console.log(`[CreativeService] Animations uploaded to S3 successfully for size ${name}:`, "s3UrlOrN/A");
         } catch (error) {
           console.error(`[CreativeService] Error generating ad for size ${name}:`, error.message);
         }
       }
     }
 
-    console.log(
-      "[generateAdImages] Ad generation and upload process completed. Total ads:",
-      ads.length
-    );
+    console.log("[generateAdAnimation] Animations generation and upload process completed. Total ads:", animations.length);
 
-    // Save to `Animations` collection
-    const creativesDocument = {
+    // Save to Animation Collection
+    const animationDocument = {
       appId,
+      userId,
       phrases: approvedPhrases.map((text) => ({ text, status: "used" })),
-      adUrls: ads.map((ad) => ({
-        creativeUrl: ad,
+      animationUrls: animations.map((anim) => ({
+        animationUrl: anim,
+        phraseUsed: approvedPhrases.map((text) => ({ text })),
         status: "pending",
       })),
       createdAt: new Date(),
     };
 
-    const result = await creativesCollection.insertOne(creativesDocument);
+    const result = await animationCollection.insertOne(animationDocument);
     console.log("[CreativeService] Animations document saved successfully.", result.insertedId);
 
-    return { ...creativesDocument, _id: result.insertedId };
+    return { ...animationDocument, _id: result.insertedId };
   } catch (error) {
     console.error("[CreativeService] Error during ad generation:", error.message);
     throw error;
