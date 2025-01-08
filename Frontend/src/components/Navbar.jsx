@@ -18,27 +18,28 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 w-full z-50 h-[82px] md:h-[96px] flex items-center transition-colors duration-300 ${
+      className={`fixed top-0 left-0 w-full z-50 h-[5.125rem] md:h-[6rem] flex items-center transition-colors duration-300 ${
         hasScrolled
           ? "bg-black/60 backdrop-blur-xl" // When scrolled
           : "bg-black" // At the top (no scroll)
       }`}
     >
-      <div className="max-w-7xl mx-auto flex justify-between items-center px-8 w-full h-full">
+      <div className="max-w-7xl mx-auto flex justify-between items-center px-[2rem] w-full h-full">
         {/* Logo */}
         <button
-          onClick={()=> navigate("/")}
-          className="flex items-center">
+          onClick={() => navigate("/")}
+          className="flex items-center"
+        >
           <img
             src={logo}
             alt="Logo"
-            className="w-[120px] h-[32.24px] md:w-[185px] md:h-[40px]"
+            className="w-[7.5rem] h-[2.015rem] md:w-[11.5625rem] md:h-[2.5rem]"
           />
         </button>
 
         {/* Desktop Menu */}
-        <div className="hidden custom-md:flex items-center space-x-14">
-          <div className="flex space-x-8 text-[16px]">
+        <div className="hidden custom-md:flex items-center space-x-[3.5rem]">
+          <div className="flex space-x-[2rem] text-[1rem]">
             <a
               href="#products"
               className="text-white hover:text-blue-500 transition duration-300"
@@ -72,61 +73,66 @@ const Navbar = () => {
           </div>
           <button
             onClick={() => navigate("/login")}
-            className="bg-transparent text-white px-6 py-2 rounded-full border-2 border-blue-500 hover:bg-blue-500 hover:text-black transition duration-300">
+            className="bg-transparent text-white px-[1.5rem] py-[0.5rem] rounded-full border-2 border-blue-500 hover:bg-blue-500 hover:text-black transition duration-300"
+          >
             TRY ME
           </button>
         </div>
 
         {/* Mobile Menu Button */}
-        <button onClick={() => setIsOpen(!isOpen)} className="custom-md:hidden flex items-center justify-center">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="custom-md:hidden flex items-center justify-center"
+        >
           <img
             src={menuIcon}
             alt={isOpen ? "Close menu" : "Open menu"}
-            className="w-8 h-8 object-contain"
+            className="w-[2rem] h-[2rem] object-contain"
           />
         </button>
       </div>
 
       {/* Mobile Menu */}
       <div
-        className={`md:hidden absolute top-[82px] left-0 right-0 bg-black transition-all duration-300 ease-in-out ${
+        className={`md:hidden absolute top-[5.125rem] left-0 right-0 bg-black transition-all duration-300 ease-in-out ${
           isOpen ? "h-auto opacity-100" : "h-0 opacity-0 overflow-hidden"
         }`}
       >
-        <div className="px-8 py-4 space-y-4">
+        <div className="px-[2rem] py-[1rem] space-y-[1rem]">
           <a
             href="#products"
-            className="block text-white hover:text-blue-500 py-2"
+            className="block text-white hover:text-blue-500 py-[0.5rem]"
           >
             Products
           </a>
           <a
             href="#clients"
-            className="block text-white hover:text-blue-500 py-2"
+            className="block text-white hover:text-blue-500 py-[0.5rem]"
           >
             Clients
           </a>
           <a
             href="#partners"
-            className="block text-white hover:text-blue-500 py-2"
+            className="block text-white hover:text-blue-500 py-[0.5rem]"
           >
             Partners
           </a>
           <a
             href="#solutions"
-            className="block text-white hover:text-blue-500 py-2"
+            className="block text-white hover:text-blue-500 py-[0.5rem]"
           >
             Solutions
           </a>
           <a
             href="#resources"
-            className="block text-white hover:text-blue-500 py-2"
+            className="block text-white hover:text-blue-500 py-[0.5rem]"
           >
             Resources
           </a>
           <button
             onClick={() => navigate("/login")}
-            className="w-full bg-transparent text-white px-6 py-2 rounded-full border-2 border-blue-500 hover:bg-blue-500 hover:text-black transition duration-300">
+            className="w-full bg-transparent text-white px-[1.5rem] py-[0.5rem] rounded-full border-2 border-blue-500 hover:bg-blue-500 hover:text-black transition duration-300"
+          >
             TRY ME
           </button>
         </div>

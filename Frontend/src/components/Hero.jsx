@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
-import image1 from "../assets/image1.png";
-import image2 from "../assets/image2.png";
-import image3 from "../assets/image3.png";
-import image4 from "../assets/image4.png";
-import image5 from "../assets/image5.png";
-import image6 from "../assets/image6.png";
+import image1 from "../assets/HomePage/Hero1.png";
+import image2 from "../assets/HomePage/Hero2.png";
+import image3 from "../assets/HomePage/Hero3.png";
+import image4 from "../assets/HomePage/Hero4.png";
+import image5 from "../assets/HomePage/Hero5.png";
+import image6 from "../assets/HomePage/Hero6.png";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ const Hero = () => {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      setIsMobile(window.innerWidth <= 768); // 768px → 48rem
     };
     
     checkMobile();
@@ -30,17 +30,17 @@ const Hero = () => {
   }, []);
 
   return (
-    <div className="relative w-full bg-black min-h-[510px]  md:min-h-[680px] lg:min-h-screen overflow-hidden mt-[80px] lg:mt-[96px]">
+    <div className="relative w-full bg-black min-h-[31.875rem] md:min-h-[42.5rem] lg:min-h-screen overflow-hidden mt-[5rem] lg:mt-[5rem]">
       {/* Gradient Background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="w-full h-full relative">
           <div className="absolute inset-0 bg-black" />
           <div
-            className="absolute left-1/2 top-[75%] -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px]"
+            className="absolute left-1/2 top-[75%] -translate-x-1/2 -translate-y-1/2 w-[50rem] h-[37.5rem]"
             style={{
               background:
                 "radial-gradient(circle at center, rgba(1,100,248,0.5) 0%, rgba(2,43,104,0.5) 50%, transparent 80%)",
-              filter: "blur(80px)",
+              filter: "blur(5rem)", // 80px → 5rem
             }}
           />
         </div>
@@ -49,25 +49,25 @@ const Hero = () => {
       {/* Combined Content Container */}
       <div className="relative z-10 flex flex-col items-center">
         {/* Hero Content */}
-        <div className="w-full max-w-[877px] mx-auto px-4 sm:px-6 pt-8 sm:pt-[36px] pb-2 sm:pb-8 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white">
+        <div className="w-full max-w-[54.8125rem] mx-auto px-[1rem] sm:px-[1.5rem] pt-[1.5rem] sm:pt-[2.25rem] pb-[0.5rem] sm:pb-[2rem] text-center">
+          <h1 className="text-[1.875rem] sm:text-[2.25rem] md:text-[3.125rem] lg:text-[3.75rem] font-bold text-white">
             Powering the <span style={growthStyle}>&ldquo;Growth&rdquo;</span>
           </h1>
 
-          <p className="text-gray-300 text-base sm:text-lg lg:text-[20px] mt-3 sm:mt-4">
+          <p className="text-gray-300 text-[1rem] sm:text-[1.125rem] lg:text-[1.25rem] mt-[0.75rem] sm:mt-[0.25rem]">
             Campaign &mdash;{">"} Scalable &mdash;{">"} Conversions
           </p>
 
-          <div className="flex justify-center mt-4 sm:mt-6">
+          <div className="flex justify-center mt-[1rem] sm:mt-[1.5rem]">
             <div
               onClick={() => navigate("/login")}
-              className="bg-[#015FF8] p-[2px] rounded-full w-[128px] md:w-[180px] hover:shadow-lg transition-all duration-300 cursor-pointer"
+              className="bg-[#015FF8] p-[0.125rem] rounded-full w-[8rem] md:w-[11.25rem] hover:shadow-lg transition-all duration-300 cursor-pointer"
             >
-              <button className="bg-[#015FF8] w-full h-[44px] md:h-[62px] px-4 rounded-full text-[12px] md:text-xl flex items-center justify-between text-white">
-                <span className="ml-3 font-bold">TRY ME</span>
-                <div className="w-8 md:w-12 h-8 md:h-12 rounded-full bg-black flex items-center justify-center">
+              <button className="bg-[#015FF8] w-full h-[2.75rem] md:h-[3.875rem] px-[1rem] rounded-full text-[0.75rem] md:text-[1.25rem] flex items-center justify-between text-white">
+                <span className="ml-[0.75rem] font-bold">TRY ME</span>
+                <div className="w-[2rem] md:w-[3rem] h-[2rem] md:h-[3rem] rounded-full bg-black flex items-center justify-center">
                   <svg
-                    className="w-6 md:w-8 h-6 md:h-8 text-white transform -rotate-45"
+                    className="w-[1.5rem] md:w-[2rem] h-[1.5rem] md:h-[2rem] text-white transform -rotate-45"
                     fill="none"
                     strokeWidth="2"
                     stroke="currentColor"
@@ -94,7 +94,7 @@ const Hero = () => {
                       alt={`Slide ${index + 1}`}
                       className="carousel-image"
                     />
-                    <div className="absolute inset-0 rounded-lg ring-1 ring-blue-500/20" />
+                    <div className="absolute inset-0 rounded-lg" />
                   </div>
                 </div>
               ))}
@@ -132,19 +132,15 @@ const Hero = () => {
 
           .carousel-item {
             flex-shrink: 0;
-<<<<<<< HEAD
-            padding: 0.;
-=======
             padding: 0;
-            margin-right: ${isMobile ? '16px' : '0'};
-            margin-top: ${isMobile ? '16px' : '0'};
->>>>>>> 161091424849dbe675037fa693303413bd465e60
-            width: ${isMobile ? '280px' : '400px'};
+            margin-right: ${isMobile ? '1rem' : '0.75rem'}; // 16px → 1rem
+            margin-top: ${isMobile ? '1rem' : '0'}; // 16px → 1rem
+            width: ${isMobile ? '17.5rem' : '25rem'}; // 280px → 17.5rem, 400px → 25rem
           }
 
           .carousel-image-container {
             width: 100%;
-            height: ${isMobile ? '280px' : '400px'};
+            height: ${isMobile ? '17.5rem' : '25rem'}; // 280px → 17.5rem, 400px → 25rem
             position: relative;
             border-radius: 0.5rem;
             overflow: hidden;
@@ -176,7 +172,7 @@ const Hero = () => {
             top: 0;
             right: 0;
             bottom: 0;
-            width: 100px;
+            width: 6.25rem; // 100px → 6.25rem
             background: linear-gradient(to right, transparent, black);
             pointer-events: none;
           }
