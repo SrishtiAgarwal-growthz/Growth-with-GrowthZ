@@ -1,32 +1,46 @@
 import { useNavigate } from "react-router-dom";
-import image1 from "../assets/image1.png";
-import image2 from "../assets/image2.png";
-import image3 from "../assets/image3.png";
-import image4 from "../assets/image4.png";
-import image5 from "../assets/image5.png";
-import image6 from "../assets/image6.png";
+import { useState, useEffect } from "react";
+import image1 from "../assets/HomePage/Hero1.png";
+import image2 from "../assets/HomePage/Hero2.png";
+import image3 from "../assets/HomePage/Hero3.png";
+import image4 from "../assets/HomePage/Hero4.png";
+import image5 from "../assets/HomePage/Hero5.png";
+import image6 from "../assets/HomePage/Hero6.png";
 
 const Hero = () => {
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(false);
+
   const images = [image1, image2, image3, image4, image5, image6];
+
   const growthStyle = {
     color: "#007bff",
     fontWeight: "bold",
     fontFamily: "sans-serif",
   };
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768); // 768px → 48rem
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
-    <div className="relative w-full bg-black min-h-[510px] md:min-h-[680px] lg:min-h-screen overflow-hidden mt-[80px] lg:mt-[96px]">
+    <div className="relative w-full bg-black min-h-[31.875rem] md:min-h-[42.5rem] lg:min-h-screen overflow-hidden mt-[5rem] lg:mt-[5rem]">
       {/* Gradient Background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="w-full h-full relative">
           <div className="absolute inset-0 bg-black" />
           <div
-            className="absolute left-1/2 top-[75%] -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px]"
+            className="absolute left-1/2 top-[75%] -translate-x-1/2 -translate-y-1/2 w-[50rem] h-[37.5rem]"
             style={{
               background:
                 "radial-gradient(circle at center, rgba(1,100,248,0.5) 0%, rgba(2,43,104,0.5) 50%, transparent 80%)",
-              filter: "blur(80px)",
+              filter: "blur(5rem)", // 80px → 5rem
             }}
           />
         </div>
@@ -35,25 +49,25 @@ const Hero = () => {
       {/* Combined Content Container */}
       <div className="relative z-10 flex flex-col items-center">
         {/* Hero Content */}
-        <div className="w-full max-w-[877px] mx-auto px-4 sm:px-6 pt-8 sm:pt-[36px] pb-2 sm:pb-8 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white">
+        <div className="w-full max-w-[54.8125rem] mx-auto px-[1rem] sm:px-[1.5rem] pt-[1.5rem] sm:pt-[2.25rem] pb-[0.5rem] sm:pb-[2rem] text-center">
+          <h1 className="text-[1.875rem] sm:text-[2.25rem] md:text-[3.125rem] lg:text-[3.75rem] font-bold text-white">
             Powering the <span style={growthStyle}>&ldquo;Growth&rdquo;</span>
           </h1>
 
-          <p className="text-gray-300 text-base sm:text-lg lg:text-[20px] mt-3 sm:mt-4">
+          <p className="text-gray-300 text-[1rem] sm:text-[1.125rem] lg:text-[1.25rem] mt-[0.75rem] sm:mt-[0.25rem]">
             Campaign &mdash;{">"} Scalable &mdash;{">"} Conversions
           </p>
 
-          <div className="flex justify-center mt-4 sm:mt-6">
+          <div className="flex justify-center mt-[1rem] sm:mt-[1.5rem]">
             <div
               onClick={() => navigate("/login")}
-              className="bg-[#015FF8] p-[2px] rounded-full w-[128px] md:w-[180px] hover:shadow-[0_0_20px_4px_rgba(1,95,248,0.7)] transition-all duration-300"
+              className="bg-[#015FF8] p-[0.125rem] rounded-full w-[8rem] md:w-[11.25rem] hover:shadow-lg transition-all duration-300 cursor-pointer"
             >
-              <button className="bg-[#015FF8] w-full h-[44px] md:h-[62px] px-4 rounded-full text-[12px] md:text-xl flex items-center justify-between text-white">
-                <span className="ml-3 font-bold pr-[2px]">TRY ME</span>
-                <div className="w-8 md:w-12 h-8 md:h-12 rounded-full bg-black flex items-center justify-center transition-colors duration-200 hover:bg-black group">
+              <button className="bg-[#015FF8] w-full h-[2.75rem] md:h-[3.875rem] px-[1rem] rounded-full text-[0.75rem] md:text-[1.25rem] flex items-center justify-between text-white">
+                <span className="ml-[0.75rem] font-bold">TRY ME</span>
+                <div className="w-[2rem] md:w-[3rem] h-[2rem] md:h-[3rem] rounded-full bg-black flex items-center justify-center">
                   <svg
-                    className="w-6 md:w-8 h-6 md:h-8 text-white transform -rotate-45 transition-colors duration-200"
+                    className="w-[1.5rem] md:w-[2rem] h-[1.5rem] md:h-[2rem] text-white transform -rotate-45"
                     fill="none"
                     strokeWidth="2"
                     stroke="currentColor"
@@ -68,61 +82,163 @@ const Hero = () => {
         </div>
 
         {/* Carousel Container */}
-        <div className="w-full ">
-          <article className="flex w-[300%] animate-bannermove">
-            {[0, 1, 2].map((groupIndex) => (
-              <div key={groupIndex} className="w-full flex">
-                <ul className="flex list-none p-0 m-2 lg:m-0">
-                  {images.map((img, index) => (
-                    <li
-                      key={index}
-                      className="flex-shrink-0 w-[300px] sm:w-[300px] md:w-[400px] lg:w-[400px] 
-                               h-[290px] sm:h-[200px] md:h-[400px] lg:h-[400px] 
-                               flex items-center justify-center px-[6px]"
-                    >
-                      <div className="w-full h-full rounded-lg overflow-hidden relative">
-                        <img
-                          src={img}
-                          alt={`Slide ${index + 1}`}
-                          className="block w-full h-full object-contain"
-                        />
-                        {/* Card Glow Effect */}
-                        <div className="absolute inset-0 rounded-lg ring-1 ring-blue-500/20" />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </article>
+        <div className="w-full overflow-hidden">
+          <div className="carousel-container">
+            <div className="carousel-track">
+              {/* First set of images */}
+              {images.map((img, index) => (
+                <div key={`first-${index}`} className="carousel-item">
+                  <div className="carousel-image-container">
+                    <img
+                      src={img}
+                      alt={`Slide ${index + 1}`}
+                      className="carousel-image"
+                    />
+                    <div className="absolute inset-0 rounded-lg" />
+                  </div>
+                </div>
+              ))}
+              {/* Duplicate set for smooth infinite scroll */}
+              {images.map((img, index) => (
+                <div key={`second-${index}`} className="carousel-item">
+                  <div className="carousel-image-container">
+                    <img
+                      src={img}
+                      alt={`Slide ${index + 1}`}
+                      className="carousel-image"
+                    />
+                    <div className="absolute inset-0 rounded-lg" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
       <style>
         {`
-          @keyframes bannermove {
-            0% {
-              transform: translateX(0);
-            }
-            100% {
-              transform: translateX(-66.666%);
-            }
-          }
-          .animate-bannermove {
-            animation: bannermove 40s linear infinite;
-          }
-          
-          @media (hover: hover) {
-            .animate-bannermove:hover {
-              animation-play-state: paused;
-            }
-          }
-          
-          @media (max-width: 640px) {
-            .animate-bannermove {
-              animation-duration: 20s;
-            }
-          }
+           .carousel-container {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    margin-top: ${isMobile ? "1.5rem" : "0"};
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pinch-zoom;
+  }
+
+  .carousel-track {
+    display: flex;
+    width: max-content;
+    animation: smoothScroll 30s linear infinite;
+    will-change: transform;
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+
+  .carousel-item {
+    flex: 0 0 auto;
+    padding: 0;
+    margin-right: ${isMobile ? "0.5rem" : "0rem"};
+    margin-top: ${isMobile ? "0.5rem" : "0"};
+    width: ${isMobile ? "calc(100vw - 4rem)" : "23.5rem"};
+    max-width: ${isMobile ? "17.5rem" : "25rem"};
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  .carousel-image-container {
+    width: 100%;
+    height: ${isMobile ? "17.5rem" : "25rem"};
+    position: relative;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  .carousel-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimizeQuality;
+  }
+
+  @-webkit-keyframes smoothScroll {
+    0% {
+      -webkit-transform: translate3d(0, 0, 0);
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      -webkit-transform: translate3d(-50%, 0, 0);
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  @keyframes smoothScroll {
+    0% {
+      -webkit-transform: translate3d(0, 0, 0);
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      -webkit-transform: translate3d(-50%, 0, 0);
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  .carousel-track:hover {
+    -webkit-animation-play-state: paused;
+    animation-play-state: paused;
+  }
+
+  /* Smooth fade effect at the edges */
+  .carousel-track::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 6.25rem;
+    background: linear-gradient(to right, rgba(0,0,0,0), rgba(0,0,0,1));
+    pointer-events: none;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  /* Remove blue highlight on tap in iOS */
+  .carousel-container, 
+  .carousel-track, 
+  .carousel-item, 
+  .carousel-image-container {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Improve performance on iOS */
+  @supports (-webkit-overflow-scrolling: touch) {
+    .carousel-track {
+      -webkit-overflow-scrolling: touch;
+      -webkit-transform: translate3d(0, 0, 0);
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* Prevent text size adjustment on orientation change */
+  @media screen and (orientation: portrait) {
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+  }
         `}
       </style>
     </div>

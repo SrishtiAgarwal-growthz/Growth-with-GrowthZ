@@ -6,6 +6,9 @@ import {
   approvePhrase,
   rejectPhrase,
 } from "../logic/genius/geniusApi.js";
+import logo from "../assets/logo.png";
+import frame from "../assets/Frame.png";
+import { useNavigate } from "react-router-dom";
 
 const BASE_URL = "https://growth-with-growthz.onrender.com";
 
@@ -36,6 +39,7 @@ async function createAds(appId) {
 }
 
 const GeniusMarketingForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     google_play: "",
     apple_app: "",
@@ -74,7 +78,7 @@ const GeniusMarketingForm = () => {
       phrases.phrases.phrases && // an array of { text, status }
       !phrases.uspPhrases // means we haven't inserted them yet
     ) {
-      const dbPhrases = phrases.phrases.phrases; 
+      const dbPhrases = phrases.phrases.phrases;
       console.log("Existing phrases from DB:", dbPhrases);
 
       // Convert array of objects -> array of strings for the UI
@@ -90,8 +94,7 @@ const GeniusMarketingForm = () => {
 
       // 2) Set local approvalStates to DB statuses
       setApprovalStates(statesFromDB);
-
-    } 
+    }
     // (B) If we have brand-new phrases (no "already_exists") but haven't set approval states yet
     else if (phrases.uspPhrases && approvalStates.length === 0) {
       console.log("Brand-new phrases => defaulting to 'pending'.");
@@ -126,11 +129,14 @@ const GeniusMarketingForm = () => {
       console.log("User email:", userEmail);
 
       // Fetch userId from backend
-      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail }),
-      });
+      const userResponse = await fetch(
+        `${BASE_URL}/api/users/get-user-by-email`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userEmail }),
+        }
+      );
       if (!userResponse.ok) {
         throw new Error("Failed to fetch userId.");
       }
@@ -151,7 +157,11 @@ const GeniusMarketingForm = () => {
 
       // 2) Generate phrases
       console.log("Generating phrases for app ID:", appIdFromResponse);
-      const generatedPhrases = await generatePhrases(formData, appIdFromResponse, userId);
+      const generatedPhrases = await generatePhrases(
+        formData,
+        appIdFromResponse,
+        userId
+      );
       console.log("Phrases generated successfully:", generatedPhrases);
 
       setPhrases(generatedPhrases);
@@ -167,7 +177,12 @@ const GeniusMarketingForm = () => {
   const handleTickClick = async (index) => {
     if (!phrases || !phrases.uspPhrases) return;
     const phraseToApprove = phrases.uspPhrases[index];
-    console.log("handleTickClick - Approving phrase:", phraseToApprove, "App ID:", appId);
+    console.log(
+      "handleTickClick - Approving phrase:",
+      phraseToApprove,
+      "App ID:",
+      appId
+    );
 
     try {
       await approvePhrase(phraseToApprove, appId);
@@ -220,11 +235,14 @@ const GeniusMarketingForm = () => {
       const userEmail = auth.currentUser ? auth.currentUser.email : null;
       if (!userEmail) throw new Error("User email is not available.");
 
-      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail }),
-      });
+      const userResponse = await fetch(
+        `${BASE_URL}/api/users/get-user-by-email`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userEmail }),
+        }
+      );
       if (!userResponse.ok) throw new Error("Failed to fetch userId.");
       const userData = await userResponse.json();
       const userId = userData._id;
@@ -254,12 +272,23 @@ const GeniusMarketingForm = () => {
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
-      <div className="absolute bottom-0 right-0 w-full h-1/2 bg-blue-900/20 transform rotate-[-10deg] translate-y-1/4" />
+      <div className="absolute bottom-0 right-0 w-full h-[80vh] overflow-hidden">
+        <img
+          src={frame}
+          alt="Decorative Effect"
+          className="absolute bottom-0 right-0 w-auto h-full object-contain"
+        />
+      </div>
 
       <div className="relative p-6">
         <div className="flex items-center gap-2 mb-16">
-          <h1 className="text-white text-xl font-semibold">growthZ.ai</h1>
-          <span className="text-sm text-gray-400">Dashboard</span>
+          <button onClick={() => navigate("/")} className="flex items-center">
+            <img
+              src={logo}
+              alt="Logo"
+              className="w-[120px] h-[25px] md:w-[131px] md:h-[32px]"
+            />
+          </button>
         </div>
 
         <div className="max-w-[847px] mx-auto space-y-8">
@@ -377,8 +406,10 @@ const GeniusMarketingForm = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={loading || (!formData.google_play && !formData.apple_app)}
-              className="w-full h-[70px] rounded-[16px] bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-white font-bold text-[20px] flex items-center justify-center gap-2 disabled:opacity-50"
+              disabled={
+                loading || (!formData.google_play && !formData.apple_app)
+              }
+              className="w-full h-[70px] rounded-[16px] bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-black font-bold text-[20px] flex items-center justify-center gap-2 "
             >
               {loading ? "Processing..." : "Generate Ad Copies"}
             </button>
@@ -392,7 +423,9 @@ const GeniusMarketingForm = () => {
                     disabled={isGeneratingCreatives}
                     className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg"
                   >
-                    {isGeneratingCreatives ? "Generating Creatives..." : "Get Creatives"}
+                    {isGeneratingCreatives
+                      ? "Generating Creatives..."
+                      : "Get Creatives"}
                   </button>
                 ) : (
                   <button
@@ -408,7 +441,8 @@ const GeniusMarketingForm = () => {
             {/* Website Link Input */}
             <div className="space-y-2">
               <p className="text-white text-[16px]">
-                Don&apos;t have the App Store/ Google Play Store Link? No worries!
+                Don&apos;t have the App Store/ Google Play Store Link? No
+                worries!
               </p>
               <div className="relative">
                 <input
