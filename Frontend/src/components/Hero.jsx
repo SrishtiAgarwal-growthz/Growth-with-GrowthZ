@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import image1 from "../assets/HomePage/Hero1.png";
@@ -246,3 +247,4 @@ const Hero = () => {
 };
 
 export default Hero;
+
