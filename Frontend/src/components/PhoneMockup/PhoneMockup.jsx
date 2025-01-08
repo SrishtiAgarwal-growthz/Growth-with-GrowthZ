@@ -19,7 +19,7 @@ const PhoneMockup = ({ children }) => {
         />
 
         {/* Phone Mockup */}
-        <div className="relative w-[294px] h-[591px] bg-black rounded-[2.5rem] border-8 border-[#1d1e20] shadow-xl overflow-hidden">
+        <div className="relative w-[256px] h-[510px] bg-black rounded-[2.5rem] border-8 border-[#1d1e20] shadow-xl overflow-hidden">
           {/* Notch Container */}
           <div className="absolute top-0 left-0 right-0 h-7 bg-[#3a3b3c] z-50">
             {/* Actual Notch */}

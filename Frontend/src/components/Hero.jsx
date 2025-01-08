@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import image1 from "../assets/HomePage/Hero1.png";
 import image2 from "../assets/HomePage/Hero2.png";
 import image3 from "../assets/HomePage/Hero3.png";
@@ -23,10 +23,10 @@ const Hero = () => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768); // 768px → 48rem
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   return (
@@ -107,7 +107,7 @@ const Hero = () => {
                       alt={`Slide ${index + 1}`}
                       className="carousel-image"
                     />
-                    <div className="absolute inset-0 rounded-lg ring-1 ring-blue-500/20" />
+                    <div className="absolute inset-0 rounded-lg" />
                   </div>
                 </div>
               ))}
@@ -118,64 +118,127 @@ const Hero = () => {
 
       <style>
         {`
-          .carousel-container {
-            width: 100%;
-            overflow: hidden;
-            position: relative;
-          }
+           .carousel-container {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    margin-top: ${isMobile ? "1.5rem" : "0"};
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pinch-zoom;
+  }
 
-          .carousel-track {
-            display: flex;
-            width: max-content;
-            animation: smoothScroll 30s linear infinite;
-          }
+  .carousel-track {
+    display: flex;
+    width: max-content;
+    animation: smoothScroll 30s linear infinite;
+    will-change: transform;
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
 
-          .carousel-item {
-            flex-shrink: 0;
-            padding: 0;
-            margin-right: ${isMobile ? '1rem' : '0.75rem'}; // 16px → 1rem
-            margin-top: ${isMobile ? '1rem' : '0'}; // 16px → 1rem
-            width: ${isMobile ? '17.5rem' : '25rem'}; // 280px → 17.5rem, 400px → 25rem
-          }
+  .carousel-item {
+    flex: 0 0 auto;
+    padding: 0;
+    margin-right: ${isMobile ? "0.5rem" : "0rem"};
+    margin-top: ${isMobile ? "0.5rem" : "0"};
+    width: ${isMobile ? "calc(100vw - 4rem)" : "23.5rem"};
+    max-width: ${isMobile ? "17.5rem" : "25rem"};
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
 
-          .carousel-image-container {
-            width: 100%;
-            height: ${isMobile ? '17.5rem' : '25rem'}; // 280px → 17.5rem, 400px → 25rem
-            position: relative;
-            border-radius: 0.5rem;
-            overflow: hidden;
-          }
+  .carousel-image-container {
+    width: 100%;
+    height: ${isMobile ? "17.5rem" : "25rem"};
+    position: relative;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
 
-          .carousel-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-          }
+  .carousel-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimizeQuality;
+  }
 
-          @keyframes smoothScroll {
-            0% {
-              transform: translateX(0);
-            }
-            100% {
-              transform: translateX(-50%);
-            }
-          }
+  @-webkit-keyframes smoothScroll {
+    0% {
+      -webkit-transform: translate3d(0, 0, 0);
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      -webkit-transform: translate3d(-50%, 0, 0);
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
 
-          .carousel-track:hover {
-            animation-play-state: paused;
-          }
+  @keyframes smoothScroll {
+    0% {
+      -webkit-transform: translate3d(0, 0, 0);
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      -webkit-transform: translate3d(-50%, 0, 0);
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
 
-          /* Add smooth transition when animation restarts */
-          .carousel-track::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 6.25rem; // 100px → 6.25rem
-            background: linear-gradient(to right, transparent, black);
-            pointer-events: none;
-          }
+  .carousel-track:hover {
+    -webkit-animation-play-state: paused;
+    animation-play-state: paused;
+  }
+
+  /* Smooth fade effect at the edges */
+  .carousel-track::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 6.25rem;
+    background: linear-gradient(to right, rgba(0,0,0,0), rgba(0,0,0,1));
+    pointer-events: none;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  /* Remove blue highlight on tap in iOS */
+  .carousel-container, 
+  .carousel-track, 
+  .carousel-item, 
+  .carousel-image-container {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Improve performance on iOS */
+  @supports (-webkit-overflow-scrolling: touch) {
+    .carousel-track {
+      -webkit-overflow-scrolling: touch;
+      -webkit-transform: translate3d(0, 0, 0);
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* Prevent text size adjustment on orientation change */
+  @media screen and (orientation: portrait) {
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+  }
         `}
       </style>
     </div>
