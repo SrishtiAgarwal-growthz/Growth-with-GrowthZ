@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import image1 from "../assets/HomePage/Hero1.png";
 import image2 from "../assets/HomePage/Hero2.png";
 import image3 from "../assets/HomePage/Hero3.png";
@@ -21,16 +21,16 @@ const Hero = () => {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768); // 768px → 48rem
+      setIsMobile(window.innerWidth <= 768);
     };
-
+    
     checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   return (
-    <div className="relative w-full bg-black min-h-[31.875rem] md:min-h-[42.5rem] lg:min-h-screen overflow-hidden mt-[5rem] lg:mt-[5rem]">
+    <div className="relative w-full bg-black min-h-screen overflow-hidden pt-[5.125rem] md:pt-[10rem]">
       {/* Gradient Background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="w-full h-full relative">
@@ -40,7 +40,7 @@ const Hero = () => {
             style={{
               background:
                 "radial-gradient(circle at center, rgba(1,100,248,0.5) 0%, rgba(2,43,104,0.5) 50%, transparent 80%)",
-              filter: "blur(5rem)", // 80px → 5rem
+              filter: "blur(5rem)",
             }}
           />
         </div>
@@ -49,12 +49,12 @@ const Hero = () => {
       {/* Combined Content Container */}
       <div className="relative z-10 flex flex-col items-center">
         {/* Hero Content */}
-        <div className="w-full max-w-[54.8125rem] mx-auto px-[1rem] sm:px-[1.5rem] pt-[1.5rem] sm:pt-[2.25rem] pb-[0.5rem] sm:pb-[2rem] text-center">
+        <div className="w-full max-w-[54.8125rem] mx-auto px-4 sm:px-6 pt-6 sm:pt-9 pb-2 sm:pb-8 text-center">
           <h1 className="text-[1.875rem] sm:text-[2.25rem] md:text-[3.125rem] lg:text-[3.75rem] font-bold text-white">
             Powering the <span style={growthStyle}>&ldquo;Growth&rdquo;</span>
           </h1>
 
-          <p className="text-gray-300 text-[1rem] sm:text-[1.125rem] lg:text-[1.25rem] mt-[0.75rem] sm:mt-[0.25rem]">
+          <p className="text-gray-300 text-base sm:text-lg lg:text-xl mt-3 sm:mt-1">
             Campaign &mdash;{">"} Scalable &mdash;{">"} Conversions
           </p>
 
@@ -118,127 +118,138 @@ const Hero = () => {
 
       <style>
         {`
-           .carousel-container {
-    width: 100%;
-    overflow: hidden;
-    position: relative;
-    margin-top: ${isMobile ? "1.5rem" : "0"};
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y pinch-zoom;
-  }
+          .carousel-container {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            margin-top: ${isMobile ? '1.5rem' : '0'};
+            padding: 0 1rem;
+            -webkit-overflow-scrolling: touch;
+          }
 
-  .carousel-track {
-    display: flex;
-    width: max-content;
-    animation: smoothScroll 30s linear infinite;
-    will-change: transform;
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-  }
+          .carousel-track {
+            display: flex;
+            width: max-content;
+            animation: smoothScroll 30s linear infinite;
+            will-change: transform;
+            gap: 1rem;
+            -webkit-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+          }
 
-  .carousel-item {
-    flex: 0 0 auto;
-    padding: 0;
-    margin-right: ${isMobile ? "0.5rem" : "0rem"};
-    margin-top: ${isMobile ? "0.5rem" : "0"};
-    width: ${isMobile ? "calc(100vw - 4rem)" : "23.5rem"};
-    max-width: ${isMobile ? "17.5rem" : "25rem"};
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
+          .carousel-item {
+            flex: 0 0 auto;
+            width: clamp(280px, calc(100vw - 2rem), 400px);
+            max-width: ${isMobile ? '17.5rem' : '25rem'};
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+          }
 
-  .carousel-image-container {
-    width: 100%;
-    height: ${isMobile ? "17.5rem" : "25rem"};
-    position: relative;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
+          .carousel-image-container {
+            width: 100%;
+            height: ${isMobile ? '17.5rem' : '25rem'};
+            position: relative;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+          }
 
-  .carousel-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: optimizeQuality;
-  }
+          .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: optimizeQuality;
+          }
 
-  @-webkit-keyframes smoothScroll {
-    0% {
-      -webkit-transform: translate3d(0, 0, 0);
-      transform: translate3d(0, 0, 0);
-    }
-    100% {
-      -webkit-transform: translate3d(-50%, 0, 0);
-      transform: translate3d(-50%, 0, 0);
-    }
-  }
+          @media screen and (min-width: 640px) {
+            .carousel-container {
+              padding: 0 2rem;
+            }
+            
+            .carousel-track {
+              gap: 1.5rem;
+            }
+          }
 
-  @keyframes smoothScroll {
-    0% {
-      -webkit-transform: translate3d(0, 0, 0);
-      transform: translate3d(0, 0, 0);
-    }
-    100% {
-      -webkit-transform: translate3d(-50%, 0, 0);
-      transform: translate3d(-50%, 0, 0);
-    }
-  }
+          @media screen and (min-width: 1024px) {
+            .carousel-container {
+              padding: 0 3rem;
+            }
+            
+            .carousel-item {
+              width: clamp(320px, calc((100vw - 8rem) / 3), 400px);
+            }
+          }
 
-  .carousel-track:hover {
-    -webkit-animation-play-state: paused;
-    animation-play-state: paused;
-  }
+          @media screen and (min-width: 1280px) {
+            .carousel-item {
+              width: clamp(320px, calc((100vw - 10rem) / 4), 400px);
+            }
+          }
 
-  /* Smooth fade effect at the edges */
-  .carousel-track::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 6.25rem;
-    background: linear-gradient(to right, rgba(0,0,0,0), rgba(0,0,0,1));
-    pointer-events: none;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
+          @-webkit-keyframes smoothScroll {
+            0% {
+              -webkit-transform: translate3d(0, 0, 0);
+              transform: translate3d(0, 0, 0);
+            }
+            100% {
+              -webkit-transform: translate3d(-50%, 0, 0);
+              transform: translate3d(-50%, 0, 0);
+            }
+          }
 
-  /* Remove blue highlight on tap in iOS */
-  .carousel-container, 
-  .carousel-track, 
-  .carousel-item, 
-  .carousel-image-container {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-  }
+          @keyframes smoothScroll {
+            0% {
+              -webkit-transform: translate3d(0, 0, 0);
+              transform: translate3d(0, 0, 0);
+            }
+            100% {
+              -webkit-transform: translate3d(-50%, 0, 0);
+              transform: translate3d(-50%, 0, 0);
+            }
+          }
 
-  /* Improve performance on iOS */
-  @supports (-webkit-overflow-scrolling: touch) {
-    .carousel-track {
-      -webkit-overflow-scrolling: touch;
-      -webkit-transform: translate3d(0, 0, 0);
-      transform: translate3d(0, 0, 0);
-    }
-  }
+          .carousel-track:hover {
+            -webkit-animation-play-state: paused;
+            animation-play-state: paused;
+          }
 
-  /* Prevent text size adjustment on orientation change */
-  @media screen and (orientation: portrait) {
-    html {
-      -webkit-text-size-adjust: 100%;
-      text-size-adjust: 100%;
-    }
-  }
+          .carousel-track::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 6.25rem;
+            background: linear-gradient(to right, rgba(0,0,0,0), rgba(0,0,0,1));
+            pointer-events: none;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+          }
+
+          .carousel-container, 
+          .carousel-track, 
+          .carousel-item, 
+          .carousel-image-container {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+          }
+
+          @supports (-webkit-overflow-scrolling: touch) {
+            .carousel-track {
+              -webkit-overflow-scrolling: touch;
+            }
+          }
         `}
       </style>
     </div>
