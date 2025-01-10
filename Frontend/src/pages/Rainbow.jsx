@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import PhoneMockup from "../components/PhoneMockup/PhoneMockup";
 import FbFeedCarousel from "../components/PhoneMockup/FbMockup/FbFeedCarousel";
 import FbStoryAds from "../components/PhoneMockup/FbMockup/FbStoryAds";
@@ -6,9 +6,14 @@ import GoogleAnimatedAds from "../components/PhoneMockup/GoogleMockup/GoogleAnim
 import GoogleTextAds from "../components/PhoneMockup/GoogleMockup/GoogleTextads";
 import GoogleDisplayAds from "../components/PhoneMockup/GoogleMockup/GoogleDisplayads";
 
+// Import icons from assets
+import FacebookIcon from "../assets/PhoneMockup/FB.png";
+import GoogleIcon from "../assets/PhoneMockup/Google.png";
+import LinkedInIcon from "../assets/PhoneMockup/Linkedin.png";
+import TwitterIcon from "../assets/PhoneMockup/Twitter.png";
+import ProgramaticIcon from "../assets/PhoneMockup/Programatic.png";
 
 // Suppose you have an API utility or inline fetch:
-const BASE_URL = "https://growth-with-growthz.onrender.com";
 // e.g. /api/creatives/get-ads?appId=...
 
 /** 
@@ -27,20 +32,22 @@ function shortCaption(phrase) {
 }
 
 export default function Rainbow() {
-  const [error, setError] = useState("");
+  const [error, ] = useState("");
   const [loading, setLoading] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, ] = useState(0);
   const [ads, setAds] = useState([]);
   const [activeApp, setActiveApp] = useState("facebook");
   const [activeMockup, setActiveMockup] = useState("feedCarousel");
 
+  
   const apps = [
-    { id: 'facebook', alt: 'Facebook' },
-    { id: 'google', alt: 'Google' },
-    { id: 'linkedin', alt: 'LinkedIn' },
-    { id: 'twitter', alt: 'Twitter' },
-    { id: 'presentation', alt: 'Presentation' }
+    { id: 'facebook', alt: 'Facebook', icon: FacebookIcon },
+    { id: 'google', alt: 'Google', icon: GoogleIcon },
+    { id: 'linkedin', alt: 'LinkedIn', icon: LinkedInIcon },
+    { id: 'twitter', alt: 'Twitter', icon: TwitterIcon },
+    { id: 'presentation', alt: 'Presentation', icon: ProgramaticIcon }
   ];
+
 
 
   useEffect(() => {
@@ -56,7 +63,7 @@ export default function Rainbow() {
     setAds([{ id: 1, name: "Ad #1" }, { id: 2, name: "Ad #2" }]);
   }, []);
 
-  const currentAd = ads[currentIndex] || {};
+  // const currentAd = ads[currentIndex] || {};
 
   useEffect(() => {
     // Simulate some work
