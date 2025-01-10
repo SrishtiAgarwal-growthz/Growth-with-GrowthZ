@@ -3,12 +3,20 @@ import { Battery, Wifi } from "lucide-react";
 import PropTypes from "prop-types";
 import leftbtn from "../../assets/PhoneMockup/leftbtn.png";
 import rightbtn from "../../assets/PhoneMockup/rightbtn.png";
+import bg from "../../assets/PhoneMockup/background.png"
 
 const PhoneMockup = ({ children }) => {
   const [time] = useState("4:28");
 
   return (
-    <div className="flex flex-col items-center justify-center h-[34rem] mt-6">
+    <div className="relative flex flex-col items-center justify-center h-[34rem] mt-6">
+      <div className="absolute inset-6 z-0">
+        <img
+          src={bg}
+          alt="Background Grid"
+          className="w-full h-full object-cover"
+        />
+      </div>
       {/* Phone Mockup Container */}
       <div
         className="relative"
@@ -63,19 +71,19 @@ const PhoneMockup = ({ children }) => {
 
       {/* Accept/Reject Buttons */}
       <div className="flex gap-4 mt-8">
-  <button
-    className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-red-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors"
-    onClick={() => console.log("Rejected")}
-  >
-    Reject
-  </button>
-  <button
-    className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-green-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors"
-    onClick={() => console.log("Approved")}
-  >
-    Approve
-  </button>
-</div>
+        <button
+          className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-red-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors"
+          onClick={() => console.log("Rejected")}
+        >
+          Reject
+        </button>
+        <button
+          className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-green-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors"
+          onClick={() => console.log("Approved")}
+        >
+          Approve
+        </button>
+      </div>
     </div>
   );
 };
