@@ -305,7 +305,6 @@ export const generateAdImages = async (appId, userId) => {
       phrases: approvedPhrases.map((text) => ({ text, status: "used" })),
       adUrls: ads.map((ad) => ({
         creativeUrl: ad,
-        phraseUsed: approvedPhrases.map((text) => ({ text })),
         status: "pending",
       })),
       createdAt: new Date(),
@@ -427,16 +426,16 @@ export const generateAdAnimation = async (appId, userId) => {
         try {
           const adPath = await createAnimations(adOptions);
 
-          // // If you want to upload to S3:
-          // const s3Url = await uploadToS3(
-          //   fs.readFileSync(adPath),
-          //   `creatives/${appId}`,
-          //   `ad-${appId}-${name}-${Date.now()}.png`
-          // );
+          // If you want to upload to S3:
+          const s3Url = await uploadToS3(
+            fs.readFileSync(adPath),
+            `creatives/${appId}`,
+            `ad-${appId}-${name}-${Date.now()}.png`
+          );
 
           animations.push({
             phrase: currentPhrase,
-            animationUrl: adPath,
+            animationUrl: s3Url,
             size: name,
           });
 

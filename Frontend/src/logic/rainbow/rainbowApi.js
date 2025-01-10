@@ -27,12 +27,12 @@ export const addCreativeToTasks = async (userId, appId) => {
  * POST /api/creatives/createAd
  * This triggers the backend to generate ads/creatives for the specified app.
  */
-export const createAds = async (appId) => {
+export const createAds = async (userId, appId) => {
   try {
     const response = await fetch(`${BASE_URL}/api/creatives/createAd`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ appId }),
+      body: JSON.stringify({ userId, appId }),
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -47,15 +47,14 @@ export const createAds = async (appId) => {
 
 // in rainbowApi.js
 export const getGeneratedAds = async (appId) => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch generated ads');
-      }
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching generated ads:", error.message);
-      throw error;
+  try {
+    const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch generated ads');
     }
-  };
-  
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching generated ads:", error.message);
+    throw error;
+  }
+};

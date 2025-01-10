@@ -25,11 +25,11 @@ async function addCreativeToTasks(userId, appId) {
   return response.json();
 }
 
-async function createAds(appId) {
+async function createAds(userId, appId) {
   const response = await fetch(`${BASE_URL}/api/creatives/createAd`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ appId }),
+    body: JSON.stringify({ userId, appId }),
   });
   if (!response.ok) {
     const errorData = await response.json();
@@ -250,7 +250,7 @@ const GeniusMarketingForm = () => {
       await addCreativeToTasks(userId, appId);
 
       console.log("Creating ads for appId:", appId);
-      const adsResponse = await createAds(appId);
+      const adsResponse = await createAds(userId, appId);
       console.log("Ads creation response:", adsResponse);
 
       setHasGeneratedCreatives(true);

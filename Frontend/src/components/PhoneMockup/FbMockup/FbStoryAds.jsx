@@ -1,108 +1,61 @@
-// FacebookMockup.jsx
-import { Plus, Search, MessageCircle, MoreHorizontal, Home, PlaySquare, Users, X } from 'lucide-react';
+
+import { X, Share } from 'lucide-react';
 import image from "../../../assets/creative.png";
 
-const FacebookMockup = () => {
+const FacebookStory = () => {
+  const userName = "Zac Efron";
+
+  const handleCloseStory = () => {
+    console.log("Story closed");
+  };
+
+  const handleShareStory = () => {
+    console.log("Story shared");
+  };
+
   return (
-    <>
-      {/* Facebook Header - pushed down to account for notch */}
-      <div className="bg-[#3a3b3c] text-white px-3 pt-7 pb-1.5">
-        <div className="flex justify-between items-center">
-          <span className="text-xl font-bold text-[#0866ff]">Fb</span>
-          <div className="flex items-center space-x-2">
-            <button className="bg-[#3a3b3c] p-1.5 rounded-full">
-              <Plus size={14} className="text-white" />
-            </button>
-            <button className="bg-[#3a3b3c] p-1.5 rounded-full">
-              <Search size={14} className="text-white" />
-            </button>
-            <button className="bg-[#3a3b3c] p-1.5 rounded-full relative">
-              <MessageCircle size={14} className="text-white" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-[8px] w-3 h-3 flex items-center justify-center rounded-full">4</span>
-            </button>
+    <div className="relative w-full h-full bg-black flex flex-col">
+      {/* Progress Bar */}
+      <div className="absolute top-8 left-4 right-4 h-0.5 bg-gray-700 rounded-full">
+        <div className="h-0.5 bg-white rounded-full" style={{ width: '70%' }}></div>
+      </div>
+
+      {/* User Info and Close Button */}
+      <div className="absolute top-10 left-4 right-4 flex justify-between items-center">
+        <div className="flex items-center">
+          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+            {userName.charAt(0)}
           </div>
+          <span className="ml-2 text-white font-semibold">{userName}</span>
+        </div>
+        <button onClick={handleCloseStory} className="text-white">
+          <X size={22} />
+        </button>
+      </div>
+
+      {/* Story Content - Main content area with flex-grow */}
+      <div className="flex-grow flex items-center justify-center mt-16 mb-20">
+        <div className="w-full h-full flex items-center justify-center px-4">
+          <img
+            src={image}
+            alt="Story"
+            className="w-full h-full object-contain"
+          />
         </div>
       </div>
 
-      <div className="h-[7px] bg-black"></div>
-      {/* Post Content */}
-      <div className="bg-[#3a3b3c] text-white px-3">
-        <div className="py-2">
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-[#3a3b3c] rounded-full flex items-center justify-center text-white text-sm font-bold mr-2">
-                <span>I</span>
-              </div>
-              <div>
-                <div className="flex items-center">
-                  <p className="text-sm font-semibold">IndMoney</p>
-                </div>
-                <p className="text-[10px] text-gray-400">Sponsored · </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <MoreHorizontal size={16} className="text-gray-400" />
-              <X size={16} className="text-gray-400" />
-            </div>
-          </div>
-          
-          <p className="text-xs mb-2">Start your investment journey today.... <span className="text-blue-500">See More</span></p>
-          
-          {/* Post Image */}
-          <div className="rounded-lg overflow-hidden bg-[#242526]">
-            <img 
-              src={image}
-              alt="Food presentation"
-              className="w-full h-[225px] object-contain"
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="mt-2 flex justify-between border-t border-[#3a3b3c] pt-2">
-            <button className="flex items-center space-x-1 text-gray-400">
-              <span>👍</span>
-              <span className="text-xs">Like</span>
-            </button>
-            <button className="flex items-center space-x-1 text-gray-400">
-              <span>💬</span>
-              <span className="text-xs">Comment</span>
-            </button>
-            <button className="flex items-center space-x-1 text-gray-400">
-              <span>↗</span>
-              <span className="text-xs">Share</span>
-            </button>
-          </div>
-        </div>
+      {/* Share Button */}
+      <div className="absolute bottom-8 left-4 right-4 flex justify-center">
+        <button
+          onClick={handleShareStory}
+          className="flex items-center bg-white bg-opacity-20 backdrop-blur-sm rounded-full px-4 py-2 text-white font-semibold"
+        >
+          <Share size={16} className="mr-2" />
+          Share
+        </button>
       </div>
-
-      <div className="h-[4px] bg-black"></div>
-      {/* Bottom Navigation */}
-      <div className="absolute bottom-0 w-full bg-[#242526] border-t border-[#3a3b3c] mb-[10px]">
-        <div className="flex justify-between px-6 py-1">
-          <button className="flex flex-col items-center text-[#0866ff]">
-            <Home size={20} />
-            <span className="text-[10px] mt-0.5">Home</span>
-          </button>
-          <button className="flex flex-col items-center text-gray-400">
-            <PlaySquare size={20} />
-            <span className="text-[10px] mt-0.5">Video</span>
-          </button>
-          <button className="flex flex-col items-center text-gray-400">
-            <Users size={20} />
-            <span className="text-[10px] mt-0.5">Friends</span>
-          </button>
-          <button className="flex flex-col items-center text-gray-400">
-            <img 
-              src="/api/placeholder/20/20" 
-              alt="Marketplace"
-              className="w-5 h-5"
-            />
-            <span className="text-[10px] mt-0.5">Market</span>
-          </button>
-        </div>
-      </div>
-    </>
+    </div>
   );
 };
 
-export default FacebookMockup;
+export default FacebookStory;
