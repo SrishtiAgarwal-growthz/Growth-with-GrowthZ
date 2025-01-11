@@ -1,8 +1,6 @@
-// FacebookMockup.jsx
 import { useEffect, useState } from "react";
-import { Plus, Search, MessageCircle, MoreHorizontal, Home, PlaySquare, Users, X } from 'lucide-react';
-import placeholderImage from "../../../assets/creative.png";
-
+import { Plus, Search, MessageCircle, MoreHorizontal, Home, PlaySquare, Users, X, ArrowLeft,
+  ArrowRight, } from 'lucide-react';
 
 /** 
  * Example fetch function returning { appId, appName, ads: [...] } 
@@ -51,10 +49,8 @@ export default function FacebookMockup() {
   const [appName, setAppName] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // We'll assume appId is stored in localStorage
   const storedAppId = localStorage.getItem("appId") || "";
 
-  // On mount, fetch ads
   useEffect(() => {
     if (!storedAppId) return;
 
@@ -63,14 +59,8 @@ export default function FacebookMockup() {
         setLoadingAds(true);
         setError("");
 
-        // Suppose your backend returns { appName, ads: [...], appId }
         const data = await getGeneratedAds(storedAppId);
-        console.log("[MainRainbow] Ads data received:", data);
-
-        if (data.appName) {
-          setAppName(data.appName);
-        }
-
+        if (data.appName) setAppName(data.appName);
         if (data.ads && data.ads.length > 0) {
           // Filter out only 1080x1080 ads if you want
           const only1080 = data.ads.filter(
@@ -96,22 +86,26 @@ export default function FacebookMockup() {
     fetchAdsForApp();
   }, [storedAppId]);
 
-  // Current ad
-  const currentAd = ads[currentIndex] || {};
-  const mainAdUrl =
-    currentAd.creativeUrl?.adUrl ||
-    placeholderImage;
+  const handleNextAd = () => {
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
+  };
 
-  // Use shortCaption() to get the 3-word truncated text
+  const handlePrevAd = () => {
+    setCurrentIndex((prevIndex) =>
+      prevIndex === 0 ? ads.length - 1 : prevIndex - 1
+    );
+  };
+
+  const currentAd = ads[currentIndex] || {};
+  const mainAdUrl = currentAd.creativeUrl?.adUrl;
   const rawPhrase = currentAd.creativeUrl?.phrase || "";
   const adCaption = shortCaption(rawPhrase);
 
   return (
     <>
-
-      {/* Error / Loading */}
       {error && <p className="text-red-500 text-center mb-4">{error}</p>}
       {loadingAds && <p className="text-gray-700 text-center mb-4">Loading ads...</p>}
+
       {/* Facebook Header - pushed down to account for notch */}
       <div className="bg-[#3a3b3c] text-white px-3 pt-7 pb-1.5">
         <div className="flex justify-between items-center">
@@ -153,16 +147,31 @@ export default function FacebookMockup() {
             </div>
           </div>
 
-          <p className="text-xs mb-2">{adCaption}<span className="text-blue-500">See More</span></p>
+          <p className="text-xs mb-2">{adCaption}</p>
+
+          {/* Left Arrow */}
+          <button
+            onClick={handlePrevAd}
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 p-2 rounded-full"
+          >
+            <ArrowLeft size={20} className="text-white" />
+          </button>
 
           {/* Post Image */}
           <div className="rounded-lg overflow-hidden bg-[#242526]">
             <img
               src={mainAdUrl}
-              alt="Food presentation"
               className="w-full h-[225px] object-contain"
             />
           </div>
+
+          {/* Right Arrow */}
+          <button
+            onClick={handleNextAd}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 p-2 rounded-full"
+          >
+            <ArrowRight size={20} className="text-white" />
+          </button>
 
           {/* Action Buttons */}
           <div className="mt-2 flex justify-between border-t border-[#3a3b3c] pt-2">

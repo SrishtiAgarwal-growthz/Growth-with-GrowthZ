@@ -1611,7 +1611,6 @@ export const adTemplates = {
               display: flex;
               align-items: center;
               flex-direction: column;
-              padding: 60px;
               position: relative;
             }
 
@@ -1619,10 +1618,9 @@ export const adTemplates = {
               width: 100%;
               height: 100%;
               display: flex;
-              align-items: center;
               flex-direction: column;
               justify-content: flex-start;
-              margin-top: 180px;
+              padding-top: 280px;
             }
 
             .cta-button {
@@ -1635,13 +1633,13 @@ export const adTemplates = {
               align-items: center;
               justify-content: center;
               font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-              font-size: 60px;
+              font-size: 80px;
               font-weight: 600;
               height: 100px;
               letter-spacing: 1px;
               margin: 0;
               min-width: 600px;
-              padding: 80px 100px;
+              padding: 80px 80px;
               text-transform: uppercase;
               transform: translateY(0);
               transition: transform 0.2s ease;
@@ -1651,15 +1649,15 @@ export const adTemplates = {
               width: 100%;
               display: flex;
               justify-content: center;
-              position: relative;
+              margin-bottom: 30px;
             }
 
             .image-and-cta-container {
               flex: 1;
               display: flex;
+              align-items: center;
               flex-direction: column;
               justify-content: center;
-              padding-bottom: 100px;
             }
 
             .logo {
@@ -1672,8 +1670,8 @@ export const adTemplates = {
               position: absolute;
               top: 60px;
               right: 60px;
-              width: 160px;
-              height: 160px;
+              width: 200px;
+              height: 200px;
               z-index: 2;
             }
 
@@ -1681,15 +1679,20 @@ export const adTemplates = {
               width: 100%;
               height: auto;
               object-fit: contain;
+              display: block;
+              max-height: 1500px;
+              vertical-align: bottom;
+              filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));  // Add subtle shadow
+              margin-bottom: 0;
             }
 
             .main-image-container {
               width: 100%;
-              height: auto;
-              flex: 1;
+              height: 1500px;
               display: flex;
               align-items: center;
               justify-content: center;
+              margin: 0 auto;
               position: relative;
             }
 
@@ -1728,17 +1731,14 @@ export const adTemplates = {
             .text-container {
               display: flex;
               flex-direction: column;
-              gap: 30px;
               width: 100%;
             }
 
             .text-section {
               font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-              margin-bottom: 80px;
-              max-width: 80%;
-              padding-top: 40px;
+              margin: 0 auto;
+              max-width: 95%;
               position: relative;
-              text-align: center;
               z-index: 1;
             }
         </style>
@@ -1823,3 +1823,4 @@ export const adTemplates = {
     </html>`;
   },
 };
+
