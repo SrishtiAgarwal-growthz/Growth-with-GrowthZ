@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { X, Share, ArrowLeft, ArrowRight, } from "lucide-react";
-import image from "../../../assets/creative.png";
 
 async function getGeneratedAds(appId) {
   const BASE_URL = "http://localhost:8000";
@@ -60,7 +59,7 @@ export default function FacebookStory() {
   };
 
   const currentAd = ads[currentIndex] || {};
-  const mainAdUrl = currentAd.creativeUrl?.adUrl || image;
+  const mainAdUrl = currentAd.creativeUrl?.adUrl;
 
   return (
     <>

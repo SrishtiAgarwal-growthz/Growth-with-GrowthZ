@@ -3,15 +3,15 @@ import PhoneMockup from "../components/PhoneMockup/PhoneMockup";
 import FbFeedCarousel from "../components/PhoneMockup/FbMockup/FbFeedCarousel";
 import FbStoryAds from "../components/PhoneMockup/FbMockup/FbStoryAds";
 import GoogleAnimatedAds from "../components/PhoneMockup/GoogleMockup/GoogleAnimatedads";
-import GoogleTextAds from "../components/PhoneMockup/GoogleMockup/GoogleTextads";
+// import GoogleTextAds from "../components/PhoneMockup/GoogleMockup/GoogleTextads";
 import GoogleDisplayAds from "../components/PhoneMockup/GoogleMockup/GoogleDisplayads";
 
 // Import icons from assets
 import FacebookIcon from "../assets/PhoneMockup/FB.png";
 import GoogleIcon from "../assets/PhoneMockup/Google.png";
-import LinkedInIcon from "../assets/PhoneMockup/Linkedin.png";
-import TwitterIcon from "../assets/PhoneMockup/Twitter.png";
-import ProgramaticIcon from "../assets/PhoneMockup/Programatic.png";
+// import LinkedInIcon from "../assets/PhoneMockup/Linkedin.png";
+// import TwitterIcon from "../assets/PhoneMockup/Twitter.png";
+// import ProgramaticIcon from "../assets/PhoneMockup/Programatic.png";
 
 // Suppose you have an API utility or inline fetch:
 // e.g. /api/creatives/get-ads?appId=...
@@ -32,9 +32,9 @@ function shortCaption(phrase) {
 }
 
 export default function Rainbow() {
-  const [error, setError] = useState("");
+  const [error] = useState("");
   const [loading, setLoading] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex] = useState(0);
   const [ads, setAds] = useState([]);
   const [activeApp, setActiveApp] = useState("facebook");
   const [activeMockup, setActiveMockup] = useState("feedCarousel");
@@ -42,19 +42,19 @@ export default function Rainbow() {
   
   const apps = [
     { id: 'facebook', alt: 'Facebook', icon: FacebookIcon },
-    { id: 'google', alt: 'Google', icon: GoogleIcon },
-    { id: 'linkedin', alt: 'LinkedIn', icon: LinkedInIcon },
-    { id: 'twitter', alt: 'Twitter', icon: TwitterIcon },
-    { id: 'presentation', alt: 'Presentation', icon: ProgramaticIcon }
+    { id: 'google', alt: 'Google', icon: GoogleIcon }
+    // { id: 'linkedin', alt: 'LinkedIn', icon: LinkedInIcon },
+    // { id: 'twitter', alt: 'Twitter', icon: TwitterIcon },
+    // { id: 'presentation', alt: 'Presentation', icon: ProgramaticIcon }
   ];
 
 
 
   useEffect(() => {
     if (activeApp === "google") {
-      setActiveMockup("maps"); // Set Animated Ads as default for Google
+      setActiveMockup("display"); // Set Animated Ads as default for Google
     } else if (activeApp === "facebook") {
-      setActiveMockup("feedCarousel"); // Set Feed Carousel as default for Facebook
+      setActiveMockup("storyAds"); // Set Feed Carousel as default for Facebook
     }
   }, [activeApp]); // Run this effect whenever activeApp changes
 
@@ -99,9 +99,10 @@ export default function Rainbow() {
       }
     }
     else if (activeApp === "google") {
-      if (activeMockup === "search") {
-        return <GoogleTextAds />;
-      } else if (activeMockup === "maps") {
+      // if (activeMockup === "search") {
+      //   return <GoogleTextAds />;
+      // } else
+        if (activeMockup === "maps") {
         return <GoogleAnimatedAds />;
       } else if (activeMockup === "display") {
         return <GoogleDisplayAds />; // Render the new component
