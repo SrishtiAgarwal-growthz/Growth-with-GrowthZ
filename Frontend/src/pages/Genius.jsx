@@ -38,6 +38,19 @@ async function createAds(userId, appId) {
   return response.json();
 }
 
+async function createAnimations(userId, appId) {
+  const response = await fetch(`${BASE_URL}/api/creatives/createAnimation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, appId }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to create ads");
+  }
+  return response.json();
+}
+
 const GeniusMarketingForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -252,6 +265,8 @@ const GeniusMarketingForm = () => {
       console.log("Creating ads for appId:", appId);
       const adsResponse = await createAds(userId, appId);
       console.log("Ads creation response:", adsResponse);
+      const animationsResponse = await createAnimations(userId, appId);
+      console.log("Ads creation response:", animationsResponse);
 
       setHasGeneratedCreatives(true);
     } catch (err) {

@@ -1,12 +1,69 @@
+import { useEffect, useState } from "react";
+import { Share, ArrowLeft, ArrowRight } from "lucide-react";
 
-import { Share } from 'lucide-react';
+async function fetchAds(appId) {
+  const BASE_URL = "http://localhost:8000";
+  const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch ads");
+  }
+  return response.json();
+}
 
-const GoogleAdsMockup = () => {
+const NewsArticleMockup = () => {
+  const [ads, setAds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const storedAppId = localStorage.getItem("appId") || "";
+
+  useEffect(() => {
+    if (!storedAppId) return;
+
+    const fetchAndSetAds = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchAds(storedAppId);
+        const filteredAds = data.ads.filter(
+          (ad) => ad.creativeUrl?.size === "300x250"
+        );
+        setAds(filteredAds);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAndSetAds();
+  }, [storedAppId]);
+
+  const handleNextAd = () => {
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
+  };
+
+  const handlePrevAd = () => {
+    setCurrentIndex((prevIndex) =>
+      prevIndex === 0 ? ads.length - 1 : prevIndex - 1
+    );
+  };
+
+  const currentAd = ads[currentIndex] || null;
+
+  const ArticleBlurSection = () => (
+    <div className="space-y-2 px-4">
+      <div className="h-4 bg-neutral-800 rounded w-11/12 blur-sm"></div>
+      <div className="h-4 bg-neutral-800 rounded w-3/4 blur-sm"></div>
+      <div className="h-4 bg-neutral-800 rounded w-10/12 blur-sm"></div>
+      <div className="h-4 bg-neutral-800 rounded w-5/6 blur-sm"></div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full bg-neutral-900">
-      {/* Add padding-top to account for the notch */}
       <div className="pt-8">
-        {/* Google Search Bar */}
+        {/* News Site Header */}
         <div className="p-2 bg-neutral-800">
           <div className="flex items-center">
             <div className="text-white text-sm">google.com</div>
@@ -16,43 +73,67 @@ const GoogleAdsMockup = () => {
           </div>
         </div>
 
-        {/* Content Area with Skeleton Loading */}
+        {/* Content Area */}
         <div className="flex-1 overflow-y-auto">
-          {/* Skeleton Text at Top */}
-          <div className="p-4 space-y-2">
-            <div className="h-4 bg-neutral-800 rounded w-3/4 animate-pulse"></div>
-            <div className="h-4 bg-neutral-800 rounded w-1/2 animate-pulse"></div>
-          </div>
+          {loading && (
+            <div className="p-4 space-y-2">
+              <div className="h-4 bg-neutral-800 rounded w-3/4 animate-pulse"></div>
+              <div className="h-4 bg-neutral-800 rounded w-1/2 animate-pulse"></div>
+            </div>
+          )}
+          {error && (
+            <div className="p-4 text-red-500 text-center">
+              Failed to load ads: {error}
+            </div>
+          )}
+          {!loading && ads.length === 0 && (
+            <div className="p-4 text-gray-400 text-center">
+              No ads available for size 300x250.
+            </div>
+          )}
+          {!loading && currentAd && (
+            <div className="space-y-6 py-4">
+              {/* Top Article Section */}
+              <ArticleBlurSection />
+              
+              {/* Ad Creative */}
+              <div className="flex justify-center">
+                <div className="relative">
+                  <img
+                    src={currentAd.creativeUrl.adUrl}
+                    alt="Ad"
+                    className="w-full h-auto object-contain"
+                    style={{ maxWidth: "300px", maxHeight: "250px" }}
+                  />
 
-          {/* Advertisement Block */}
-          <div className="p-4">
-            <div className="bg-purple-600 rounded-lg overflow-hidden">
-              {/* Ad Content */}
-              <div className="p-6 space-y-4">
-                <div className="text-white text-lg font-bold">zepto</div>
-                <div className="text-white text-xl font-bold">
-                  bath & body essentials
-                  <div className="text-sm font-normal mt-1">at lowest prices</div>
-                </div>
-                <div className="flex justify-end">
-                  <button className="bg-neutral-800 text-white px-6 py-2 rounded-lg">
-                    GET
-                  </button>
+                  {/* Navigation Buttons */}
+                  {ads.length > 1 && (
+                    <>
+                      <button
+                        onClick={handlePrevAd}
+                        className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-30 p-2 rounded-full"
+                      >
+                        <ArrowLeft className="w-5 h-5 text-white" />
+                      </button>
+                      <button
+                        onClick={handleNextAd}
+                        className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-30 p-2 rounded-full"
+                      >
+                        <ArrowRight className="w-5 h-5 text-white" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* More Skeleton Text at Bottom */}
-          <div className="p-4 space-y-2">
-            <div className="h-4 bg-neutral-800 rounded w-full animate-pulse"></div>
-            <div className="h-4 bg-neutral-800 rounded w-5/6 animate-pulse"></div>
-            <div className="h-4 bg-neutral-800 rounded w-4/5 animate-pulse"></div>
-          </div>
+              {/* Bottom Article Section */}
+              <ArticleBlurSection />
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default GoogleAdsMockup;
+export default NewsArticleMockup;

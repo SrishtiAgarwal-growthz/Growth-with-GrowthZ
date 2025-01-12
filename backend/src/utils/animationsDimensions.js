@@ -1,5 +1,5 @@
 export const animationDimensionsConfig = [
-    // { width: 300, height: 250, name: "300x250" },
+    { width: 300, height: 250, name: "300x250" },
     // { width: 160, height: 600, name: "160x600" },
     // { width: 320, height: 480, name: "320x480" },
     { width: 1080, height: 1080, name: "1080x1080" },

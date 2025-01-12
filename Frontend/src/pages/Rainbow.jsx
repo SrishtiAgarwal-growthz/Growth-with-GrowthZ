@@ -1,4 +1,4 @@
-import  { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import PhoneMockup from "../components/PhoneMockup/PhoneMockup";
 import FbFeedCarousel from "../components/PhoneMockup/FbMockup/FbFeedCarousel";
 import FbStoryAds from "../components/PhoneMockup/FbMockup/FbStoryAds";
@@ -32,9 +32,9 @@ function shortCaption(phrase) {
 }
 
 export default function Rainbow() {
-  const [error, ] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [currentIndex, ] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [ads, setAds] = useState([]);
   const [activeApp, setActiveApp] = useState("facebook");
   const [activeMockup, setActiveMockup] = useState("feedCarousel");

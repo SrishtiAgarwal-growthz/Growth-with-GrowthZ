@@ -61,23 +61,23 @@ export default function FacebookMockup() {
 
         const data = await getGeneratedAds(storedAppId);
         if (data.appName) setAppName(data.appName);
-        if (data.ads && data.ads.length > 0) {
+        if (data.animations && data.animations.length > 0) {
           // Filter out only 1080x1080 ads if you want
-          const only1080 = data.ads.filter(
+          const only1080 = data.animations.filter(
             (item) => item.creativeUrl?.size === "1080x1080"
           );
           if (only1080.length > 0) {
             setAds(only1080);
             setCurrentIndex(0);
           } else {
-            setError("No 1080x1080 ads found.");
+            setError("No 1080x1080 animations found.");
           }
         } else {
-          setError("No ads found in response.");
+          setError("No animations found in response.");
         }
       } catch (err) {
-        console.error("[getGeneratedAds] Error:", err.message);
-        setError(err.message || "Error fetching ads");
+        console.error("[getGeneratedAnimations] Error:", err.message);
+        setError(err.message || "Error fetching animations");
       } finally {
         setLoadingAds(false);
       }
@@ -97,7 +97,7 @@ export default function FacebookMockup() {
   };
 
   const currentAd = ads[currentIndex] || {};
-  const mainAdUrl = currentAd.creativeUrl?.adUrl;
+  const mainAdUrl = currentAd.creativeUrl?.animationUrl;
   const rawPhrase = currentAd.creativeUrl?.phrase || "";
   const adCaption = shortCaption(rawPhrase);
 

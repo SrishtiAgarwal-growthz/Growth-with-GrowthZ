@@ -45,6 +45,28 @@ export const createAds = async (userId, appId) => {
   }
 };
 
+/**
+ * POST /api/creatives/createAd
+ * This triggers the backend to generate ads/creatives for the specified app.
+ */
+export const createAnimations = async (userId, appId) => {
+  try {
+    const response = await fetch(`${BASE_URL}/api/creatives/createAnimation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, appId }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create ads');
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error in createAnimations:', error.message);
+    throw error;
+  }
+};
+
 // in rainbowApi.js
 export const getGeneratedAds = async (appId) => {
   try {

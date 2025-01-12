@@ -104,7 +104,7 @@ export const createAnimations = async (req, res) => {
 
 export const getAdsForApp = async (req, res) => {
   try {
-    const { appId } = req.query;  // from ?appId=...
+    const { appId } = req.query; // Extract appId from query
     if (!appId) {
       return res.status(400).json({ message: "Missing appId query parameter" });
     }
@@ -114,25 +114,28 @@ export const getAdsForApp = async (req, res) => {
     const appCollection = db.collection("Apps");
     const creativesCollection = db.collection("Creatives");
 
+    // Find the app to get the name
     const app = await appCollection.findOne({ _id: new ObjectId(appId) });
+    if (!app) {
+      return res.status(404).json({ message: "App not found for this appId" });
+    }
     const appName = app.appName;
-    
-    // Find a Creatives document for this appId. Usually you store it as a string, so compare directly:
-    const doc = await creativesCollection.findOne({ appId }); 
 
+    // Find the creatives document
+    const doc = await creativesCollection.findOne({ appId });
     if (!doc) {
       return res.status(404).json({ message: "No creatives found for this appId" });
     }
 
-    // doc.adUrls is typically an array of objects with { creativeUrl, status }, or you might store them differently
     res.status(200).json({
       appId: doc.appId,
       appName: appName,
       ads: doc.adUrls || [],
+      animations: doc.animationUrls || [],
       createdAt: doc.createdAt,
     });
   } catch (error) {
-    console.error("[getAdsForApp] Error:", error);
-    return res.status(500).json({ message: "Error fetching ads", error: error.message });
+    console.error("[getAdsForApp] Error:", error.message);
+    res.status(500).json({ message: "Error fetching ads", error: error.message });
   }
 };

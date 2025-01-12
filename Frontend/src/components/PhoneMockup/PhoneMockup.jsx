@@ -89,7 +89,7 @@ const PhoneMockup = ({ children }) => {
 };
 
 PhoneMockup.propTypes = {
-  children: PropTypes.node.isRequired,
+  children: PropTypes.node,
 };
 
 export default PhoneMockup;

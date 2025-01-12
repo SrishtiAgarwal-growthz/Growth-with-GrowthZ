@@ -11,7 +11,7 @@ import {
   fetchIconUrl,
   fetchWebsiteUrl,
   fetchFont,
-  fetchCTAForCategory,
+  // fetchCTAForCategory,
 } from "../utils/imageProcessingSteps.js";
 import {
   rgbToArray,
@@ -67,9 +67,9 @@ export const processAppImages = async (appId, userId) => {
     const websiteUrl = await fetchWebsiteUrl(appId);
     console.log(`[processAppImages] Website URL fetched: ${websiteUrl}`);
 
-    // -- Fetch CTA
-    const CTA = await fetchCTAForCategory(appId);
-    console.log(`[processAppImages] CTA fetched: ${CTA}`);
+    // // -- Fetch CTA
+    // const CTA = await fetchCTAForCategory(appId);
+    // console.log(`[processAppImages] CTA fetched: ${CTA}`);
 
     // Save some fields in the app doc
     await appsCollection.updateOne(
@@ -77,7 +77,7 @@ export const processAppImages = async (appId, userId) => {
       {
         $set: {
           iconBackgroundColor: iconBackgroundColor,
-          CTA: CTA,
+          // CTA: CTA,
         },
       }
     );
@@ -220,17 +220,10 @@ export const generateAdImages = async (appId, userId) => {
       .filter((image) => image.removedBgUrl && image.backgroundColor)
       .slice(0, 3); // Limit to first three images
 
-    for (const image of processedImages) {
-      if (!image.removedBgUrl || !image.backgroundColor) {
-        console.warn(
-          `[generateAdImages] Skipping image with missing background info: ${image.originalUrl}`
-        );
-        continue;
-      }
-
-      for (const { width, height, name } of adDimensionsConfig) {
+    for (const { width, height, name } of adDimensionsConfig) {
+      for (const image of processedImages) {
         const currentPhrase = approvedPhrases[phraseIndex];
-        phraseIndex = (phraseIndex + 1) % approvedPhrases.length;
+        phraseIndex = (phraseIndex + 1) % approvedPhrases.length; // Cycle through phrases
 
         // Get optimal text color based on background
         let adjustedTextColor = getOptimalTextColor(image.backgroundColor);
@@ -265,7 +258,7 @@ export const generateAdImages = async (appId, userId) => {
           adDimensions: { width, height },
           fontSize: width > 300 ? "24px" : "16px",
           textColor: adjustedTextColor,
-          ctaText: app.CTA,
+          ctaText: "INSTALL NOW",
           ctaColor: adjustedCTAColor,
           ctaTextColor: adjustedCTATextColor,
         };
@@ -289,7 +282,7 @@ export const generateAdImages = async (appId, userId) => {
           });
 
           console.log(`[CreativeService] Ad generated successfully for size ${name}:`, adPath);
-          console.log(`[CreativeService] Ad uploaded to S3 successfully for size ${name}:`, "s3UrlOrN/A");
+          console.log(`[CreativeService] Ad uploaded to S3 successfully for size ${name}:`, s3Url);
         } catch (error) {
           console.error(`[CreativeService] Error generating ad for size ${name}:`, error.message);
         }
@@ -329,6 +322,7 @@ export const generateAdAnimation = async (appId, userId) => {
   const appsCollection = db.collection("Apps");
   const adCopiesCollection = db.collection("AdCopies");
   const animationCollection = db.collection("Animations");
+  const creativesCollection = db.collection("Creatives");
 
   try {
     console.log(`[generateAdAnimation] Fetching app and phrases for appId: ${appId}`);
@@ -359,9 +353,6 @@ export const generateAdAnimation = async (appId, userId) => {
     console.log("[generateAdAnimation] Fetching font details from the app's website...");
     const fontDetails = await fetchFont(app.websiteUrl);
     console.log("[generateAdAnimation] Font details fetched successfully:", fontDetails);
-    console.log(
-      `[generateAdAnimation] Font Family fetched: ${fontDetails.fontName}, URL: ${fontDetails.fontPath}`
-    );
 
     const animations = [];
     let phraseIndex = 0;
@@ -371,15 +362,8 @@ export const generateAdAnimation = async (appId, userId) => {
       .filter((image) => image.removedBgUrl && image.backgroundColor)
       .slice(0, 3); // Limit to first three images
 
-    for (const image of processedImages) {
-      if (!image.removedBgUrl || !image.backgroundColor) {
-        console.warn(
-          `[generateAdAnimation] Skipping image with missing background info: ${image.originalUrl}`
-        );
-        continue;
-      }
-
-      for (const { width, height, name } of animationDimensionsConfig) {
+      for (const { width, height, name } of adDimensionsConfig) {
+        for (const image of processedImages) {
         const currentPhrase = approvedPhrases[phraseIndex];
         phraseIndex = (phraseIndex + 1) % approvedPhrases.length;
 
@@ -416,7 +400,7 @@ export const generateAdAnimation = async (appId, userId) => {
           adDimensions: { width, height },
           fontSize: width > 300 ? "24px" : "16px",
           textColor: adjustedTextColor,
-          ctaText: app.CTA,
+          ctaText: "INSTALL NOW",
           ctaColor: adjustedCTAColor,
           ctaTextColor: adjustedCTATextColor,
         };
@@ -424,13 +408,12 @@ export const generateAdAnimation = async (appId, userId) => {
         console.log("[CreativeService] Generating animations with options:", adOptions);
 
         try {
-          const adPath = await createAnimations(adOptions);
+          const animationPath = await createAnimations(adOptions);
 
-          // If you want to upload to S3:
           const s3Url = await uploadToS3(
-            fs.readFileSync(adPath),
+            fs.readFileSync(animationPath),
             `creatives/${appId}`,
-            `ad-${appId}-${name}-${Date.now()}.png`
+            `animation-${appId}-${name}-${Date.now()}.mp4`
           );
 
           animations.push({
@@ -439,24 +422,45 @@ export const generateAdAnimation = async (appId, userId) => {
             size: name,
           });
 
-          console.log(`[CreativeService] Animations generated successfully for size ${name}:`, adPath);
-          // console.log(`[CreativeService] Animations uploaded to S3 successfully for size ${name}:`, "s3UrlOrN/A");
+          console.log(`[CreativeService] Animation generated and uploaded successfully for size ${name}`);
         } catch (error) {
-          console.error(`[CreativeService] Error generating ad for size ${name}:`, error.message);
+          console.error(`[CreativeService] Error generating animation for size ${name}:`, error.message);
         }
       }
     }
 
-    console.log("[generateAdAnimation] Animations generation and upload process completed. Total ads:", animations.length);
+    console.log("[generateAdAnimation] Animation generation and upload process completed. Total animations:", animations.length);
 
-    // Save to Animation Collection
+    // Save animations to the Creatives collection
+    const updateResult = await creativesCollection.updateOne(
+      { appId, userId },
+      {
+        $push: {
+          animationUrls: {
+            $each: animations.map((anim) => ({
+              creativeUrl: {
+                phrase: anim.phrase,
+                animationUrl: anim.animationUrl,
+                size: anim.size,
+              },
+              status: "pending",
+            })),
+          },
+        },
+      },
+      { upsert: true }
+    );
+
+    console.log("[generateAdAnimation] Animation URLs saved to Creatives collection.", updateResult);
+
+    // Optionally save to Animation Collection
     const animationDocument = {
       appId,
       userId,
       phrases: approvedPhrases.map((text) => ({ text, status: "used" })),
       animationUrls: animations.map((anim) => ({
-        animationUrl: anim,
-        phraseUsed: approvedPhrases.map((text) => ({ text })),
+        animationUrl: anim.animationUrl,
+        phraseUsed: anim.phrase,
         status: "pending",
       })),
       createdAt: new Date(),
@@ -467,7 +471,7 @@ export const generateAdAnimation = async (appId, userId) => {
 
     return { ...animationDocument, _id: result.insertedId };
   } catch (error) {
-    console.error("[CreativeService] Error during ad generation:", error.message);
+    console.error("[CreativeService] Error during animation generation:", error.message);
     throw error;
   } finally {
     await client.close();
