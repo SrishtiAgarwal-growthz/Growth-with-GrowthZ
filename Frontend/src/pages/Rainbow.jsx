@@ -165,13 +165,13 @@ export default function Rainbow() {
             </>
           ) : (
             <>
-              <button
+              {/* <button
                 onClick={() => setActiveMockup("search")}
                 className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
                   ${activeMockup === "search" ? "selected-gradient" : "unselected-gradient"}`}
               >
                 Text Ads
-              </button>
+              </button> */}
               <button
                 onClick={() => setActiveMockup("maps")}
                 className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
