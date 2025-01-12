@@ -362,7 +362,7 @@ export const generateAdAnimation = async (appId, userId) => {
       .filter((image) => image.removedBgUrl && image.backgroundColor)
       .slice(0, 3); // Limit to first three images
 
-      for (const { width, height, name } of adDimensionsConfig) {
+      for (const { width, height, name } of animationDimensionsConfig) {
         for (const image of processedImages) {
         const currentPhrase = approvedPhrases[phraseIndex];
         phraseIndex = (phraseIndex + 1) % approvedPhrases.length;

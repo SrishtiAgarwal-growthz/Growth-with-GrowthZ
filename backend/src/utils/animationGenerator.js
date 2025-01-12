@@ -1,6 +1,6 @@
 /*******************************************************
  * animationGenerator.js
- * 
+ *
  * Usage:
  *   import { createAnimations } from "./animationGenerator.js";
  *   const gifPath = await createAnimations({
@@ -26,7 +26,9 @@ const { load } = pngJs;
 
 // IMPORTANT: Make sure this path points to your own animationTemplates.js
 import { animationTemplates } from "./animationTemplates.js";
-
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 /**
  * createAnimations:
  * - Takes an `options` object describing which template to use, phrase, etc.
@@ -48,8 +50,11 @@ export async function createAnimations(options = {}) {
 
   // 3) Launch Puppeteer
   const browser = await puppeteer.launch({
-    headless: true, 
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    defaultViewport: {
+      width: options.adDimensions.width,
+      height: options.adDimensions.height,
+      deviceScaleFactor: 2, // Increase rendering resolution
+    },
   });
   const page = await browser.newPage();
 
@@ -59,36 +64,31 @@ export async function createAnimations(options = {}) {
     fs.mkdirSync(framesDir);
   }
 
-  // 5) Set the browser viewport
-  await page.setViewport({
-    width,
-    height,
-    deviceScaleFactor: 1,
-  });
+  const frameCount = 45; // Reduced from 60 to 45 for better file size
+  const delayTime = 40; // Slightly slower animation for smoother appearance
 
-  // 6) Load the HTML content
-  await page.setContent(htmlContent, { waitUntil: ["domcontentloaded"] });
+  await page.setContent(htmlContent);
+  await page.evaluate(() => document.fonts.ready);
+  await delay(100);
 
-  // Allow time for JS in the template to run (e.g., formatText()) and for animations to start
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // 7) Prepare our GIF encoder
-  const totalFrames = 30;           // e.g. 30 frames => ~1 second if we set ~33ms delay
-  const delayPerFrameMs = 33;       // about 30 FPS
-  const encoder = new GIFEncoder(width, height);
-
+  const encoder = new GIFEncoder(
+    options.adDimensions.width * 2, // Double size for downscaling
+    options.adDimensions.height * 2
+  );
+  encoder.setDelay(delayTime);
+  encoder.setQuality(1); // Highest quality
+  encoder.setRepeat(-1);
   encoder.start();
-  encoder.setRepeat(0); // 0 => loop forever
-  encoder.setDelay(delayPerFrameMs);
-  encoder.setQuality(10); // lower => better quality, bigger file
+  // 5) Set the browser viewport
+  const animationDuration = 2500;
+  const timePerFrame = animationDuration / frameCount;
 
-  // 8) Capture each frame
-  for (let i = 0; i < totalFrames; i++) {
-    const currentTime = i * delayPerFrameMs; 
-    // Force CSS animations to the appropriate time
+  for (let i = 0; i < frameCount; i++) {
+    const currentTime = i * timePerFrame;
+
     await page.evaluate((time) => {
-      document.getAnimations().forEach((anim) => {
-        anim.currentTime = time;
+      document.getAnimations().forEach((animation) => {
+        animation.currentTime = time;
       });
     }, currentTime);
 
@@ -99,14 +99,15 @@ export async function createAnimations(options = {}) {
     // Convert the PNG to raw pixel data for GIF encoding
     const png = load(framePath);
     const pixels = await new Promise((resolve) => {
-      png.decode((decoded) => resolve(decoded));
+      png.decode((pixels) => resolve(pixels));
     });
 
     encoder.addFrame(pixels);
-    console.log(`Frame ${i + 1}/${totalFrames} captured.`);
+    console.log(`Frame ${i + 1}/${frameCount} captured.`);
   }
 
   // 9) Finalize the GIF
+  await browser.close();
   encoder.finish();
 
   // 10) Write the GIF to disk
