@@ -149,19 +149,20 @@ export default function Rainbow() {
           {activeApp === "facebook" ? (
             <>
               <button
-                onClick={() => setActiveMockup("feedCarousel")}
-                className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
-                  ${activeMockup === "feedCarousel" ? "selected-gradient" : "unselected-gradient"}`}
-              >
-                Feed Carousel
-              </button>
-              <button
                 onClick={() => setActiveMockup("storyAds")}
                 className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
                   ${activeMockup === "storyAds" ? "selected-gradient" : "unselected-gradient"}`}
               >
                 Story Ads
               </button>
+              <button
+                onClick={() => setActiveMockup("feedCarousel")}
+                className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
+                  ${activeMockup === "feedCarousel" ? "selected-gradient" : "unselected-gradient"}`}
+              >
+                Feed Carousel
+              </button>
+              
             </>
           ) : (
             <>
@@ -172,6 +173,13 @@ export default function Rainbow() {
               >
                 Text Ads
               </button> */}
+                  <button
+                onClick={() => setActiveMockup("display")}
+                className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
+                  ${activeMockup === "display" ? "selected-gradient" : "unselected-gradient"}`}
+              >
+                Display Ads
+              </button>
               <button
                 onClick={() => setActiveMockup("maps")}
                 className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
@@ -179,14 +187,8 @@ export default function Rainbow() {
               >
                 Animated Ads
               </button>
-              <button
-                onClick={() => setActiveMockup("display")}
-                className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
-                  ${activeMockup === "display" ? "selected-gradient" : "unselected-gradient"}`}
-              >
-                Display Ads
-              </button>
-
+            
+              
             </>
           )}
         </div>

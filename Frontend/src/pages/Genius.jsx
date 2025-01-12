@@ -10,8 +10,10 @@ import logo from "../assets/logo.png";
 import frame from "../assets/Frame.png";
 import { useNavigate } from "react-router-dom";
 
+// Base URL for API endpoints
 const BASE_URL = "http://localhost:8000";
 
+// API function to add creative tasks
 async function addCreativeToTasks(userId, appId) {
   const response = await fetch(`${BASE_URL}/api/creatives/addCreativeToTasks`, {
     method: "POST",
@@ -25,6 +27,7 @@ async function addCreativeToTasks(userId, appId) {
   return response.json();
 }
 
+// API function to create ads
 async function createAds(userId, appId) {
   const response = await fetch(`${BASE_URL}/api/creatives/createAd`, {
     method: "POST",
@@ -38,6 +41,7 @@ async function createAds(userId, appId) {
   return response.json();
 }
 
+// API function to create animations
 async function createAnimations(userId, appId) {
   const response = await fetch(`${BASE_URL}/api/creatives/createAnimation`, {
     method: "POST",
@@ -53,6 +57,8 @@ async function createAnimations(userId, appId) {
 
 const GeniusMarketingForm = () => {
   const navigate = useNavigate();
+  
+  // Initialize all state variables
   const [formData, setFormData] = useState({
     google_play: "",
     apple_app: "",
@@ -60,88 +66,55 @@ const GeniusMarketingForm = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  /**
-   * "phrases" will hold the entire response from generate-phrases:
-   *   e.g. { status: "already_exists", appId, phrases: { phrases: [...] }, uspPhrases: [...] }
-   */
   const [phrases, setPhrases] = useState(null);
-
-  /**
-   * approvalStates is an array parallel to `phrases.uspPhrases`.
-   * Each element is "pending", "approved", or "rejected".
-   */
   const [approvalStates, setApprovalStates] = useState([]);
-
   const [appId, setAppId] = useState(null);
-
   const [isGeneratingCreatives, setIsGeneratingCreatives] = useState(false);
-  const [hasGeneratedCreatives, setHasGeneratedCreatives] = useState(false);
+  const [buttonState, setButtonState] = useState('generate');
 
-  // -----------------------------------------------------------
-  // useEffect to handle "already_exists" or brand-new phrases
-  // -----------------------------------------------------------
+  // Effect to handle existing phrases from database
   useEffect(() => {
-    if (!phrases) return; // do nothing if we haven't fetched phrases yet
+    if (!phrases) return;
 
-    // (A) If the server says "already_exists" and we haven't set uspPhrases yet, do so once
     if (
       phrases.status === "already_exists" &&
-      phrases.phrases &&
-      phrases.phrases.phrases && // an array of { text, status }
-      !phrases.uspPhrases // means we haven't inserted them yet
+      phrases.phrases?.phrases &&
+      !phrases.uspPhrases
     ) {
       const dbPhrases = phrases.phrases.phrases;
-      console.log("Existing phrases from DB:", dbPhrases);
-
-      // Convert array of objects -> array of strings for the UI
       const phraseTexts = dbPhrases.map((item) => item.text);
-      // statuses from DB
       const statesFromDB = dbPhrases.map((item) => item.status || "pending");
 
-      // 1) Insert the array of texts into `phrases.uspPhrases`
       setPhrases((prev) => ({
         ...prev,
         uspPhrases: phraseTexts,
       }));
-
-      // 2) Set local approvalStates to DB statuses
       setApprovalStates(statesFromDB);
-    }
-    // (B) If we have brand-new phrases (no "already_exists") but haven't set approval states yet
-    else if (phrases.uspPhrases && approvalStates.length === 0) {
-      console.log("Brand-new phrases => defaulting to 'pending'.");
+    } else if (phrases.uspPhrases && approvalStates.length === 0) {
       setApprovalStates(new Array(phrases.uspPhrases.length).fill("pending"));
     }
   }, [phrases, approvalStates.length]);
 
-  // Handle input changes
+  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    console.log(`Input changed: ${name} = ${value}`);
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  // Submit form => fetch app details => generate phrases
+  // Main form submission handler
   const handleSubmit = async () => {
-    console.log("Submitting form data:", formData);
     try {
       setLoading(true);
       setError(null);
       setPhrases(null);
 
-      // Get userId from Firebase Auth
       const auth = getAuth();
-      const userEmail = auth.currentUser ? auth.currentUser.email : null;
-      if (!userEmail) {
-        throw new Error("User email is not available.");
-      }
-      console.log("User email:", userEmail);
+      const userEmail = auth.currentUser?.email;
+      if (!userEmail) throw new Error("User email is not available.");
 
-      // Fetch userId from backend
       const userResponse = await fetch(
         `${BASE_URL}/api/users/get-user-by-email`,
         {
@@ -150,34 +123,19 @@ const GeniusMarketingForm = () => {
           body: JSON.stringify({ email: userEmail }),
         }
       );
-      if (!userResponse.ok) {
-        throw new Error("Failed to fetch userId.");
-      }
+      if (!userResponse.ok) throw new Error("Failed to fetch userId.");
       const userData = await userResponse.json();
       const userId = userData._id;
-      console.log("Fetched userId:", userId);
 
-      // 1) Save app details
-      console.log("Saving app details...");
       const savedApp = await saveAppDetails(formData);
-      console.log("App saved successfully:", savedApp);
-
       const appIdFromResponse = savedApp._id;
-      if (!appIdFromResponse) {
-        throw new Error("App ID not returned from saveAppDetails.");
-      }
+      if (!appIdFromResponse) throw new Error("App ID not returned from saveAppDetails.");
+      
       setAppId(appIdFromResponse);
-
-      // 2) Generate phrases
-      console.log("Generating phrases for app ID:", appIdFromResponse);
-      const generatedPhrases = await generatePhrases(
-        formData,
-        appIdFromResponse,
-        userId
-      );
-      console.log("Phrases generated successfully:", generatedPhrases);
-
+      const generatedPhrases = await generatePhrases(formData, appIdFromResponse, userId);
       setPhrases(generatedPhrases);
+      
+      setButtonState('getCreatives');
     } catch (err) {
       setError(err.message);
       console.error("Error during form submission:", err);
@@ -186,21 +144,12 @@ const GeniusMarketingForm = () => {
     }
   };
 
-  // Approve a phrase
+  // Handle phrase approval
   const handleTickClick = async (index) => {
-    if (!phrases || !phrases.uspPhrases) return;
-    const phraseToApprove = phrases.uspPhrases[index];
-    console.log(
-      "handleTickClick - Approving phrase:",
-      phraseToApprove,
-      "App ID:",
-      appId
-    );
-
+    if (!phrases?.uspPhrases) return;
     try {
+      const phraseToApprove = phrases.uspPhrases[index];
       await approvePhrase(phraseToApprove, appId);
-      console.log("Phrase approved successfully:", phraseToApprove);
-
       const newStates = [...approvalStates];
       newStates[index] = "approved";
       setApprovalStates(newStates);
@@ -210,15 +159,12 @@ const GeniusMarketingForm = () => {
     }
   };
 
-  // Reject a phrase
+  // Handle phrase rejection
   const handleCrossClick = async (index) => {
-    if (!phrases || !phrases.uspPhrases) return;
-    const phraseToReject = phrases.uspPhrases[index];
-    console.log(`Rejecting phrase at index ${index}:`, phraseToReject);
+    if (!phrases?.uspPhrases) return;
     try {
+      const phraseToReject = phrases.uspPhrases[index];
       await rejectPhrase(appId, phraseToReject);
-      console.log("Phrase rejected successfully:", phraseToReject);
-
       const newStates = [...approvalStates];
       newStates[index] = "rejected";
       setApprovalStates(newStates);
@@ -228,12 +174,7 @@ const GeniusMarketingForm = () => {
     }
   };
 
-  /**
-   * Handle "Get Creatives" flow:
-   * 1) Add 'Creatives' to tasks
-   * 2) Create ads
-   * 3) Show "Show Creatives" button
-   */
+  // Handle creative generation
   const handleGetCreatives = async () => {
     if (!appId) {
       alert("No App ID found. Please generate phrases first.");
@@ -243,9 +184,8 @@ const GeniusMarketingForm = () => {
     try {
       setIsGeneratingCreatives(true);
 
-      // re-fetch user
       const auth = getAuth();
-      const userEmail = auth.currentUser ? auth.currentUser.email : null;
+      const userEmail = auth.currentUser?.email;
       if (!userEmail) throw new Error("User email is not available.");
 
       const userResponse = await fetch(
@@ -261,14 +201,10 @@ const GeniusMarketingForm = () => {
       const userId = userData._id;
 
       await addCreativeToTasks(userId, appId);
+      await createAds(userId, appId);
+      await createAnimations(userId, appId);
 
-      console.log("Creating ads for appId:", appId);
-      const adsResponse = await createAds(userId, appId);
-      console.log("Ads creation response:", adsResponse);
-      const animationsResponse = await createAnimations(userId, appId);
-      console.log("Ads creation response:", animationsResponse);
-
-      setHasGeneratedCreatives(true);
+      setButtonState('showCreatives');
     } catch (err) {
       console.error("Error generating creatives:", err.message);
       alert(err.message);
@@ -277,7 +213,7 @@ const GeniusMarketingForm = () => {
     }
   };
 
-  // Show final creatives in the "Rainbow" page
+  // Handle showing creatives
   const handleShowCreatives = () => {
     if (appId) {
       localStorage.setItem("appId", appId);
@@ -285,8 +221,56 @@ const GeniusMarketingForm = () => {
     window.location.href = "/rainbow";
   };
 
+  // Unified button click handler
+  const handleButtonClick = async () => {
+    switch (buttonState) {
+      case 'generate':
+        await handleSubmit();
+        break;
+      case 'getCreatives':
+        await handleGetCreatives();
+        break;
+      case 'showCreatives':
+        handleShowCreatives();
+        break;
+    }
+  };
+
+  // Get dynamic button text
+  const getButtonText = () => {
+    if (loading) return "Processing...";
+    
+    switch (buttonState) {
+      case 'generate':
+        return "Generate Ad Copies";
+      case 'getCreatives':
+        return isGeneratingCreatives ? "Generating Creatives..." : "Get Creatives";
+      case 'showCreatives':
+        return "Show Creatives";
+      default:
+        return "Generate Ad Copies";
+    }
+  };
+
+  // Get dynamic button styles
+  const getButtonStyles = () => {
+    const baseStyles = "w-full h-[70px] rounded-[16px] font-bold text-[20px] flex items-center justify-center gap-2";
+    
+    switch (buttonState) {
+      case 'generate':
+        return `${baseStyles} bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-black`;
+      case 'getCreatives':
+        return `${baseStyles} bg-purple-600 text-white`;
+      case 'showCreatives':
+        return `${baseStyles} bg-green-600 text-white`;
+      default:
+        return baseStyles;
+    }
+  };
+  // Component render method starts here
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
+      {/* Background decorative effect */}
       <div className="absolute bottom-0 right-0 w-full h-[80vh] overflow-hidden">
         <img
           src={frame}
@@ -295,7 +279,9 @@ const GeniusMarketingForm = () => {
         />
       </div>
 
+      {/* Main content container */}
       <div className="relative p-6">
+        {/* Header with logo */}
         <div className="flex items-center gap-2 mb-16">
           <button onClick={() => navigate("/")} className="flex items-center">
             <img
@@ -306,7 +292,9 @@ const GeniusMarketingForm = () => {
           </button>
         </div>
 
+        {/* Main content area */}
         <div className="max-w-[847px] mx-auto space-y-8">
+          {/* Title section */}
           <div className="text-center space-y-2 mb-12">
             <h2 className="text-5xl font-bold bg-gradient-to-r from-purple-500 to-purple-300 bg-clip-text text-transparent">
               Genius
@@ -316,8 +304,9 @@ const GeniusMarketingForm = () => {
             </p>
           </div>
 
+          {/* Main form */}
           <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-            {/* Google Play Input */}
+            {/* Google Play Store URL input */}
             <div>
               <label className="block text-white mb-2 text-[16px]">
                 Enter Google Play Store URL
@@ -333,7 +322,7 @@ const GeniusMarketingForm = () => {
               />
             </div>
 
-            {/* Apple App Input */}
+            {/* App Store URL input */}
             <div>
               <label className="block text-white mb-2 text-[16px]">
                 Enter App Store URL
@@ -348,15 +337,15 @@ const GeniusMarketingForm = () => {
               />
             </div>
 
-            {/* Error Message */}
+            {/* Error message display */}
             {error && <div className="text-red-500 text-sm">{error}</div>}
 
-            {/* If we have phrases => show them */}
-            {phrases && phrases.uspPhrases && (
+            {/* Generated phrases display section */}
+            {phrases?.uspPhrases && (
               <div className="space-y-4 max-h-[60vh] overflow-y-auto">
                 {phrases.uspPhrases.map((phrase, index) => {
-                  // Preprocess the text
-                  let processedText;
+                  // Process the phrase text for display
+                  let processedText = phrase;
                   if (index === 0 && /^##\s*/.test(phrase)) {
                     processedText = phrase.replace(/^##\s*/, "").trim();
                   } else if (index === 0) {
@@ -380,9 +369,12 @@ const GeniusMarketingForm = () => {
                       key={index}
                       className="p-4 rounded-[16px] bg-gray-900/80 border border-gray-800 flex justify-between items-center group hover:bg-gray-900/90 transition-all"
                     >
+                      {/* Phrase text */}
                       <div className="flex-1">
                         <p className="text-white text-lg">{processedText}</p>
                       </div>
+                      
+                      {/* Approval/Rejection buttons or status */}
                       <div className="ml-4 flex items-center space-x-2">
                         {status === "approved" ? (
                           <span className="px-4 py-2 rounded-lg bg-green-500 text-white font-bold">
@@ -417,47 +409,24 @@ const GeniusMarketingForm = () => {
               </div>
             )}
 
-            {/* Button to Generate Ad Copies */}
+            {/* Main action button - dynamically changes based on state */}
             <button
               type="button"
-              onClick={handleSubmit}
+              onClick={handleButtonClick}
               disabled={
-                loading || (!formData.google_play && !formData.apple_app)
+                (buttonState === 'generate' && (!formData.google_play && !formData.apple_app)) ||
+                loading ||
+                isGeneratingCreatives
               }
-              className="w-full h-[70px] rounded-[16px] bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-black font-bold text-[20px] flex items-center justify-center gap-2 "
+              className={getButtonStyles()}
             >
-              {loading ? "Processing..." : "Generate Ad Copies"}
+              {getButtonText()}
             </button>
 
-            {/* "Get Creatives" button: Only if phrases are present */}
-            {phrases && phrases.uspPhrases && (
-              <div className="flex flex-col items-center mt-6">
-                {!hasGeneratedCreatives ? (
-                  <button
-                    onClick={handleGetCreatives}
-                    disabled={isGeneratingCreatives}
-                    className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg"
-                  >
-                    {isGeneratingCreatives
-                      ? "Generating Creatives..."
-                      : "Get Creatives"}
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleShowCreatives}
-                    className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg"
-                  >
-                    Show Creatives
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Website Link Input */}
+            {/* Website URL input section */}
             <div className="space-y-2">
               <p className="text-white text-[16px]">
-                Don&apos;t have the App Store/ Google Play Store Link? No
-                worries!
+                Don&apos;t have the App Store/ Google Play Store Link? No worries!
               </p>
               <div className="relative">
                 <input
@@ -502,4 +471,5 @@ const GeniusMarketingForm = () => {
   );
 };
 
+// Export the component
 export default GeniusMarketingForm;
