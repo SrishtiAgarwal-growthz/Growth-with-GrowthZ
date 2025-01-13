@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer";
 import path from "path";
+import fs from "fs"; // Import fs module
 import { adTemplates } from "./adTemplates.js";
 
 export async function createAd(options = {}) {
@@ -24,6 +25,12 @@ export async function createAd(options = {}) {
   try {
     console.log(`[createAd] Starting ad creation for size: ${sizeKey}`);
     console.log("[createAd] Ad options received:", options);
+
+    // Ensure the output directory exists
+    if (!fs.existsSync(outputDir)) {
+      console.log(`[createAd] Output directory does not exist. Creating: ${outputDir}`);
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
 
     // Fetch the HTML template for the given size
     const generateHtml = adTemplates[sizeKey];
