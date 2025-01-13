@@ -281,38 +281,36 @@ export const generateAdImages = async (appId, userId) => {
             size: name,
           });
 
-          console.log(`[CreativeService] Ad generated successfully for size ${name}:`, adPath);
-          console.log(`[CreativeService] Ad uploaded to S3 successfully for size ${name}:`, s3Url);
+          console.log(`[generateAdImages] Ad generated and uploaded: ${s3Url}`);
         } catch (error) {
-          console.error(`[CreativeService] Error generating ad for size ${name}:`, error.message);
+          console.error(`[generateAdImages] Error generating ad for size ${name}:`, error.message);
         }
       }
     }
 
-    console.log("[generateAdImages] Ad generation and upload process completed. Total ads:", ads.length);
+    // Save ads to database
+    if (ads.length > 0) {
+      await creativesCollection.updateOne(
+        { appId, userId },
+        {
+          $push: {
+            adUrls: {
+              $each: ads.map((ad) => ({ creativeUrl: ad, status: "pending" })),
+            },
+          },
+        },
+        { upsert: true }
+      );
+    }
 
-    // Save to Creatives Collection
-    const creativesDocument = {
-      appId,
-      userId,
-      phrases: approvedPhrases.map((text) => ({ text, status: "used" })),
-      adUrls: ads.map((ad) => ({
-        creativeUrl: ad,
-        status: "pending",
-      })),
-      createdAt: new Date(),
-    };
-
-    const result = await creativesCollection.insertOne(creativesDocument);
-    console.log("[CreativeService] Creatives document saved successfully.", result.insertedId);
-
-    return { ...creativesDocument, _id: result.insertedId };
+    console.log(`[generateAdImages] Ad generation completed. Total ads: ${ads.length}`);
+    return ads;
   } catch (error) {
-    console.error("[CreativeService] Error during ad generation:", error.message);
+    console.error(`[generateAdImages] Error: ${error.message}`);
     throw error;
   } finally {
     await client.close();
-    console.log("[CreativeService] MongoDB connection closed.");
+    console.log("[generateAdImages] MongoDB connection closed.");
   }
 };
 
@@ -321,7 +319,6 @@ export const generateAdAnimation = async (appId, userId) => {
   const db = client.db("GrowthZ");
   const appsCollection = db.collection("Apps");
   const adCopiesCollection = db.collection("AdCopies");
-  const animationCollection = db.collection("Animations");
   const creativesCollection = db.collection("Creatives");
 
   try {
@@ -422,59 +419,35 @@ export const generateAdAnimation = async (appId, userId) => {
             size: name,
           });
 
-          console.log(`[CreativeService] Animation generated and uploaded successfully for size ${name}`);
+          console.log(`[generateAdAnimation] Animation generated and uploaded: ${s3Url}`);
         } catch (error) {
-          console.error(`[CreativeService] Error generating animation for size ${name}:`, error.message);
+          console.error(`[generateAdAnimation] Error generating animation for size ${name}:`, error.message);
         }
       }
     }
 
-    console.log("[generateAdAnimation] Animation generation and upload process completed. Total animations:", animations.length);
-
-    // Save animations to the Creatives collection
-    const updateResult = await creativesCollection.updateOne(
-      { appId, userId },
-      {
-        $push: {
-          animationUrls: {
-            $each: animations.map((anim) => ({
-              creativeUrl: {
-                phrase: anim.phrase,
-                animationUrl: anim.animationUrl,
-                size: anim.size,
-              },
-              status: "pending",
-            })),
+    // Save animations to database
+    if (animations.length > 0) {
+      await creativesCollection.updateOne(
+        { appId, userId },
+        {
+          $push: {
+            animationUrls: {
+              $each: animations.map((anim) => ({ creativeUrl: anim, status: "pending" })),
+            },
           },
         },
-      },
-      { upsert: true }
-    );
+        { upsert: true }
+      );
+    }
 
-    console.log("[generateAdAnimation] Animation URLs saved to Creatives collection.", updateResult);
-
-    // Optionally save to Animation Collection
-    const animationDocument = {
-      appId,
-      userId,
-      phrases: approvedPhrases.map((text) => ({ text, status: "used" })),
-      animationUrls: animations.map((anim) => ({
-        animationUrl: anim.animationUrl,
-        phraseUsed: anim.phrase,
-        status: "pending",
-      })),
-      createdAt: new Date(),
-    };
-
-    const result = await animationCollection.insertOne(animationDocument);
-    console.log("[CreativeService] Animations document saved successfully.", result.insertedId);
-
-    return { ...animationDocument, _id: result.insertedId };
+    console.log(`[generateAdAnimation] Animation generation completed. Total animations: ${animations.length}`);
+    return animations;
   } catch (error) {
-    console.error("[CreativeService] Error during animation generation:", error.message);
+    console.error(`[generateAdAnimation] Error: ${error.message}`);
     throw error;
   } finally {
     await client.close();
-    console.log("[CreativeService] MongoDB connection closed.");
+    console.log("[generateAdAnimation] MongoDB connection closed.");
   }
 };
