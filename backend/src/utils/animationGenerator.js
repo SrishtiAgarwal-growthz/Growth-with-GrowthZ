@@ -1,22 +1,3 @@
-/*******************************************************
- * animationGenerator.js
- *
- * Usage:
- *   import { createAnimations } from "./animationGenerator.js";
- *   const gifPath = await createAnimations({
- *       adDimensions: { width: 1080, height: 1080 },
- *       phrase: "Your ad text here...",
- *       logoUrl: "...",
- *       mainImageUrl: "...",
- *       bgColor: "#111111",
- *       textColor: "#FFFFFF",
- *       fontPath: null,
- *       fontName: "Inter",
- *       outputDir: "./animations/1080x1080",
- *       // optional CTA fields, etc.
- *   });
- *******************************************************/
-
 import fs from "fs";
 import path from "path";
 import puppeteer from "puppeteer";
@@ -24,31 +5,76 @@ import GIFEncoder from "gif-encoder-2";
 import pngJs from "png-js";
 const { load } = pngJs;
 
-// IMPORTANT: Make sure this path points to your own animationTemplates.js
+// Import your animation templates
 import { animationTemplates } from "./animationTemplates.js";
+
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-/**
- * createAnimations:
- * - Takes an `options` object describing which template to use, phrase, etc.
- * - Renders the HTML via Puppeteer, captures frames, and encodes them into a GIF.
- * - Returns the local path to the generated GIF file.
- */
-export async function createAnimations(options = {}) {
-  const { width, height } = options.adDimensions;
-  const sizeKey = `${width}x${height}`;
 
-  // 1) Get the correct template function from your animationTemplates
-  const templateFn = animationTemplates[sizeKey];
-  if (!templateFn) {
-    throw new Error(`animationTemplates is missing a key for: ${sizeKey}`);
+// Function to handle 1080x1080 animations
+async function createLargeAnimation(options, htmlContent) {
+  const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    
+    const framesDir = path.join(process.cwd(), "temp_frames");
+    if (!fs.existsSync(framesDir)) {
+      fs.mkdirSync(framesDir);
+    }
+    // Increase frame count and decrease delay for smoother animation
+    const frameCount = 60; // Doubled from 30 to 60
+    const delayTime = 33; // ~30fps (1000ms / 30fps ≈ 33.33ms)
+  
+    await page.setViewport({ width: options.adDimensions.width, height: options.adDimensions.height });
+    await page.setContent(htmlContent);
+    
+    // Wait for all animations to be ready
+    await page.evaluate(() => document.fonts.ready);
+    await delay(100); // Small delay to ensure everything is loaded
+  
+    const encoder = new GIFEncoder(options.adDimensions.width, options.adDimensions.height);
+    encoder.setDelay(delayTime);
+    encoder.setQuality(10); // Lower number = better quality
+    encoder.setRepeat(-1);   // 0 = loop forever
+    encoder.start();
+  
+    // Calculate total animation duration (1000ms = 1s animation duration from CSS)
+    const animationDuration = 2000;
+    const timePerFrame = animationDuration / frameCount;
+  
+    for (let i = 0; i < frameCount; i++) {
+      // Calculate current animation time
+      const currentTime = i * timePerFrame;
+      
+      // Set the animation time using CSS animations playState
+      await page.evaluate((time) => {
+        document.getAnimations().forEach(animation => {
+          animation.currentTime = time;
+        });
+      }, currentTime);
+
+    const framePath = path.join(framesDir, `frame-${i}.png`);
+    await page.screenshot({ path: framePath });
+
+    const png = load(framePath);
+    const pixels = await new Promise((resolve) => {
+      png.decode((pixels) => resolve(pixels));
+    });
+
+    encoder.addFrame(pixels);
+    console.log(`Frame ${i + 1}/${frameCount} captured.`);
   }
 
-  // 2) Build the HTML string
-  const htmlContent = templateFn(options);
+  await browser.close();
+  encoder.finish();
 
-  // 3) Launch Puppeteer
+  // Cleanup and return
+  const { gifPath, framesDir: frames } = await saveAndCleanup(options, encoder, framesDir);
+  return gifPath;
+}
+
+// Function to handle 300x250 animations
+async function createSmallAnimation(options, htmlContent) {
   const browser = await puppeteer.launch({
     defaultViewport: {
       width: options.adDimensions.width,
@@ -110,20 +136,53 @@ export async function createAnimations(options = {}) {
   await browser.close();
   encoder.finish();
 
-  // 10) Write the GIF to disk
-  // You can store or return this path or upload to S3, etc.
+  // Cleanup and return
+  const { gifPath, framesDir: frames } = await saveAndCleanup(options, encoder, framesDir);
+  return gifPath;
+}
+
+// Helper function for saving GIF and cleaning up frames
+async function saveAndCleanup(options, encoder, framesDir) {
   const gifFilename = `animation_${Date.now()}.gif`;
   const gifPath = path.join(options.outputDir || process.cwd(), gifFilename);
   fs.writeFileSync(gifPath, encoder.out.getData());
 
-  console.log(`[createAnimations] GIF saved to: ${gifPath}`);
-
-  // Clean up the frames dir
+  // Clean up the frames directory
   fs.readdirSync(framesDir).forEach((file) => {
     fs.unlinkSync(path.join(framesDir, file));
   });
   fs.rmdirSync(framesDir);
 
-  await browser.close();
+  return { gifPath, framesDir };
+}
+
+// Main function that determines which animation function to use
+export async function createAnimations(options = {}) {
+  const { width, height } = options.adDimensions;
+  const sizeKey = `${width}x${height}`;
+
+  // Get the template function
+  const templateFn = animationTemplates[sizeKey];
+  if (!templateFn) {
+    throw new Error(`animationTemplates is missing a key for: ${sizeKey}`);
+  }
+
+  // Build the HTML string
+  const htmlContent = templateFn(options);
+
+  // Choose the appropriate animation function based on size
+  let gifPath;
+  switch (sizeKey) {
+    case "1080x1080":
+      gifPath = await createLargeAnimation(options, htmlContent);
+      break;
+    case "300x250":
+      gifPath = await createSmallAnimation(options, htmlContent);
+      break;
+    default:
+      throw new Error(`Unsupported size: ${sizeKey}`);
+  }
+
+  console.log(`[createAnimations] GIF saved to: ${gifPath}`);
   return gifPath;
 }
