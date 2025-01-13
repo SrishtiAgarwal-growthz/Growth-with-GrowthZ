@@ -11,7 +11,7 @@ import frame from "../assets/Frame.png";
 import { useNavigate } from "react-router-dom";
 
 // Base URL for API endpoints
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "https://growth-with-growthz.onrender.com";
 
 // API function to add creative tasks
 async function addCreativeToTasks(userId, appId) {

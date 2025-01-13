@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { X, Share, ArrowLeft, ArrowRight, } from "lucide-react";
 
 async function getGeneratedAds(appId) {
-  const BASE_URL = "http://localhost:8000";
+  const BASE_URL = "https://growth-with-growthz.onrender.com";
   const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
   if (!response.ok) {
     throw new Error("Failed to fetch generated ads");
