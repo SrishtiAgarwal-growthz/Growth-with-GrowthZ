@@ -8,6 +8,7 @@ import GoogleDisplayAds from "../components/PhoneMockup/GoogleMockup/GoogleDispl
 import FacebookIcon from "../assets/PhoneMockup/FB.png";
 import GoogleIcon from "../assets/PhoneMockup/Google.png";
 
+// Utility function for caption shortening
 function shortCaption(phrase) {
   if (!phrase || typeof phrase !== "string") return "";
   const cleaned = phrase.replace(/^\d+\.\s*/, "").trim();
@@ -17,29 +18,94 @@ function shortCaption(phrase) {
 }
 
 export default function Rainbow() {
-  const [error] = useState("");
+  // Core state management
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  // const [currentIndex] = useState(0);
   const [ads, setAds] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // UI state management
   const [activeApp, setActiveApp] = useState("facebook");
   const [activeMockup, setActiveMockup] = useState("storyAds");
-  
-  const [nextHandler, setNextHandler] = useState(() => () => {});
-  const [prevHandler, setPrevHandler] = useState(() => () => {});
 
-  const handleNext = useCallback(() => {
-    nextHandler();
-  }, [nextHandler]);
-
-  const handlePrev = useCallback(() => {
-    prevHandler();
-  }, [prevHandler]);
-
+  // Available apps configuration
   const apps = [
     { id: 'facebook', alt: 'Facebook', icon: FacebookIcon },
     { id: 'google', alt: 'Google', icon: GoogleIcon }
   ];
 
+  // Centralized navigation handlers
+  const handleNext = useCallback(() => {
+    if (ads.length === 0) return;
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
+    console.log('Moving to next ad, new index:', (currentIndex + 1) % ads.length);
+  }, [ads.length, currentIndex]);
+
+  const handlePrev = useCallback(() => {
+    if (ads.length === 0) return;
+    setCurrentIndex((prevIndex) => 
+      prevIndex === 0 ? ads.length - 1 : prevIndex - 1
+    );
+    console.log('Moving to previous ad');
+  }, [ads.length]);
+
+  // Accept handler with API integration
+  // In Rainbow.jsx
+const handleAccept = useCallback(async (e) => {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  // Use a local loading state instead of global state
+  
+  try {
+    const currentAd = ads[currentIndex];
+    const adUrl = currentAd?.creativeUrl?.adUrl;
+    
+    if (!adUrl) {
+      throw new Error("No ad URL found for the current creative");
+    }
+
+    const response = await fetch("http://localhost:8000/api/creativesStatus/approve", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        creativeId: adUrl,
+        status: "approved",
+      }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || "Failed to approve creative");
+    }
+
+    // Only update state once after successful API call
+    handleNext();
+    
+  } catch (err) {
+    console.error("Error approving creative:", err.message);
+    setError(err.message);
+  } 
+}, [ads, currentIndex, handleNext]);
+  // Reject handler (can be expanded with API integration if needed)
+  const handleReject = useCallback(() => {
+    console.log('Creative Rejected');
+    handleNext(); // Optionally move to next after rejection
+  }, [handleNext]);
+
+  // Effect to handle initial loading state
+  useEffect(() => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+  }, []);
+
+  // Effect to handle app switching
   useEffect(() => {
     if (activeApp === "google") {
       setActiveMockup("display");
@@ -48,60 +114,64 @@ export default function Rainbow() {
     }
   }, [activeApp]);
 
+  // Effect to initialize ads (replace with your actual data fetching logic)
   useEffect(() => {
     setAds([{ id: 1, name: "Ad #1" }, { id: 2, name: "Ad #2" }]);
   }, []);
 
-  useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-  }, []);
-
+  // Loading state handler
   if (loading) {
     return <p>Loading...</p>;
   }
 
-  // Pre-render all mockups and control visibility instead of conditional rendering
+  // Render all mockups function
   const renderAllMockups = () => {
-     return (
+    return (
       <div className="relative w-full h-full">
         {/* Facebook Mockups */}
         <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "facebook" && activeMockup === "feedCarousel" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
           <FbFeedCarousel
             ads={ads}
+            setAds={setAds}
+            currentIndex={currentIndex}
+            setCurrentIndex={setCurrentIndex}
             shortCaption={shortCaption}
-            setNextHandler={setNextHandler}
-            setPrevHandler={setPrevHandler}
           />
         </div>
         <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "facebook" && activeMockup === "storyAds" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
           <FbStoryAds
-            setNextHandler={setNextHandler}
-            setPrevHandler={setPrevHandler}
+            ads={ads}
+            setAds={setAds}
+            currentIndex={currentIndex}
+            setCurrentIndex={setCurrentIndex}
           />
         </div>
 
         {/* Google Mockups */}
         <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "google" && activeMockup === "maps" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
           <GoogleAnimatedAds
-            setNextHandler={setNextHandler}
-            setPrevHandler={setPrevHandler}
+            ads={ads}
+            setAds={setAds}
+            currentIndex={currentIndex}
+            setCurrentIndex={setCurrentIndex}
           />
         </div>
         <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "google" && activeMockup === "display" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
           <GoogleDisplayAds
-            setNextHandler={setNextHandler}
-            setPrevHandler={setPrevHandler}
+            ads={ads}
+            setAds={setAds}
+            currentIndex={currentIndex}
+            setCurrentIndex={setCurrentIndex}
           />
         </div>
       </div>
     );
   };
+
   return (
     <div className="bg-black min-h-screen w-full relative overflow-x-hidden">
-      {error && <p>{error}</p>}
+      {error && <p className="text-red-500 text-center">{error}</p>}
+      
       {/* Sidebar */}
       <div className="fixed left-0 top-0 h-full w-16 bg-[#0F0F0F] flex flex-col items-center justify-center gap-8 z-10">
         {apps.map((app) => (
@@ -166,14 +236,16 @@ export default function Rainbow() {
 
         {/* Phone Mockup Container */}
         <div className="flex justify-center items-center w-full">
-        <div className="w-full max-w-md mx-auto">
-          <PhoneMockup
-            handleNext={handleNext}
-            handlePrev={handlePrev}
-          >
-            {renderAllMockups()}
-          </PhoneMockup>
-        </div>
+          <div className="w-full max-w-md mx-auto">
+            <PhoneMockup
+              handleNext={handleNext}
+              handlePrev={handlePrev}
+              onAccept={handleAccept}
+              onReject={handleReject}
+            >
+              {renderAllMockups()}
+            </PhoneMockup>
+          </div>
         </div>
       </div>
 
