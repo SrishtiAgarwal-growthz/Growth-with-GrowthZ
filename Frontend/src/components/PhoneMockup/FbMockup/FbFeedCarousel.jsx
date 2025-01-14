@@ -7,7 +7,7 @@ import { Plus, Search, MessageCircle, MoreHorizontal, Home, PlaySquare, Users, X
  * from your backend route `/api/creatives/get-ads?appId=...`.
  */
 async function getGeneratedAds(appId) {
-  const BASE_URL = "https://growth-with-growthz.onrender.com";
+  const BASE_URL = "http://localhost:8000";
   const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
   if (!response.ok) {
     throw new Error("Failed to fetch generated ads");

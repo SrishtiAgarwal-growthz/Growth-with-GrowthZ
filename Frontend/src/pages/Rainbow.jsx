@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PhoneMockup from "../components/PhoneMockup/PhoneMockup";
 import FbFeedCarousel from "../components/PhoneMockup/FbMockup/FbFeedCarousel";
 import FbStoryAds from "../components/PhoneMockup/FbMockup/FbStoryAds";
@@ -19,11 +19,22 @@ function shortCaption(phrase) {
 export default function Rainbow() {
   const [error] = useState("");
   const [loading, setLoading] = useState(false);
-  const [currentIndex] = useState(0);
+  // const [currentIndex] = useState(0);
   const [ads, setAds] = useState([]);
   const [activeApp, setActiveApp] = useState("facebook");
   const [activeMockup, setActiveMockup] = useState("storyAds");
   
+  const [nextHandler, setNextHandler] = useState(() => () => {});
+  const [prevHandler, setPrevHandler] = useState(() => () => {});
+
+  const handleNext = useCallback(() => {
+    nextHandler();
+  }, [nextHandler]);
+
+  const handlePrev = useCallback(() => {
+    prevHandler();
+  }, [prevHandler]);
+
   const apps = [
     { id: 'facebook', alt: 'Facebook', icon: FacebookIcon },
     { id: 'google', alt: 'Google', icon: GoogleIcon }
@@ -54,35 +65,40 @@ export default function Rainbow() {
 
   // Pre-render all mockups and control visibility instead of conditional rendering
   const renderAllMockups = () => {
-    return (
+     return (
       <div className="relative w-full h-full">
         {/* Facebook Mockups */}
         <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "facebook" && activeMockup === "feedCarousel" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
           <FbFeedCarousel
             ads={ads}
-            currentIndex={currentIndex}
             shortCaption={shortCaption}
+            setNextHandler={setNextHandler}
+            setPrevHandler={setPrevHandler}
           />
         </div>
         <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "facebook" && activeMockup === "storyAds" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
           <FbStoryAds
-            ads={ads}
-            currentIndex={currentIndex}
-            shortCaption={shortCaption}
+            setNextHandler={setNextHandler}
+            setPrevHandler={setPrevHandler}
           />
         </div>
 
         {/* Google Mockups */}
         <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "google" && activeMockup === "maps" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
-          <GoogleAnimatedAds />
+          <GoogleAnimatedAds
+            setNextHandler={setNextHandler}
+            setPrevHandler={setPrevHandler}
+          />
         </div>
         <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "google" && activeMockup === "display" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
-          <GoogleDisplayAds />
+          <GoogleDisplayAds
+            setNextHandler={setNextHandler}
+            setPrevHandler={setPrevHandler}
+          />
         </div>
       </div>
     );
   };
-
   return (
     <div className="bg-black min-h-screen w-full relative overflow-x-hidden">
       {error && <p>{error}</p>}
@@ -150,9 +166,14 @@ export default function Rainbow() {
 
         {/* Phone Mockup Container */}
         <div className="flex justify-center items-center w-full">
-          <div className="w-full max-w-md mx-auto">
-            <PhoneMockup>{renderAllMockups()}</PhoneMockup>
-          </div>
+        <div className="w-full max-w-md mx-auto">
+          <PhoneMockup
+            handleNext={handleNext}
+            handlePrev={handlePrev}
+          >
+            {renderAllMockups()}
+          </PhoneMockup>
+        </div>
         </div>
       </div>
 
