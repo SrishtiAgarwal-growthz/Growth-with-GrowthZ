@@ -61,7 +61,7 @@ const GoogleDisplayAds = ({ currentIndex, setCurrentIndex, ads, setAds }) => {
     return () => {
       mounted = false;
     };
-  }, [storedAppId]);
+  }, [storedAppId, ads, currentIndex, setAds, setCurrentIndex]);
 
   const currentAd = ads[currentIndex] || null;
 

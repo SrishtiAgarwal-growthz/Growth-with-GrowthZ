@@ -76,7 +76,7 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
     return () => {
       mounted = false;
     };
-  }, [storedAppId]);
+  }, [storedAppId, ads, currentIndex, setAds, setCurrentIndex]);
 
   const currentAd = ads[currentIndex] || {};
   const mainAdUrl = currentAd.creativeUrl?.animationUrl;
