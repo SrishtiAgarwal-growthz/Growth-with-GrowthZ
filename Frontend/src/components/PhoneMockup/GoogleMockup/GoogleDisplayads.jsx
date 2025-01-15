@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Share, ArrowLeft, ArrowRight } from "lucide-react";
+import { Share } from "lucide-react";
+import PropTypes from "prop-types";
 
 async function fetchAds(appId) {
-  const BASE_URL = "https://growth-with-growthz.onrender.com";
+  const BASE_URL = "http://localhost:8000";
   const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
   if (!response.ok) {
     throw new Error("Failed to fetch ads");
@@ -10,44 +11,57 @@ async function fetchAds(appId) {
   return response.json();
 }
 
-const NewsArticleMockup = () => {
-  const [ads, setAds] = useState([]);
+const GoogleDisplayAds = ({ currentIndex, setCurrentIndex, ads, setAds }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
-
+  
   const storedAppId = localStorage.getItem("appId") || "";
 
   useEffect(() => {
+    let mounted = true;
     if (!storedAppId) return;
 
     const fetchAndSetAds = async () => {
+      // Only fetch if we don't already have ads
+      if (ads.length > 0) return;
+      
       try {
         setLoading(true);
+        setError("");
+        
         const data = await fetchAds(storedAppId);
+        
+        if (!mounted) return;
+        
         const filteredAds = data.ads.filter(
           (ad) => ad.creativeUrl?.size === "300x250"
         );
-        setAds(filteredAds);
+        
+        if (filteredAds.length > 0) {
+          setAds(filteredAds);
+          if (setCurrentIndex && currentIndex === 0) {
+            setCurrentIndex(0);
+          }
+        } else {
+          setError("No display ads (300x250) found.");
+        }
       } catch (err) {
-        setError(err.message);
+        if (!mounted) return;
+        console.error("[fetchAds] Error:", err.message);
+        setError(err.message || "Error fetching display ads");
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchAndSetAds();
+    
+    return () => {
+      mounted = false;
+    };
   }, [storedAppId]);
-
-  const handleNextAd = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
-  };
-
-  const handlePrevAd = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? ads.length - 1 : prevIndex - 1
-    );
-  };
 
   const currentAd = ads[currentIndex] || null;
 
@@ -101,28 +115,10 @@ const NewsArticleMockup = () => {
                 <div className="relative">
                   <img
                     src={currentAd.creativeUrl.adUrl}
-                    alt="Ad"
+                    alt="Display Ad"
                     className="w-full h-auto object-contain"
                     style={{ maxWidth: "300px", maxHeight: "250px" }}
                   />
-
-                  {/* Navigation Buttons */}
-                  {ads.length > 1 && (
-                    <>
-                      <button
-                        onClick={handlePrevAd}
-                        className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-30 p-2 rounded-full"
-                      >
-                        <ArrowLeft className="w-5 h-5 text-white" />
-                      </button>
-                      <button
-                        onClick={handleNextAd}
-                        className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-30 p-2 rounded-full"
-                      >
-                        <ArrowRight className="w-5 h-5 text-white" />
-                      </button>
-                    </>
-                  )}
                 </div>
               </div>
 
@@ -136,4 +132,11 @@ const NewsArticleMockup = () => {
   );
 };
 
-export default NewsArticleMockup;
+GoogleDisplayAds.propTypes = {
+  currentIndex: PropTypes.number.isRequired,
+  setCurrentIndex: PropTypes.func,
+  ads: PropTypes.array.isRequired,
+  setAds: PropTypes.func.isRequired
+};
+
+export default GoogleDisplayAds;

@@ -11,7 +11,7 @@ import logo from "../assets/logo.png";
 import frame from "../assets/Frame.png";
 import { useNavigate } from "react-router-dom";
 
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "http://localhost:8000";
 
 async function addCreativeToTasks(userId, appId) {
   const response = await fetch(`${BASE_URL}/api/creatives/addCreativeToTasks`, {

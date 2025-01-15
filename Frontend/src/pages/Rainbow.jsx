@@ -8,24 +8,28 @@ import GoogleDisplayAds from "../components/PhoneMockup/GoogleMockup/GoogleDispl
 import FacebookIcon from "../assets/PhoneMockup/FB.png";
 import GoogleIcon from "../assets/PhoneMockup/Google.png";
 
-const BASE_URL = "https://growth-with-growthz.onrender.com";
-
-// Utility function for caption shortening
-function shortCaption(phrase) {
-  if (!phrase || typeof phrase !== "string") return "";
-  // const cleaned = phrase.replace(/^\d+\.\s*/, "").trim();
-  // const words = cleaned.split(/\s+/);
-  // const firstFive = words.slice(0, 5).join(" ");
-  return phrase;
-}
-
 export default function Rainbow() {
   // Core state management
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [ads, setAds] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [approvedAds, setApprovedAds] = useState(new Set()); 
+  
+  // Separate states for each mockup type
+  const [ads, setAds] = useState({
+    storyAds: [],
+    feedCarousel: [],
+    displayAds: [],
+    animatedAds: []
+  });
+  
+  const [currentIndex, setCurrentIndex] = useState({
+    storyAds: 0,
+    feedCarousel: 0,
+    displayAds: 0,
+    animatedAds: 0
+  });
+
+  // Track approvals per mockup type
+  const [approvedAds, setApprovedAds] = useState(new Set());
   
   // UI state management
   const [activeApp, setActiveApp] = useState("facebook");
@@ -39,66 +43,75 @@ export default function Rainbow() {
 
   // Centralized navigation handlers
   const handleNext = useCallback(() => {
-    if (ads.length === 0) return;
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
-    console.log('Moving to next ad, new index:', (currentIndex + 1) % ads.length);
-  }, [ads.length, currentIndex]);
+    const currentAds = ads[activeMockup];
+    if (!currentAds?.length) return;
+
+    setCurrentIndex(prev => ({
+      ...prev,
+      [activeMockup]: (prev[activeMockup] + 1) % currentAds.length
+    }));
+    console.log('Moving to next ad in', activeMockup);
+  }, [ads, activeMockup]);
 
   const handlePrev = useCallback(() => {
-    if (ads.length === 0) return;
-    setCurrentIndex((prevIndex) => 
-      prevIndex === 0 ? ads.length - 1 : prevIndex - 1
-    );
-    console.log('Moving to previous ad');
-  }, [ads.length]);
+    const currentAds = ads[activeMockup];
+    if (!currentAds?.length) return;
+
+    setCurrentIndex(prev => ({
+      ...prev,
+      [activeMockup]: prev[activeMockup] === 0 
+        ? currentAds.length - 1 
+        : prev[activeMockup] - 1
+    }));
+    console.log('Moving to previous ad in', activeMockup);
+  }, [ads, activeMockup]);
 
   // Accept handler with API integration
-  // In Rainbow.jsx
-const handleAccept = useCallback(async (e) => {
-  if (e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
-  // Use a local loading state instead of global state
-  
-  try {
-    const currentAd = ads[currentIndex];
-    const adUrl = currentAd?.creativeUrl?.adUrl;
-    
-    if (!adUrl) {
-      throw new Error("No ad URL found for the current creative");
+  const handleAccept = useCallback(async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
 
-    const response = await fetch(`${BASE_URL}/api/creativesStatus/approve`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        creativeId: adUrl,
-        status: "approved",
-      }),
-    });
+    try {
+      const currentAd = ads[activeMockup][currentIndex[activeMockup]];
+      const adUrl = currentAd?.creativeUrl?.adUrl;
+      
+      if (!adUrl) {
+        throw new Error("No ad URL found for the current creative");
+      }
 
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Failed to approve creative");
-    }
+      const response = await fetch("http://localhost:8000/api/creativesStatus/approve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          creativeId: adUrl,
+          status: "approved",
+          mockupType: activeMockup
+        }),
+      });
 
-    setApprovedAds(prev => new Set([...prev, adUrl]));
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to approve creative");
+      }
+
+      // Store approval with mockup type
+      setApprovedAds(prev => new Set([...prev, `${activeMockup}:${currentAd.id}`]));
       handleNext();
-    
-    
-  } catch (err) {
-    console.error("Error approving creative:", err.message);
-    setError(err.message);
-  } 
-}, [ads, currentIndex, handleNext]);
-  // Reject handler (can be expanded with API integration if needed)
+      
+    } catch (err) {
+      console.error("Error approving creative:", err.message);
+      setError(err.message);
+    }
+  }, [ads, currentIndex, handleNext, activeMockup]);
+
+  // Reject handler
   const handleReject = useCallback(() => {
     console.log('Creative Rejected');
-    handleNext(); // Optionally move to next after rejection
+    handleNext();
   }, [handleNext]);
 
   // Effect to handle initial loading state
@@ -112,68 +125,64 @@ const handleAccept = useCallback(async (e) => {
   // Effect to handle app switching
   useEffect(() => {
     if (activeApp === "google") {
-      setActiveMockup("display");
+      setActiveMockup("displayAds");
     } else if (activeApp === "facebook") {
       setActiveMockup("storyAds");
     }
   }, [activeApp]);
-
-  // Effect to initialize ads (replace with your actual data fetching logic)
-  useEffect(() => {
-    setAds([{ id: 1, name: "Ad #1" }, { id: 2, name: "Ad #2" }]);
-  }, []);
 
   // Loading state handler
   if (loading) {
     return <p>Loading...</p>;
   }
 
-  const isCurrentAdApproved = ads[currentIndex]?.creativeUrl?.adUrl 
-  ? approvedAds.has(ads[currentIndex].creativeUrl.adUrl)
-    : false;
-  
-  // Render all mockups function
-  const renderAllMockups = () => {
-    return (
-      <div className="relative w-full h-full">
-        {/* Facebook Mockups */}
-        <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "facebook" && activeMockup === "feedCarousel" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
-          <FbFeedCarousel
-            ads={ads}
-            setAds={setAds}
-            currentIndex={currentIndex}
-            setCurrentIndex={setCurrentIndex}
-            shortCaption={shortCaption}
-          />
-        </div>
-        <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "facebook" && activeMockup === "storyAds" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
-          <FbStoryAds
-            ads={ads}
-            setAds={setAds}
-            currentIndex={currentIndex}
-            setCurrentIndex={setCurrentIndex}
-          />
-        </div>
+  // Calculate if current ad is approved
+  const isCurrentAdApproved = (() => {
+    const currentAd = ads[activeMockup]?.[currentIndex[activeMockup]];
+    return currentAd ? approvedAds.has(`${activeMockup}:${currentAd.id}`) : false;
+  })();
 
-        {/* Google Mockups */}
-        <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "google" && activeMockup === "maps" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
-          <GoogleAnimatedAds
-            ads={ads}
-            setAds={setAds}
-            currentIndex={currentIndex}
-            setCurrentIndex={setCurrentIndex}
+  // Render mockup function based on active type
+  const renderAllMockups = () => {
+    const mockupProps = {
+      currentIndex: currentIndex[activeMockup],
+      setCurrentIndex: (index) => setCurrentIndex(prev => ({ ...prev, [activeMockup]: index })),
+    };
+
+    switch (activeMockup) {
+      case "storyAds":
+        return (
+          <FbStoryAds
+            {...mockupProps}
+            ads={ads.storyAds}
+            setAds={(newAds) => setAds(prev => ({ ...prev, storyAds: newAds }))}
           />
-        </div>
-        <div className={`absolute inset-0 transition-opacity duration-300 ${activeApp === "google" && activeMockup === "display" ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
+        );
+      case "feedCarousel":
+        return (
+          <FbFeedCarousel
+            {...mockupProps}
+            ads={ads.feedCarousel}
+            setAds={(newAds) => setAds(prev => ({ ...prev, feedCarousel: newAds }))}
+          />
+        );
+      case "displayAds":
+        return (
           <GoogleDisplayAds
-            ads={ads}
-            setAds={setAds}
-            currentIndex={currentIndex}
-            setCurrentIndex={setCurrentIndex}
+            {...mockupProps}
+            ads={ads.displayAds}
+            setAds={(newAds) => setAds(prev => ({ ...prev, displayAds: newAds }))}
           />
-        </div>
-      </div>
-    );
+        );
+      case "animatedAds":
+        return (
+          <GoogleAnimatedAds
+            {...mockupProps}
+            ads={ads.animatedAds}
+            setAds={(newAds) => setAds(prev => ({ ...prev, animatedAds: newAds }))}
+          />
+        );
+    }
   };
 
   return (
@@ -225,16 +234,16 @@ const handleAccept = useCallback(async (e) => {
           ) : (
             <>
               <button
-                onClick={() => setActiveMockup("display")}
+                onClick={() => setActiveMockup("displayAds")}
                 className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
-                  ${activeMockup === "display" ? "selected-gradient" : "unselected-gradient"}`}
+                  ${activeMockup === "displayAds" ? "selected-gradient" : "unselected-gradient"}`}
               >
                 Display Ads
               </button>
               <button
-                onClick={() => setActiveMockup("maps")}
+                onClick={() => setActiveMockup("animatedAds")}
                 className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
-                  ${activeMockup === "maps" ? "selected-gradient" : "unselected-gradient"}`}
+                  ${activeMockup === "animatedAds" ? "selected-gradient" : "unselected-gradient"}`}
               >
                 Animated Ads
               </button>
@@ -279,4 +288,4 @@ const handleAccept = useCallback(async (e) => {
       </style>
     </div>
   );
-} 
+}

@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Share, ArrowLeft, ArrowRight } from "lucide-react";
+import { Share } from "lucide-react";
 
-// Fetch function to get ads
 async function getGeneratedAds(appId) {
-  const BASE_URL = "https://growth-with-growthz.onrender.com";
+  const BASE_URL = "http://localhost:8000";
   const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
   if (!response.ok) {
     throw new Error("Failed to fetch generated ads");
@@ -12,54 +11,63 @@ async function getGeneratedAds(appId) {
   return await response.json();
 }
 
-const GoogleAnimatedAds = () => {
-  const [ads, setAds] = useState([]);
+const GoogleAnimatedAds = ({ currentIndex, setCurrentIndex, ads, setAds }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
-
+  
   const storedAppId = localStorage.getItem("appId") || "";
 
-  // Fetch and filter ads
   useEffect(() => {
+    let mounted = true;
     if (!storedAppId) return;
 
     const fetchAds = async () => {
+      // Only fetch if we don't already have ads
+      if (ads.length > 0) return;
+      
       try {
         setLoading(true);
+        setError("");
+        
         const data = await getGeneratedAds(storedAppId);
-        const filteredAds = data.animations.filter(
-          (ad) => ad.creativeUrl?.size === "300x250" // Adjust filter criteria for Google ads if needed
+        
+        if (!mounted) return;
+        
+        const filteredAds = data.animations?.filter(
+          (ad) => ad.creativeUrl?.size === "300x250"
         );
-        setAds(filteredAds);
+        
+        if (filteredAds?.length > 0) {
+          setAds(filteredAds);
+          if (setCurrentIndex && currentIndex === 0) {
+            setCurrentIndex(0);
+          }
+        } else {
+          setError("No animated ads (300x250) found.");
+        }
       } catch (err) {
-        setError(err.message || "Error fetching ads");
+        if (!mounted) return;
+        console.error("[getGeneratedAds] Error:", err.message);
+        setError(err.message || "Error fetching animated ads");
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchAds();
+    
+    return () => {
+      mounted = false;
+    };
   }, [storedAppId]);
 
-  // Navigation Handlers
-  const handleNextAd = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
-  };
-
-  const handlePrevAd = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? ads.length - 1 : prevIndex - 1
-    );
-  };
-
-  // Get current ad
   const currentAd = ads[currentIndex] || {};
   const mainAdUrl = currentAd.creativeUrl?.animationUrl || "";
 
   return (
     <div className="flex flex-col h-full bg-neutral-900">
-      {/* Add padding-top to account for the notch */}
       <div className="pt-8">
         {/* Google Search Bar */}
         <div className="p-4 bg-neutral-800">
@@ -102,24 +110,6 @@ const GoogleAnimatedAds = () => {
                   playsInline
                   style={{ maxHeight: "300px" }}
                 />
-
-                {/* Navigation Buttons */}
-                {ads.length > 1 && (
-                  <>
-                    <button
-                      onClick={handlePrevAd}
-                      className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-30 p-2 rounded-full"
-                    >
-                      <ArrowLeft className="w-5 h-5 text-white" />
-                    </button>
-                    <button
-                      onClick={handleNextAd}
-                      className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-30 p-2 rounded-full"
-                    >
-                      <ArrowRight className="w-5 h-5 text-white" />
-                    </button>
-                  </>
-                )}
               </div>
             </div>
           )}
@@ -130,7 +120,10 @@ const GoogleAnimatedAds = () => {
 };
 
 GoogleAnimatedAds.propTypes = {
-  children: PropTypes.node,
+  currentIndex: PropTypes.number.isRequired,
+  setCurrentIndex: PropTypes.func,
+  ads: PropTypes.array.isRequired,
+  setAds: PropTypes.func.isRequired
 };
 
 export default GoogleAnimatedAds;

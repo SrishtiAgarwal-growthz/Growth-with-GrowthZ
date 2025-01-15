@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
-import { Plus, Search, MessageCircle, MoreHorizontal, Home, PlaySquare, Users, X, ArrowLeft,
-  ArrowRight, } from 'lucide-react';
+import { Plus, Search, MessageCircle, MoreHorizontal, Home, PlaySquare, Users, X } from 'lucide-react';
+import PropTypes from "prop-types";
 
-/** 
- * Example fetch function returning { appId, appName, ads: [...] } 
- * from your backend route `/api/creatives/get-ads?appId=...`.
- */
 async function getGeneratedAds(appId) {
-  const BASE_URL = "https://growth-with-growthz.onrender.com";
+  const BASE_URL = "http://localhost:8000";
   const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
   if (!response.ok) {
     throw new Error("Failed to fetch generated ads");
@@ -15,25 +11,11 @@ async function getGeneratedAds(appId) {
   return await response.json();
 }
 
-/**
- * shortCaption(phrase):
- * - Removes leading numbering like "12. " 
- * - Takes the first 3 words
- * - Returns a JSX fragment with "...read more" in blue.
- */
 function shortCaption(phrase) {
   if (!phrase || typeof phrase !== "string") return null;
-
-  // Remove leading digits like "4. "
   const cleaned = phrase.replace(/^\d+\.\s*/, "").trim();
-
-  // Split by whitespace
   const words = cleaned.split(/\s+/);
-
-  // Take the first 3 words
   const firstThree = words.slice(0, 5).join(" ");
-
-  // Return a JSX element
   return (
     <>
       {firstThree}{" "}
@@ -42,59 +24,59 @@ function shortCaption(phrase) {
   );
 }
 
-export default function FacebookMockup() {
+export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ads, setAds }) {
   const [error, setError] = useState("");
   const [loadingAds, setLoadingAds] = useState(false);
-  const [ads, setAds] = useState([]);
   const [appName, setAppName] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
-
+  
   const storedAppId = localStorage.getItem("appId") || "";
 
   useEffect(() => {
+    let mounted = true;
     if (!storedAppId) return;
 
     async function fetchAdsForApp() {
+      if (ads.length > 0) return;
+      
       try {
         setLoadingAds(true);
         setError("");
 
         const data = await getGeneratedAds(storedAppId);
+        
+        if (!mounted) return;
+        
         if (data.appName) setAppName(data.appName);
-        if (data.animations && data.animations.length > 0) {
-          // Filter out only 1080x1080 ads if you want
-          const only1080 = data.animations.filter(
-            (item) => item.creativeUrl?.size === "1080x1080"
-          );
-          if (only1080.length > 0) {
-            setAds(only1080);
+        
+        const carouselAds = data.animations?.filter(
+          (item) => item.creativeUrl?.size === "1080x1080"
+        );
+        console.log('Filtered story ads:', carouselAds);
+        if (carouselAds?.length > 0) {
+          setAds(carouselAds);
+          if (setCurrentIndex && currentIndex === 0) {
             setCurrentIndex(0);
-          } else {
-            setError("No 1080x1080 animations found.");
           }
         } else {
-          setError("No animations found in response.");
+          setError("No carousel ads (1080x1080) found.");
         }
       } catch (err) {
-        console.error("[getGeneratedAnimations] Error:", err.message);
-        setError(err.message || "Error fetching animations");
+        if (!mounted) return;
+        console.error("[getGeneratedAds] Error:", err.message);
+        setError(err.message || "Error fetching carousel ads");
       } finally {
-        setLoadingAds(false);
+        if (mounted) {
+          setLoadingAds(false);
+        }
       }
     }
 
     fetchAdsForApp();
+    
+    return () => {
+      mounted = false;
+    };
   }, [storedAppId]);
-
-  const handleNextAd = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
-  };
-
-  const handlePrevAd = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? ads.length - 1 : prevIndex - 1
-    );
-  };
 
   const currentAd = ads[currentIndex] || {};
   const mainAdUrl = currentAd.creativeUrl?.animationUrl;
@@ -106,7 +88,7 @@ export default function FacebookMockup() {
       {error && <p className="text-red-500 text-center mb-4">{error}</p>}
       {loadingAds && <p className="text-gray-700 text-center mb-4">Loading ads...</p>}
 
-      {/* Facebook Header - pushed down to account for notch */}
+      {/* Facebook Header */}
       <div className="bg-[#3a3b3c] text-white px-3 pt-7 pb-1.5">
         <div className="flex justify-between items-center">
           <span className="text-xl font-bold text-[#0866ff]">Fb</span>
@@ -126,6 +108,7 @@ export default function FacebookMockup() {
       </div>
 
       <div className="h-[1px] bg-black"></div>
+      
       {/* Post Content */}
       <div className="bg-[#3a3b3c] text-white px-3">
         <div className="py-2">
@@ -149,29 +132,14 @@ export default function FacebookMockup() {
 
           <p className="text-xs mb-2">{adCaption}</p>
 
-          {/* Left Arrow */}
-          <button
-            onClick={handlePrevAd}
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 p-2 rounded-full"
-          >
-            <ArrowLeft size={20} className="text-white" />
-          </button>
-
           {/* Post Image */}
           <div className="rounded-lg overflow-hidden bg-[#242526]">
             <img
               src={mainAdUrl}
+              alt="Carousel Ad"
               className="w-full h-[225px] object-contain"
             />
           </div>
-
-          {/* Right Arrow */}
-          <button
-            onClick={handleNextAd}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-30 p-2 rounded-full"
-          >
-            <ArrowRight size={20} className="text-white" />
-          </button>
 
           {/* Action Buttons */}
           <div className="mt-2 flex justify-between border-t border-[#3a3b3c] pt-2">
@@ -192,6 +160,7 @@ export default function FacebookMockup() {
       </div>
 
       <div className="h-[1px] bg-black"></div>
+      
       {/* Bottom Navigation */}
       <div className="absolute bottom-0 w-full bg-[#242526] border-t border-[#3a3b3c] mb-[10px]">
         <div className="flex justify-between px-6 py-1">
@@ -207,16 +176,15 @@ export default function FacebookMockup() {
             <Users size={12} />
             <span className="text-[10px] mt-0.5">Friends</span>
           </button>
-          {/* <button className="flex flex-col items-center text-gray-400">
-            <img
-              src="/api/placeholder/20/20"
-              alt="Marketplace"
-              className="w-5 h-5"
-            />
-            <span className="text-[10px] mt-0.5">Market</span>
-          </button> */}
         </div>
       </div>
     </>
   );
+}
+
+FacebookFeedCarousel.propTypes = {
+  currentIndex: PropTypes.number.isRequired,
+  setCurrentIndex: PropTypes.func,
+  ads: PropTypes.array.isRequired,
+  setAds: PropTypes.func.isRequired
 };
