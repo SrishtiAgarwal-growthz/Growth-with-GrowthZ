@@ -10,19 +10,24 @@ const PhoneMockup = ({
   handleNext,
   handlePrev,
   onAccept,
-  onReject
+  onReject,
+  isApproved
 }) => {
   const [time] = useState("4:28");
   const [isAccepting, setIsAccepting] = useState(false);
 
   const onNextClick = useCallback(() => {
     console.log('Next button clicked');
-    if (handleNext) handleNext();
+    if (handleNext) {
+      handleNext();
+    }
   }, [handleNext]);
   
   const onPrevClick = useCallback(() => {
     console.log('Previous button clicked');
-    if (handlePrev) handlePrev();
+    if (handlePrev) {
+      handlePrev();
+    }
   }, [handlePrev]);
 
   const onAcceptClick = useCallback(async (e) => {
@@ -41,7 +46,7 @@ const PhoneMockup = ({
 
   const onRejectClick = useCallback((e) => {
     e.preventDefault();
-  e.stopPropagation();
+    e.stopPropagation();
     console.log('Reject button clicked');
     if (onReject) onReject();
   }, [onReject]);
@@ -105,7 +110,6 @@ const PhoneMockup = ({
           aria-label="Next advertisement"
           className="absolute right-[-1.875em] top-1/2 transform -translate-y-1/2 translate-x-full w-8 h-8 cursor-pointer"
           onClick={onNextClick}
-         
         >
           <img src={rightbtn} alt="" className="w-full h-full" />
         </button>
@@ -113,20 +117,35 @@ const PhoneMockup = ({
 
       {/* Action Buttons */}
       <div className="flex gap-4 mt-8">
-        <button
-          className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-red-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={onRejectClick}
-        
-        >
-          Reject
-        </button>
-        <button
-          type="button"
-          className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-green-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={onAcceptClick}
-        >
-          Approve
-        </button>
+        {isApproved ? (
+          // Approved state - single centered button
+          <div className="w-48 md:w-72">
+            <button
+              className="w-full h-10 md:h-12 bg-neutral-800 rounded-lg text-green-500 font-semibold text-sm md:text-base cursor-default"
+            >
+              Approved
+            </button>
+          </div>
+        ) : (
+          // Normal state - reject and approve buttons
+          <>
+            <button
+              className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-red-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={onRejectClick}
+              disabled={isAccepting}
+            >
+              Reject
+            </button>
+            <button
+              type="button"
+              className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-green-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={onAcceptClick}
+              disabled={isAccepting}
+            >
+              Approve
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -138,11 +157,11 @@ PhoneMockup.propTypes = {
   handlePrev: PropTypes.func,
   onAccept: PropTypes.func,
   onReject: PropTypes.func,
-  isLoading: PropTypes.bool
+  isApproved: PropTypes.bool
 };
 
 PhoneMockup.defaultProps = {
-  isLoading: false
+  isApproved: false
 };
 
 export default PhoneMockup;

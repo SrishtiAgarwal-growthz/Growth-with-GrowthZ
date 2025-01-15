@@ -11,10 +11,10 @@ import GoogleIcon from "../assets/PhoneMockup/Google.png";
 // Utility function for caption shortening
 function shortCaption(phrase) {
   if (!phrase || typeof phrase !== "string") return "";
-  const cleaned = phrase.replace(/^\d+\.\s*/, "").trim();
-  const words = cleaned.split(/\s+/);
-  const firstFive = words.slice(0, 5).join(" ");
-  return firstFive + " ... See More";
+  // const cleaned = phrase.replace(/^\d+\.\s*/, "").trim();
+  // const words = cleaned.split(/\s+/);
+  // const firstFive = words.slice(0, 5).join(" ");
+  return phrase;
 }
 
 export default function Rainbow() {
@@ -23,6 +23,7 @@ export default function Rainbow() {
   const [loading, setLoading] = useState(false);
   const [ads, setAds] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [approvedAds, setApprovedAds] = useState(new Set()); 
   
   // UI state management
   const [activeApp, setActiveApp] = useState("facebook");
@@ -83,8 +84,9 @@ const handleAccept = useCallback(async (e) => {
       throw new Error(data.message || "Failed to approve creative");
     }
 
-    // Only update state once after successful API call
-    handleNext();
+    setApprovedAds(prev => new Set([...prev, adUrl]));
+      handleNext();
+    
     
   } catch (err) {
     console.error("Error approving creative:", err.message);
@@ -124,6 +126,10 @@ const handleAccept = useCallback(async (e) => {
     return <p>Loading...</p>;
   }
 
+  const isCurrentAdApproved = ads[currentIndex]?.creativeUrl?.adUrl 
+  ? approvedAds.has(ads[currentIndex].creativeUrl.adUrl)
+    : false;
+  
   // Render all mockups function
   const renderAllMockups = () => {
     return (
@@ -242,6 +248,7 @@ const handleAccept = useCallback(async (e) => {
               handlePrev={handlePrev}
               onAccept={handleAccept}
               onReject={handleReject}
+              isApproved={isCurrentAdApproved}
             >
               {renderAllMockups()}
             </PhoneMockup>
@@ -270,4 +277,4 @@ const handleAccept = useCallback(async (e) => {
       </style>
     </div>
   );
-}
+} 
