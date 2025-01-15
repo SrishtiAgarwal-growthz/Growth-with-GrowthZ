@@ -1,4 +1,3 @@
-// src/services/appService.js
 import gplay from "google-play-scraper";
 import store from "app-store-scraper";
 import { connectToMongo } from "../config/db.js";
@@ -24,7 +23,7 @@ export const fetchOrCreateApp = async (googlePlayUrl, appleAppUrl, websiteUrl = 
   try {
     const query = {};
     if (googleId) query.googleBundleId = googleId;
-    if (appleId)  query.appleBundleId  = appleId;
+    if (appleId) query.appleBundleId = appleId;
 
     // 1) Check if doc already exists
     const existing = await appsCollection.findOne(query);
@@ -71,50 +70,66 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
     if (!googleAppId) throw new Error("Invalid Google Play URL.");
 
     console.log("[saveAppDetailsInDb] Scraping Google Play store details...");
-    const googleData = await gplay.app({ appId: googleAppId });
+    const googlePlayData = await gplay.app({ appId: googleAppId });
 
     appDetails = {
       ...appDetails,
-      googleBundleId: googleData.appId,
-      appName: googleData.title,
-      category: googleData.genre,
-      googlePlayUrl: googleData.url,
-      iconUrl: googleData.icon,
-      images: googleData.screenshots.map((url) => ({
-        screenshot: url,
-        removed_bg_image: null,
+      appId: googlePlayData.appId,
+      appName: googlePlayData.title,
+      category: googlePlayData.genre,
+      googleBundleId: googlePlayData.appId,
+      googlePlayUrl: googlePlayData.url,
+      googleReviews: googlePlayData.reviews,
+      googleVersion: googlePlayData.version,
+      iconUrl: googlePlayData.icon,
+      images: googlePlayData.screenshots.map((screenshot) => ({
+        screenshot,
+        removed_bg_image: null, // Placeholder for future processing
       })),
-      // etc.
+      privacyPolicyUrl: googlePlayData.privacyPolicy,
+      websiteUrl: googlePlayData.developerWebsite,
     };
   }
 
-  // 2) Apple scraping
+  // Fetch details from Apple App Store
   if (appleAppUrl) {
-    console.log("[saveAppDetailsInDb] Scraping Apple App Store details...");
-    const appleId = extractAppleAppId(appleAppUrl);
-    if (!appleId) throw new Error("Invalid Apple App URL.");
+    const match = appleAppUrl.match(/id(\d+)/); // Extract ID from Apple URL
+    const appleAppId = match ? match[1] : null;
 
-    const appleData = await store.app({ id: appleId });
+    if (!appleAppId) {
+      throw new Error("Invalid Apple App Store URL.");
+    }
+
+    console.log("[saveAppDetailsInDb] Fetching Apple App Store details...");
+    const appleData = await store.app({ id: appleAppId });
+
     appDetails = {
       ...appDetails,
-      appleBundleId: appleData.id,
       appleAppUrl: appleData.url,
-      // apple screenshots if you want, etc.
+      appleBundleId: appleData.id,
+      appleReviews: appleData.reviews,
+      appleVersion: appleData.version,
     };
   }
-
   // 3) If direct website link
   if (websiteUrl) {
     appDetails.websiteLink = websiteUrl;
   }
 
-  // 4) Upsert
-  console.log("[saveAppDetailsInDb] Upserting app doc in DB...");
+  // 4) Upsert - Save to database
+  console.log("[saveAppDetailsInDb] Saving app details to database...");
+  const result = await appsCollection.updateOne(
+    { appId: appDetails.appId }, // Query to find the document by appId
+    { $set: appDetails }, // Update the document with appDetails
+    { upsert: true } // Create a new document if it doesn’t exist
+  );
+
+  console.log("[saveAppDetailsInDb] Saved app details to database.");
+
   const filter = {};
   if (appDetails.googleBundleId) filter.googleBundleId = appDetails.googleBundleId;
   else if (appDetails.appleBundleId) filter.appleBundleId = appDetails.appleBundleId;
 
-  await appsCollection.updateOne(filter, { $setOnInsert: appDetails }, { upsert: true });
   let savedApp = await appsCollection.findOne(filter);
   console.log("[saveAppDetailsInDb] Saved app =>", savedApp._id);
 
@@ -123,7 +138,7 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
     console.log("[saveAppDetailsInDb] imagesProcessed is false => calling processAppImages...");
     try {
       // If you are *sure* you want to do it here:
-      await processAppImages(savedApp._id); 
+      await processAppImages(savedApp._id);
       // If success => mark true
       await appsCollection.updateOne(
         { _id: savedApp._id },
@@ -139,5 +154,5 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
     console.log("[saveAppDetailsInDb] imagesProcessed already true => skip remove-bg calls.");
   }
 
-  return await appsCollection.findOne({ _id: savedApp._id });
+  return { ...appDetails, _id: result.upsertedId || appDetails._id };
 };

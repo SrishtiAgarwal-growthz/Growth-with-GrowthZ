@@ -8,6 +8,8 @@ import GoogleDisplayAds from "../components/PhoneMockup/GoogleMockup/GoogleDispl
 import FacebookIcon from "../assets/PhoneMockup/FB.png";
 import GoogleIcon from "../assets/PhoneMockup/Google.png";
 
+const BASE_URL = "https://growth-with-growthz.onrender.com";
+
 // Utility function for caption shortening
 function shortCaption(phrase) {
   if (!phrase || typeof phrase !== "string") return "";
@@ -68,7 +70,7 @@ const handleAccept = useCallback(async (e) => {
       throw new Error("No ad URL found for the current creative");
     }
 
-    const response = await fetch("http://localhost:8000/api/creativesStatus/approve", {
+    const response = await fetch(`${BASE_URL}/api/creativesStatus/approve`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

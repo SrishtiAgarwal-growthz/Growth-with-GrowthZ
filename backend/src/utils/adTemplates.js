@@ -99,7 +99,7 @@ export const adTemplates = {
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        padding-top: 34px;
+        padding-top: 32px;
       }
 
       .logo-container {
@@ -120,7 +120,7 @@ export const adTemplates = {
       .text-section {
         font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
         margin: 0 auto;
-        max-width: 95%;
+        max-width: 100%;
         position: relative;
         z-index: 1;
       }
@@ -134,12 +134,12 @@ export const adTemplates = {
       .primary-text {
         color: ${textColor};
         font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-        font-size: 12px;
-        font-weight: 600;
+        font-size: 16px;
+        font-weight: 700;
         hyphens: auto;
         letter-spacing: -0.02em;
         line-height: 1.2;
-        margin: 0 0 8 0;
+        margin: 0;
         max-width: 95%;
         overflow-wrap: break-word;
         padding: 0;
@@ -150,13 +150,12 @@ export const adTemplates = {
       .secondary-text {
         color: ${textColor};
         font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-        font-size: 8px;
+        font-size: 14px;
         font-weight: 500;
         hyphens: auto;
         letter-spacing: 1.2px;
         line-height: 1;
-        margin: 0;
-        max-width: 90%;
+        max-width: 100%;
         opacity: 0.9;
         overflow-wrap: break-word;
         padding: 0;
@@ -1699,15 +1698,14 @@ export const adTemplates = {
             .primary-text {
               color: ${textColor};
               font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-              font-size: 84px;
-              font-weight: 600;
+              font-size: 90px;
+              font-weight: 700;
               hyphens: auto;
-              letter-spacing: -0.02em;
+              letter-spacing: 0.02em;
               line-height: 1.2;
               margin: 0;
-              max-width: 95%;
+              max-width: 100%;
               overflow-wrap: break-word;
-              padding: 0;
               text-align: center;
               word-wrap: break-word;
             }
@@ -1715,15 +1713,13 @@ export const adTemplates = {
             .secondary-text {
               color: ${textColor};
               font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
-              font-size: 64px;
-              font-weight: 400;
+              font-size: 76px;
+              font-weight: 500;
               hyphens: auto;
               line-height: 1.2;
-              margin: 0;
-              max-width: 90%;
+              max-width: 100%;
               opacity: 0.9;
               overflow-wrap: break-word;
-              padding: 0;
               text-align: center;
               word-wrap: break-word;  
             }
@@ -1737,7 +1733,7 @@ export const adTemplates = {
             .text-section {
               font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
               margin: 0 auto;
-              max-width: 95%;
+              max-width: 100%;
               position: relative;
               z-index: 1;
             }
