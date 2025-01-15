@@ -118,7 +118,7 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
 
   // 4) Upsert - Save to database
   console.log("[saveAppDetailsInDb] Saving app details to database...");
-  const result = await appsCollection.updateOne(
+  await appsCollection.updateOne(
     { appId: appDetails.appId }, // Query to find the document by appId
     { $set: appDetails }, // Update the document with appDetails
     { upsert: true } // Create a new document if it doesn’t exist
@@ -154,5 +154,5 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
     console.log("[saveAppDetailsInDb] imagesProcessed already true => skip remove-bg calls.");
   }
 
-  return { ...appDetails, _id: result.upsertedId || appDetails._id };
+  return await appsCollection.findOne({ _id: savedApp._id });
 };
