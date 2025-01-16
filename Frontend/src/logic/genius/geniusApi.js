@@ -1,5 +1,3 @@
-// geniusApi.js
-
 const BASE_URL = "http://localhost:8000";
 
 /**
@@ -9,7 +7,7 @@ const BASE_URL = "http://localhost:8000";
  * @returns {Promise<Object>} - The saved app data from the backend.
  */
 export const saveAppDetails = async (formData) => {
-try {
+    try {
         const response = await fetch(`${BASE_URL}/api/app/save-app`, {
             method: 'POST',
             headers: {
@@ -165,3 +163,81 @@ export const rejectPhrase = async (appId, text) => {
         throw error;
     }
 };
+
+/**
+ * Add creatives to tasks.
+ * @param {string} userId - The user's ID.
+ * @param {string} appId - The app's ID.
+ * @returns {Promise<Object>} - The response from the backend.
+ */
+export const addCreativeToTasks = async (userId, appId) => {
+    try {
+        const response = await fetch(`${BASE_URL}/api/creatives/addCreativeToTasks`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, appId }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to add Creatives task");
+        }
+
+        return response.json();
+    } catch (error) {
+        console.error("Error adding creatives to tasks:", error.message);
+        throw error;
+    }
+};
+
+/**
+ * Create ads for the given app.
+ * @param {string} userId - The user's ID.
+ * @param {string} appId - The app's ID.
+ * @returns {Promise<Object>} - The response from the backend.
+ */
+export const createAds = async (userId, appId) => {
+    try {
+        const response = await fetch(`${BASE_URL}/api/creatives/createAd`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, appId }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to create ads");
+        }
+
+        return response.json();
+    } catch (error) {
+        console.error("Error creating ads:", error.message);
+        throw error;
+    }
+};
+
+/**
+ * Create animations for the given app.
+ * @param {string} userId - The user's ID.
+ * @param {string} appId - The app's ID.
+ * @returns {Promise<Object>} - The response from the backend.
+ */
+export const createAnimations = async (userId, appId) => {
+    try {
+        const response = await fetch(`${BASE_URL}/api/creatives/createAnimation`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, appId }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to create animations");
+        }
+
+        return response.json();
+    } catch (error) {
+        console.error("Error creating animations:", error.message);
+        throw error;
+    }
+}; 

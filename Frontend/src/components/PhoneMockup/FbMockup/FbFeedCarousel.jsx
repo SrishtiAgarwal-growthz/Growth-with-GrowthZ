@@ -1,15 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Search, MessageCircle, MoreHorizontal, Home, PlaySquare, Users, X } from 'lucide-react';
 import PropTypes from "prop-types";
-
-async function getGeneratedAds(appId) {
-  const BASE_URL = "http://localhost:8000";
-  const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch generated ads");
-  }
-  return await response.json();
-}
+import { getGeneratedAds } from "../../../logic/rainbow/rainbowApi.js";
 
 function shortCaption(phrase) {
   if (!phrase || typeof phrase !== "string") return null;
@@ -28,7 +20,9 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
   const [error, setError] = useState("");
   const [loadingAds, setLoadingAds] = useState(false);
   const [appName, setAppName] = useState("");
-  
+  const [appLogo, setAppLogo] = useState("");
+  const [dataFetched, setDataFetched] = useState(false);
+
   const storedAppId = localStorage.getItem("appId") || "";
 
   useEffect(() => {
@@ -37,17 +31,19 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
 
     async function fetchAdsForApp() {
       if (ads.length > 0) return;
-      
+
       try {
         setLoadingAds(true);
         setError("");
 
         const data = await getGeneratedAds(storedAppId);
-        
+
         if (!mounted) return;
-        
+
         if (data.appName) setAppName(data.appName);
-        
+
+        if (data.logo) setAppLogo(data.logo);
+
         const carouselAds = data.animations?.filter(
           (item) => item.creativeUrl?.size === "1080x1080"
         );
@@ -60,6 +56,8 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
         } else {
           setError("No carousel ads (1080x1080) found.");
         }
+
+        setDataFetched(true);
       } catch (err) {
         if (!mounted) return;
         console.error("[getGeneratedAds] Error:", err.message);
@@ -72,7 +70,7 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
     }
 
     fetchAdsForApp();
-    
+
     return () => {
       mounted = false;
     };
@@ -86,7 +84,7 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
   return (
     <>
       {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-      {loadingAds && <p className="text-gray-700 text-center mb-4">Loading ads...</p>}
+      {loadingAds && <p className="text-gray-700 text-center mb-4"></p>}
 
       {/* Facebook Header */}
       <div className="bg-[#3a3b3c] text-white px-3 pt-7 pb-1.5">
@@ -108,20 +106,20 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
       </div>
 
       <div className="h-[1px] bg-black"></div>
-      
+
       {/* Post Content */}
       <div className="bg-[#3a3b3c] text-white px-3">
         <div className="py-2">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center">
               <div className="w-8 h-8 bg-[#3a3b3c] rounded-full flex items-center justify-center text-white text-[10px] font-bold mr-2">
-                <span>{appName ? appName[0] : "A"}</span>
+                <img src={appLogo} alt={appName} className="w-full h-full object-cover" />
               </div>
               <div>
                 <div className="flex items-center">
-                  <p className="text-[12px] font-semibold">{appName || "MyApp"}</p>
+                  <p className="text-[10px] font-semibold">{appName || "MyApp"}</p>
                 </div>
-                <p className="text-[10px] text-gray-400">Sponsored · </p>
+                <p className="text-[8px] text-gray-400">Sponsored · </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -160,7 +158,7 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
       </div>
 
       <div className="h-[1px] bg-black"></div>
-      
+
       {/* Bottom Navigation */}
       <div className="absolute bottom-0 w-full bg-[#242526] border-t border-[#3a3b3c] mb-[10px]">
         <div className="flex justify-between px-6 py-1">

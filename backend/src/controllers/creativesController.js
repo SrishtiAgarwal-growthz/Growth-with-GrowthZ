@@ -43,7 +43,7 @@ export const addCreativeToTasks = async (req, res) => {
 export const createAds = async (req, res) => {
   try {
     console.log("[CreativesController] Received request to create ads.");
-    
+
     const { appId, userId } = req.body;
 
     if (!appId || !userId) {
@@ -74,7 +74,7 @@ export const createAds = async (req, res) => {
 export const createAnimations = async (req, res) => {
   try {
     console.log("[CreativesController] Received request to create animations.");
-    
+
     const { appId, userId } = req.body;
 
     if (!appId || !userId) {
@@ -131,6 +131,8 @@ export const getAdsForApp = async (req, res) => {
       appId: doc.appId,
       appName: appName,
       ads: doc.adUrls || [],
+      logo: app.iconUrl,
+      website: app.websiteUrl,
       animations: doc.animationUrls || [],
       createdAt: doc.createdAt,
     });

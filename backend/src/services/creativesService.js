@@ -88,7 +88,11 @@ export const processAppImages = async (appId, userId) => {
     if (!Array.isArray(appDoc.images)) {
       console.warn("[processAppImages] 'images' is not an array in the app doc.");
     } else {
-      for (const image of appDoc.images) {
+      // Take only the first three images for processing
+      const imagesToProcess = appDoc.images.slice(0, 3);
+      const remainingImages = appDoc.images.slice(3);
+
+      for (const image of imagesToProcess) {
         if (!image.screenshot) {
           console.warn("[processAppImages] Skipping image with missing screenshot URL.");
           updatedImages.push({
@@ -143,12 +147,20 @@ export const processAppImages = async (appId, userId) => {
           });
         }
       }
+
+      // Add remaining images to updatedImages without processing
+      updatedImages = [...updatedImages, ...remainingImages.map(image => ({
+        originalUrl: image.screenshot,
+        removedBgUrl: null,
+        backgroundColor: null,
+        textColor: null,
+        skipped: "Image beyond first three limit"
+      }))];
     }
 
     console.log(`[processAppImages] Updating images in database for app: ${appId}`);
 
-    // 3) Mark imagesProcessed = true after we finish the loop
-    //    (Even if some failed, we won't keep re-trying).
+    // 3) Mark imagesProcessed = true after we finish the loop (Even if some failed, we won't keep re-trying).
     await appsCollection.updateOne(
       { _id: new ObjectId(appId) },
       {
@@ -359,8 +371,8 @@ export const generateAdAnimation = async (appId, userId) => {
       .filter((image) => image.removedBgUrl && image.backgroundColor)
       .slice(0, 3); // Limit to first three images
 
-      for (const { width, height, name } of animationDimensionsConfig) {
-        for (const image of processedImages) {
+    for (const { width, height, name } of animationDimensionsConfig) {
+      for (const image of processedImages) {
         const currentPhrase = approvedPhrases[phraseIndex];
         phraseIndex = (phraseIndex + 1) % approvedPhrases.length;
 

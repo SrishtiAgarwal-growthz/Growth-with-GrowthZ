@@ -1,20 +1,12 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Share } from "lucide-react";
-
-async function getGeneratedAds(appId) {
-  const BASE_URL = "http://localhost:8000";
-  const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch generated ads");
-  }
-  return await response.json();
-}
+import { getGeneratedAds } from "../../../logic/rainbow/rainbowApi.js"
 
 const GoogleAnimatedAds = ({ currentIndex, setCurrentIndex, ads, setAds }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  
+
   const storedAppId = localStorage.getItem("appId") || "";
 
   useEffect(() => {
@@ -24,19 +16,19 @@ const GoogleAnimatedAds = ({ currentIndex, setCurrentIndex, ads, setAds }) => {
     const fetchAds = async () => {
       // Only fetch if we don't already have ads
       if (ads.length > 0) return;
-      
+
       try {
         setLoading(true);
         setError("");
-        
+
         const data = await getGeneratedAds(storedAppId);
-        
+
         if (!mounted) return;
-        
+
         const filteredAds = data.animations?.filter(
           (ad) => ad.creativeUrl?.size === "300x250"
         );
-        
+
         if (filteredAds?.length > 0) {
           setAds(filteredAds);
           if (setCurrentIndex && currentIndex === 0) {
@@ -57,7 +49,7 @@ const GoogleAnimatedAds = ({ currentIndex, setCurrentIndex, ads, setAds }) => {
     };
 
     fetchAds();
-    
+
     return () => {
       mounted = false;
     };
@@ -65,6 +57,14 @@ const GoogleAnimatedAds = ({ currentIndex, setCurrentIndex, ads, setAds }) => {
 
   const currentAd = ads[currentIndex] || {};
   const mainAdUrl = currentAd.creativeUrl?.animationUrl || "";
+
+  const ArticleBlurSection = () => (
+    <div className="p-4 space-y-2">
+      <div className="h-4 bg-neutral-800 rounded w-3/4 animate-pulse"></div>
+      <div className="h-4 bg-neutral-800 rounded w-1/2 animate-pulse"></div>
+      <div className="h-4 bg-neutral-800 rounded w-3/4 animate-pulse"></div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-full bg-neutral-900">
@@ -87,32 +87,31 @@ const GoogleAnimatedAds = ({ currentIndex, setCurrentIndex, ads, setAds }) => {
               <div className="h-4 bg-neutral-800 rounded w-1/2 animate-pulse"></div>
             </div>
           )}
+
           {error && (
-            <div className="p-4 text-red-500 text-center">
+            <div className="p-4 text-gray-400 text-center">
               Failed to load ads: {error}
             </div>
           )}
+
           {!loading && ads.length === 0 && (
             <div className="p-4 text-gray-400 text-center">
               No ads available for size 300x250.
             </div>
           )}
+
+          <ArticleBlurSection />
+
           {!loading && ads.length > 0 && (
-            <div className="p-4">
+            <div className="p-2">
               <div className="relative">
                 {/* Ad Content */}
-                <video
-                  src={mainAdUrl}
-                  className="w-full rounded-lg"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  style={{ maxHeight: "300px" }}
-                />
+                <img src={mainAdUrl} alt="Carousel Ad" className="w-full h-[225px] object-contain" />
               </div>
             </div>
           )}
+
+          <ArticleBlurSection />
         </div>
       </div>
     </div>

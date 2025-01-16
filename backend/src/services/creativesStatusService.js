@@ -44,9 +44,9 @@ export const rejectCreativeService = async (creativeId) => {
 
   try {
     const result = await creativesCollection.updateOne(
-      { "adUrls.creativeUrl.filePath": creativeId },
+      { "adUrls.creativeUrl.adUrl": creativeId },
       { $set: { "adUrls.$[elem].status": "rejected" } },
-      { arrayFilters: [{ "elem.creativeUrl.filePath": creativeId }] }
+      { arrayFilters: [{ "elem.creativeUrl.adUrl": creativeId }] }
     );
 
     if (result.modifiedCount === 0) {

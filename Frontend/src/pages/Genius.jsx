@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
 import {
@@ -6,51 +5,15 @@ import {
   generatePhrases,
   approvePhrase,
   rejectPhrase,
+  addCreativeToTasks,
+  createAds,
+  createAnimations,
 } from "../logic/genius/geniusApi.js";
 import logo from "../assets/logo.png";
 import frame from "../assets/Frame.png";
 import { useNavigate } from "react-router-dom";
 
 const BASE_URL = "http://localhost:8000";
-
-async function addCreativeToTasks(userId, appId) {
-  const response = await fetch(`${BASE_URL}/api/creatives/addCreativeToTasks`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, appId }),
-  });
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to add Creatives task");
-  }
-  return response.json();
-}
-
-async function createAds(userId, appId) {
-  const response = await fetch(`${BASE_URL}/api/creatives/createAd`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, appId }),
-  });
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to create ads");
-  }
-  return response.json();
-}
-
-async function createAnimations(userId, appId) {
-  const response = await fetch(`${BASE_URL}/api/creatives/createAnimation`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, appId }),
-  });
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to create ads");
-  }
-  return response.json();
-}
 
 const GeniusMarketingForm = () => {
   const navigate = useNavigate();
@@ -86,12 +49,7 @@ const GeniusMarketingForm = () => {
     if (!phrases) return; // do nothing if we haven't fetched phrases yet
 
     // (A) If the server says "already_exists" and we haven't set uspPhrases yet, do so once
-    if (
-      phrases.status === "already_exists" &&
-      phrases.phrases &&
-      phrases.phrases.phrases && // an array of { text, status }
-      !phrases.uspPhrases // means we haven't inserted them yet
-    ) {
+    if (phrases.status === "already_exists" && phrases.phrases?.phrases && !phrases.uspPhrases) {
       const dbPhrases = phrases.phrases.phrases;
       console.log("Existing phrases from DB:", dbPhrases);
 
@@ -143,17 +101,18 @@ const GeniusMarketingForm = () => {
       console.log("User email:", userEmail);
 
       // Fetch userId from backend
-      const userResponse = await fetch(
-        `${BASE_URL}/api/users/get-user-by-email`,
+      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: userEmail }),
         }
       );
+
       if (!userResponse.ok) {
         throw new Error("Failed to fetch userId.");
       }
+
       const userData = await userResponse.json();
       const userId = userData._id;
       console.log("Fetched userId:", userId);
@@ -171,11 +130,7 @@ const GeniusMarketingForm = () => {
 
       // 2) Generate phrases
       console.log("Generating phrases for app ID:", appIdFromResponse);
-      const generatedPhrases = await generatePhrases(
-        formData,
-        appIdFromResponse,
-        userId
-      );
+      const generatedPhrases = await generatePhrases(formData, appIdFromResponse, userId);
       console.log("Phrases generated successfully:", generatedPhrases);
 
       setPhrases(generatedPhrases);
@@ -249,8 +204,7 @@ const GeniusMarketingForm = () => {
       const userEmail = auth.currentUser ? auth.currentUser.email : null;
       if (!userEmail) throw new Error("User email is not available.");
 
-      const userResponse = await fetch(
-        `${BASE_URL}/api/users/get-user-by-email`,
+      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -262,12 +216,14 @@ const GeniusMarketingForm = () => {
       const userId = userData._id;
 
       await addCreativeToTasks(userId, appId);
+      console.log("Adding creatives to tasks succeeded.");
 
       console.log("Creating ads for appId:", appId);
       const adsResponse = await createAds(userId, appId);
-      console.log("Ads creation response:", adsResponse);
+      console.log("Ads creation succeeded. Response:", adsResponse);
+
       const animationsResponse = await createAnimations(userId, appId);
-      console.log("Ads creation response:", animationsResponse);
+      console.log("Ads creation succeeded. Response:", animationsResponse);
 
       setHasGeneratedCreatives(true);
     } catch (err) {
@@ -356,24 +312,6 @@ const GeniusMarketingForm = () => {
             {phrases && phrases.uspPhrases && (
               <div className="space-y-4 max-h-[60vh] overflow-y-auto">
                 {phrases.uspPhrases.map((phrase, index) => {
-                  // Preprocess the text
-                  let processedText;
-                  if (index === 0 && /^##\s*/.test(phrase)) {
-                    processedText = phrase.replace(/^##\s*/, "").trim();
-                  } else if (index === 0) {
-                    processedText = "20 Unique Selling Ad Copies";
-                  } else {
-                    processedText = phrase
-                      .replace(/^\d+\.\s*/, "")
-                      .replace(/\*/g, "")
-                      .replace(/\s\([^)]*\)/g, "")
-                      .replace(/\s+/g, " ")
-                      .replace(/\.{2,}/g, ".")
-                      .replace(/[""]/g, '"')
-                      .replace(/['']/, "'")
-                      .trim();
-                  }
-
                   const status = approvalStates[index] || "pending";
 
                   return (
@@ -382,7 +320,7 @@ const GeniusMarketingForm = () => {
                       className="p-4 rounded-[16px] bg-gray-900/80 border border-gray-800 flex justify-between items-center group hover:bg-gray-900/90 transition-all"
                     >
                       <div className="flex-1">
-                        <p className="text-white text-lg">{processedText}</p>
+                        <p className="text-white text-lg">{phrase}</p>
                       </div>
                       <div className="ml-4 flex items-center space-x-2">
                         {status === "approved" ? (
@@ -427,7 +365,12 @@ const GeniusMarketingForm = () => {
               }
               className="w-full h-[70px] rounded-[16px] bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-black font-bold text-[20px] flex items-center justify-center gap-2 "
             >
-              {loading ? "Processing..." : "Generate Ad Copies"}
+              {loading
+                ? "Processing..."
+                : phrases
+                ? "Generate More Ad Copies"
+                : "Generate Ad Copies"
+              }
             </button>
 
             {/* "Get Creatives" button: Only if phrases are present */}
@@ -503,4 +446,4 @@ const GeniusMarketingForm = () => {
   );
 };
 
-export default GeniusMarketingForm;
+export default GeniusMarketingForm; 

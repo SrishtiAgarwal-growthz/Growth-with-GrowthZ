@@ -171,33 +171,16 @@ export const generateUSPhrases = async (appName, keywords) => {
   const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
   const prompt = `
-    You are an expert ad copywriter. You have real user feedback (in everyday language) and brand features.
-    Create 50 compelling ad copy pairs for ${appName}. Each pair should be two sentences:
+
+    Generate 20 unique selling propositions (USPs) for the following app. 
+    Make the USPs concise, engaging, and user-centric. Highlight the app's benefits and unique features.
     
-    Sentence 1: A short, punchy headline (max 30 characters)
-    Sentence 2: A supporting description that expands on the headline (max 90 characters)
-    
-    Context:
     - App Name: ${appName}
-    - Key Features: ${keywords.slice(0, 5000).join(", ")}
-    - User Benefits: ${keywords.slice(0, 5000).join(", ")}
+    - Keywords: ${keywords.slice(0, 5000).join(", ")} 
     
-    Format:
-    [Headline]. [Description]
-
-    Goal: Persuade users to install or try ${appName}. Each ad copy highlights a specific benefit from user feedback.
-    
-    Examples of perfect pairs:
-    Skip the Ads, Not the Fun. YouTube Premium gives you uninterrupted entertainment.
-    Watch Without Interruptions. Experience seamless viewing with no ads or pop-ups getting in your way.
-
-    Examples to avoid:
-    ❌ "${appName}: Master Your Future" (Don't prefix with app name)
-    ❌ "${appName} is the best choice" (Don't start with app name)
+    Focus on making these USPs persuasive and tailored to potential users.
     
     Requirements:
-    - Keep headlines catchy and under 30 characters
-    - Make descriptions informative and under 90 characters
     - Don't start sentences with the app name
     - Ensure the description naturally flows from the headline
     - Use active, engaging language
@@ -210,7 +193,6 @@ export const generateUSPhrases = async (appName, keywords) => {
     - Generic marketing language
     - Technical jargon
     - Repetitive phrases
-    - Labels like "Headline:" or "Description:"
     - Numbered lists
   `;
 

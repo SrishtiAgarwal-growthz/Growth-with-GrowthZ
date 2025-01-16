@@ -1,52 +1,48 @@
 import { useEffect, useState } from "react";
 import { X, Share } from "lucide-react";
 import PropTypes from "prop-types";
-
-async function getGeneratedAds(appId) {
-  const BASE_URL = "http://localhost:8000";
-  const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch generated ads");
-  }
-  return await response.json();
-}
+import { getGeneratedAds } from "../../../logic/rainbow/rainbowApi.js";
 
 export default function FacebookStory({ currentIndex, setCurrentIndex, ads, setAds }) {
   const [error, setError] = useState("");
   const [appName, setAppName] = useState("");
+  const [appLogo, setAppLogo] = useState("");
   const [loadingAds, setLoadingAds] = useState(false);
-  
+  const [dataFetched, setDataFetched] = useState(false);
+
   const storedAppId = localStorage.getItem("appId") || "";
 
   useEffect(() => {
     let mounted = true;
     if (!storedAppId) return;
-    
+
     async function fetchAdsForApp() {
       // Only fetch if we don't already have ads
       if (ads.length > 0) return;
-      
+
       console.log('Fetching ads for appId:', storedAppId);
       try {
         setLoadingAds(true);
         setError("");
 
         const data = await getGeneratedAds(storedAppId);
-        
+
         // Check if component is still mounted
         if (!mounted) return;
-        
+
         console.log('Received data:', data);
-        
+
         if (data.appName) setAppName(data.appName);
-        
+
+        if (data.logo) setAppLogo(data.logo);
+
         // Explicitly filter for story ads size
         const storyAds = data.ads.filter(
           (item) => item.creativeUrl?.size === "1440x2560"
         );
-        
+
         console.log('Filtered story ads:', storyAds);
-        
+
         if (storyAds.length > 0) {
           setAds(storyAds);
           // Only set index if we have control and if it's not already set
@@ -56,6 +52,8 @@ export default function FacebookStory({ currentIndex, setCurrentIndex, ads, setA
         } else {
           setError("No story ads (1440x2560) found.");
         }
+
+        setDataFetched(true);
       } catch (err) {
         if (!mounted) return;
         console.error("[getGeneratedAds] Error:", err.message);
@@ -68,7 +66,7 @@ export default function FacebookStory({ currentIndex, setCurrentIndex, ads, setA
     }
 
     fetchAdsForApp();
-    
+
     // Cleanup function
     return () => {
       mounted = false;
@@ -98,7 +96,7 @@ export default function FacebookStory({ currentIndex, setCurrentIndex, ads, setA
       <div className="absolute top-10 left-4 right-4 flex justify-between items-center">
         <div className="flex items-center">
           <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-            {appName.charAt(0)}
+            <img src={appLogo} alt={appName} className="w-full h-full object-cover" />
           </div>
           <span className="ml-2 text-white text-sm font-semibold">{appName}</span>
         </div>
@@ -110,11 +108,7 @@ export default function FacebookStory({ currentIndex, setCurrentIndex, ads, setA
       {/* Main ad content */}
       <div className="flex-grow flex items-center justify-center mt-[38px] mb-20">
         {mainAdUrl && (
-          <img 
-            src={mainAdUrl} 
-            alt="Story Ad" 
-            className="w-full h-full object-contain" 
-          />
+          <img src={mainAdUrl} alt="Story Ad" className="w-full h-full object-contain" />
         )}
       </div>
 
