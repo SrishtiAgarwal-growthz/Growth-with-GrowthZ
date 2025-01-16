@@ -21,7 +21,7 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
   const [loadingAds, setLoadingAds] = useState(false);
   const [appName, setAppName] = useState("");
   const [appLogo, setAppLogo] = useState("");
-  const [dataFetched, setDataFetched] = useState(false);
+  const [ setDataFetched] = useState(false);
 
   const storedAppId = localStorage.getItem("appId") || "";
 

@@ -22,118 +22,145 @@ const GeniusMarketingForm = () => {
     apple_app: "",
     website: "",
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  /**
-   * "phrases" will hold the entire response from generate-phrases:
-   *   e.g. { status: "already_exists", appId, phrases: { phrases: [...] }, uspPhrases: [...] }
-   */
-  const [phrases, setPhrases] = useState(null);
+  // This single loading flag is used for both generating phrases & creatives
+  const [loading, setLoading] = useState(false);
 
-  /**
-   * approvalStates is an array parallel to `phrases.uspPhrases`.
-   * Each element is "pending", "approved", or "rejected".
-   */
+  // State to hold phrases and their approval status
+  const [phrases, setPhrases] = useState(null);
   const [approvalStates, setApprovalStates] = useState([]);
 
+  // State for app ID
   const [appId, setAppId] = useState(null);
 
-  const [isGeneratingCreatives, setIsGeneratingCreatives] = useState(false);
-  const [hasGeneratedCreatives, setHasGeneratedCreatives] = useState(false);
+  /**
+   * buttonState can be:
+   *  "generateCopies"  -> show "Generate Ad Copies"
+   *  "getCreatives"    -> show "Get Creatives"
+   *  "showCreatives"   -> show "Show Creatives"
+   */
+  const [buttonState, setButtonState] = useState("generateCopies");
 
-  // -----------------------------------------------------------
-  // useEffect to handle "already_exists" or brand-new phrases
-  // -----------------------------------------------------------
+  // Effect to handle phrases and approval states
   useEffect(() => {
-    if (!phrases) return; // do nothing if we haven't fetched phrases yet
+    if (!phrases) return;
 
-    // (A) If the server says "already_exists" and we haven't set uspPhrases yet, do so once
-    if (phrases.status === "already_exists" && phrases.phrases?.phrases && !phrases.uspPhrases) {
+    // If phrases already exist in the database
+    if (phrases.status === "already_exists" && phrases.phrases?.phrases) {
       const dbPhrases = phrases.phrases.phrases;
-      console.log("Existing phrases from DB:", dbPhrases);
-
-      // Convert array of objects -> array of strings for the UI
-      const phraseTexts = dbPhrases.map((item) => item.text);
-      // statuses from DB
+      const phraseItems = dbPhrases.map((item) => item);
       const statesFromDB = dbPhrases.map((item) => item.status || "pending");
 
-      // 1) Insert the array of texts into `phrases.uspPhrases`
       setPhrases((prev) => ({
         ...prev,
-        uspPhrases: phraseTexts,
+        uspPhrases: phraseItems,
       }));
-
-      // 2) Set local approvalStates to DB statuses
       setApprovalStates(statesFromDB);
     }
-    // (B) If we have brand-new phrases (no "already_exists") but haven't set approval states yet
+    // If phrases are new
     else if (phrases.uspPhrases && approvalStates.length === 0) {
-      console.log("Brand-new phrases => defaulting to 'pending'.");
       setApprovalStates(new Array(phrases.uspPhrases.length).fill("pending"));
     }
   }, [phrases, approvalStates.length]);
 
-  // Handle input changes
+  // Input change handler
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    console.log(`Input changed: ${name} = ${value}`);
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Submit form => fetch app details => generate phrases
-  const handleSubmit = async () => {
-    console.log("Submitting form data:", formData);
+  /**
+   * 1) Generate Ad Copies
+   */
+  const handleGenerateAdCopies = async () => {
+    // Validate
+    if (!formData.google_play && !formData.apple_app) {
+      setError("Please provide at least one app store URL.");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      setPhrases(null);
 
-      // Get userId from Firebase Auth
+      // Get user email from Firebase Auth
       const auth = getAuth();
-      const userEmail = auth.currentUser ? auth.currentUser.email : null;
-      if (!userEmail) {
-        throw new Error("User email is not available.");
-      }
-      console.log("User email:", userEmail);
+      const userEmail = auth.currentUser?.email;
+      if (!userEmail) throw new Error("User email is not available.");
 
-      // Fetch userId from backend
-      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: userEmail }),
-        }
-      );
-
-      if (!userResponse.ok) {
-        throw new Error("Failed to fetch userId.");
-      }
-
+      // Fetch user ID from backend
+      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail }),
+      });
+      if (!userResponse.ok) throw new Error("Failed to fetch userId.");
       const userData = await userResponse.json();
       const userId = userData._id;
-      console.log("Fetched userId:", userId);
 
-      // 1) Save app details
-      console.log("Saving app details...");
+      // Save app details
       const savedApp = await saveAppDetails(formData);
-      console.log("App saved successfully:", savedApp);
-
-      const appIdFromResponse = savedApp._id;
-      if (!appIdFromResponse) {
+      if (!savedApp._id)
         throw new Error("App ID not returned from saveAppDetails.");
+      setAppId(savedApp._id);
+
+      // Generate phrases
+      const generatedPhrases = await generatePhrases(
+        formData,
+        savedApp._id,
+        userId
+      );
+      console.log("Generated Phrases Response:", generatedPhrases);
+
+      // --- Different ways the backend might return phrases ---
+      if (Array.isArray(generatedPhrases)) {
+        // 1) If backend returns an array of strings
+        setPhrases({ uspPhrases: generatedPhrases });
+        setApprovalStates(new Array(generatedPhrases.length).fill("pending"));
+      } else if (
+        generatedPhrases.status === "already_exists" &&
+        generatedPhrases.phrases?.phrases
+      ) {
+        // 2) If phrases already exist
+        const dbPhrases = generatedPhrases.phrases.phrases;
+        setPhrases({
+          status: "already_exists",
+          phrases: { phrases: dbPhrases },
+          uspPhrases: dbPhrases,
+        });
+        setApprovalStates(dbPhrases.map((item) => item.status || "pending"));
+      } else if (generatedPhrases.uspPhrases) {
+        // 3) If there's a direct array in generatedPhrases.uspPhrases
+        setPhrases(generatedPhrases);
+        setApprovalStates(
+          new Array(generatedPhrases.uspPhrases.length).fill("pending")
+        );
+      } else if (
+        generatedPhrases.status === "success" &&
+        generatedPhrases.phrases
+      ) {
+        // 4) If we have status="success" and .phrases is an array or object
+        console.log("generatedPhrases.phrases content:", generatedPhrases.phrases);
+        if (Array.isArray(generatedPhrases.phrases)) {
+          setPhrases({ uspPhrases: generatedPhrases.phrases });
+          setApprovalStates(
+            new Array(generatedPhrases.phrases.length).fill("pending")
+          );
+        } else if (Array.isArray(generatedPhrases.phrases.phrases)) {
+          setPhrases({ uspPhrases: generatedPhrases.phrases.phrases });
+          setApprovalStates(
+            new Array(generatedPhrases.phrases.phrases.length).fill("pending")
+          );
+        } else {
+          console.warn("No phrase array found in generatedPhrases.phrases!");
+        }
+      } else {
+        console.warn("No recognized phrase array in the response.");
       }
-      setAppId(appIdFromResponse);
 
-      // 2) Generate phrases
-      console.log("Generating phrases for app ID:", appIdFromResponse);
-      const generatedPhrases = await generatePhrases(formData, appIdFromResponse, userId);
-      console.log("Phrases generated successfully:", generatedPhrases);
-
-      setPhrases(generatedPhrases);
+      // Now that we have phrases, move to the next step => "Get Creatives"
+      setButtonState("getCreatives");
     } catch (err) {
       setError(err.message);
       console.error("Error during form submission:", err);
@@ -142,21 +169,86 @@ const GeniusMarketingForm = () => {
     }
   };
 
-  // Approve a phrase
-  const handleTickClick = async (index) => {
-    if (!phrases || !phrases.uspPhrases) return;
-    const phraseToApprove = phrases.uspPhrases[index];
-    console.log(
-      "handleTickClick - Approving phrase:",
-      phraseToApprove,
-      "App ID:",
-      appId
-    );
+  /**
+   * 2) Generate Creatives
+   */
+  const handleGenerateCreatives = async () => {
+    if (!appId) {
+      alert("No App ID found. Please generate phrases first.");
+      return;
+    }
 
     try {
-      await approvePhrase(phraseToApprove, appId);
-      console.log("Phrase approved successfully:", phraseToApprove);
+      setLoading(true);
 
+      // Fetch user ID
+      const auth = getAuth();
+      const userEmail = auth.currentUser?.email;
+      if (!userEmail) throw new Error("User email is not available.");
+
+      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail }),
+      });
+      if (!userResponse.ok) throw new Error("Failed to fetch userId.");
+      const userData = await userResponse.json();
+      const userId = userData._id;
+
+      // Add creatives to tasks and create ads/animations
+      await addCreativeToTasks(userId, appId);
+      await createAds(userId, appId);
+      await createAnimations(userId, appId);
+
+      // Once creatives are ready, change button to "Show Creatives"
+      setButtonState("showCreatives");
+    } catch (err) {
+      console.error("Error generating creatives:", err.message);
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * 3) Show Creatives Page
+   */
+  const handleShowCreatives = () => {
+    if (appId) {
+      localStorage.setItem("appId", appId);
+      navigate("/rainbow");
+    }
+  };
+
+  /**
+   * A single onClick handler for the unified button
+   */
+  const handleMainButtonClick = () => {
+    if (loading) return; // Prevent multiple clicks while loading
+
+    if (buttonState === "generateCopies") {
+      handleGenerateAdCopies();
+    } else if (buttonState === "getCreatives") {
+      handleGenerateCreatives();
+    } else if (buttonState === "showCreatives") {
+      handleShowCreatives();
+    }
+  };
+
+  // Approve a phrase
+  const handleTickClick = async (index) => {
+    if (!phrases?.uspPhrases) return;
+
+    const phraseObjOrString = phrases.uspPhrases[index];
+    const phraseText =
+      typeof phraseObjOrString === "object"
+        ? phraseObjOrString.text
+        : phraseObjOrString;
+
+    try {
+      await approvePhrase(phraseText, appId);
+
+      // Update approval state to "approved"
       const newStates = [...approvalStates];
       newStates[index] = "approved";
       setApprovalStates(newStates);
@@ -168,13 +260,16 @@ const GeniusMarketingForm = () => {
 
   // Reject a phrase
   const handleCrossClick = async (index) => {
-    if (!phrases || !phrases.uspPhrases) return;
-    const phraseToReject = phrases.uspPhrases[index];
-    console.log(`Rejecting phrase at index ${index}:`, phraseToReject);
-    try {
-      await rejectPhrase(appId, phraseToReject);
-      console.log("Phrase rejected successfully:", phraseToReject);
+    if (!phrases?.uspPhrases) return;
 
+    const phraseObjOrString = phrases.uspPhrases[index];
+    const phraseText =
+      typeof phraseObjOrString === "object"
+        ? phraseObjOrString.text
+        : phraseObjOrString;
+
+    try {
+      await rejectPhrase(appId, phraseText);
       const newStates = [...approvalStates];
       newStates[index] = "rejected";
       setApprovalStates(newStates);
@@ -184,63 +279,29 @@ const GeniusMarketingForm = () => {
     }
   };
 
-  /**
-   * Handle "Get Creatives" flow:
-   * 1) Add 'Creatives' to tasks
-   * 2) Create ads
-   * 3) Show "Show Creatives" button
-   */
-  const handleGetCreatives = async () => {
-    if (!appId) {
-      alert("No App ID found. Please generate phrases first.");
-      return;
-    }
+  // Debug logs
+  useEffect(() => {
+    console.log("Current phrases state:", phrases);
+    console.log("Current approval states:", approvalStates);
+    console.log("Button State:", buttonState);
+  }, [phrases, approvalStates, buttonState]);
 
-    try {
-      setIsGeneratingCreatives(true);
-
-      // re-fetch user
-      const auth = getAuth();
-      const userEmail = auth.currentUser ? auth.currentUser.email : null;
-      if (!userEmail) throw new Error("User email is not available.");
-
-      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: userEmail }),
-        }
-      );
-      if (!userResponse.ok) throw new Error("Failed to fetch userId.");
-      const userData = await userResponse.json();
-      const userId = userData._id;
-
-      await addCreativeToTasks(userId, appId);
-      console.log("Adding creatives to tasks succeeded.");
-
-      console.log("Creating ads for appId:", appId);
-      const adsResponse = await createAds(userId, appId);
-      console.log("Ads creation succeeded. Response:", adsResponse);
-
-      const animationsResponse = await createAnimations(userId, appId);
-      console.log("Ads creation succeeded. Response:", animationsResponse);
-
-      setHasGeneratedCreatives(true);
-    } catch (err) {
-      console.error("Error generating creatives:", err.message);
-      alert(err.message);
-    } finally {
-      setIsGeneratingCreatives(false);
-    }
+  // Decide button label based on buttonState
+  const getButtonLabel = () => {
+    if (loading) return "Processing...";
+    if (buttonState === "generateCopies") return "Generate Ad Copies";
+    if (buttonState === "getCreatives") return "Get Creatives";
+    if (buttonState === "showCreatives") return "Show Creatives";
+    return "Generate Ad Copies"; // Fallback
   };
 
-  // Show final creatives in the "Rainbow" page
-  const handleShowCreatives = () => {
-    if (appId) {
-      localStorage.setItem("appId", appId);
-    }
-    window.location.href = "/rainbow";
-  };
+  // Decide if we disable the button:
+  // In the first step, only enable if we have google_play or apple_app
+  const isButtonDisabled =
+    loading ||
+    (buttonState === "generateCopies" &&
+      !formData.google_play &&
+      !formData.apple_app);
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
@@ -308,11 +369,14 @@ const GeniusMarketingForm = () => {
             {/* Error Message */}
             {error && <div className="text-red-500 text-sm">{error}</div>}
 
-            {/* If we have phrases => show them */}
-            {phrases && phrases.uspPhrases && (
+            {/* Display Phrases */}
+            {phrases?.uspPhrases && (
               <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-                {phrases.uspPhrases.map((phrase, index) => {
-                  const status = approvalStates[index] || "pending";
+                {phrases.uspPhrases.map((phraseObjOrString, index) => {
+                  const text =
+                    typeof phraseObjOrString === "object"
+                      ? phraseObjOrString.text
+                      : phraseObjOrString;
 
                   return (
                     <div
@@ -320,17 +384,25 @@ const GeniusMarketingForm = () => {
                       className="p-4 rounded-[16px] bg-gray-900/80 border border-gray-800 flex justify-between items-center group hover:bg-gray-900/90 transition-all"
                     >
                       <div className="flex-1">
-                        <p className="text-white text-lg">{phrase}</p>
+                        <p className="text-white text-lg">{text}</p>
                       </div>
                       <div className="ml-4 flex items-center space-x-2">
-                        {status === "approved" ? (
-                          <span className="px-4 py-2 rounded-lg bg-green-500 text-white font-bold">
+                        {approvalStates[index] === "approved" ? (
+                          <button
+                            type="button"
+                            className="px-3 py-2 rounded-lg border border-green-500 text-green-500"
+                            disabled
+                          >
                             Approved
-                          </span>
-                        ) : status === "rejected" ? (
-                          <span className="px-4 py-2 rounded-lg bg-red-600 text-white font-bold">
+                          </button>
+                        ) : approvalStates[index] === "rejected" ? (
+                          <button
+                            type="button"
+                            className="px-3 py-2 rounded-lg border border-red-500 text-red-500"
+                            disabled
+                          >
                             Rejected
-                          </span>
+                          </button>
                         ) : (
                           <>
                             <button
@@ -356,46 +428,15 @@ const GeniusMarketingForm = () => {
               </div>
             )}
 
-            {/* Button to Generate Ad Copies */}
+            {/* Single Button handling all steps */}
             <button
               type="button"
-              onClick={handleSubmit}
-              disabled={
-                loading || (!formData.google_play && !formData.apple_app)
-              }
-              className="w-full h-[70px] rounded-[16px] bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-black font-bold text-[20px] flex items-center justify-center gap-2 "
+              onClick={handleMainButtonClick}
+              disabled={isButtonDisabled}
+              className="w-full h-[70px] rounded-[16px] bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-black font-bold text-[20px] flex items-center justify-center gap-2"
             >
-              {loading
-                ? "Processing..."
-                : phrases
-                ? "Generate More Ad Copies"
-                : "Generate Ad Copies"
-              }
+              {getButtonLabel()}
             </button>
-
-            {/* "Get Creatives" button: Only if phrases are present */}
-            {phrases && phrases.uspPhrases && (
-              <div className="flex flex-col items-center mt-6">
-                {!hasGeneratedCreatives ? (
-                  <button
-                    onClick={handleGetCreatives}
-                    disabled={isGeneratingCreatives}
-                    className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg"
-                  >
-                    {isGeneratingCreatives
-                      ? "Generating Creatives..."
-                      : "Get Creatives"}
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleShowCreatives}
-                    className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg"
-                  >
-                    Show Creatives
-                  </button>
-                )}
-              </div>
-            )}
 
             {/* Website Link Input */}
             <div className="space-y-2">
@@ -446,4 +487,4 @@ const GeniusMarketingForm = () => {
   );
 };
 
-export default GeniusMarketingForm; 
+export default GeniusMarketingForm;

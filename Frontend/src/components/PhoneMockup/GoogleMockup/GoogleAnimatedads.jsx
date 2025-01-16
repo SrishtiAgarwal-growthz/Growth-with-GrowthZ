@@ -28,7 +28,7 @@ const GoogleAnimatedAds = ({ currentIndex, setCurrentIndex, ads, setAds }) => {
         const filteredAds = data.animations?.filter(
           (ad) => ad.creativeUrl?.size === "300x250"
         );
-
+        console.log('Filtered story ads:', filteredAds);
         if (filteredAds?.length > 0) {
           setAds(filteredAds);
           if (setCurrentIndex && currentIndex === 0) {

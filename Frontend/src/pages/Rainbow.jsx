@@ -66,21 +66,36 @@ export default function Rainbow() {
     console.log('Moving to previous ad in', activeMockup);
   }, [ads, activeMockup]);
 
+  // Decide which URL property to use based on the mockup type
+  const getAdUrl = (mockupType, currentAd) => {
+    // For storyAds & displayAds -> 'adUrl'
+    // For feedCarousel & animatedAds -> 'animationUrl'
+    if (mockupType === "storyAds" || mockupType === "displayAds") {
+      return currentAd?.creativeUrl?.adUrl;
+    } else {
+      // feedCarousel or animatedAds
+      return currentAd?.creativeUrl?.animationUrl;
+    }
+  };
+
   // Accept handler with API integration
   const handleAccept = useCallback(async (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-
+  
     try {
       const currentAd = ads[activeMockup][currentIndex[activeMockup]];
-      const adUrl = currentAd?.creativeUrl?.adUrl;
-      
+      // Use ID or fallback to adUrl/animationUrl
+      const adUrl = getAdUrl(activeMockup, currentAd);
+      const uniqueId = currentAd.id ?? adUrl; // fallback in case id is null
+  
       if (!adUrl) {
         throw new Error("No ad URL found for the current creative");
       }
-
+  
+      console.log("Approving creative with uniqueId:", uniqueId);
       const response = await fetch("http://localhost:8000/api/creativesStatus/approve", {
         method: "POST",
         headers: {
@@ -92,14 +107,16 @@ export default function Rainbow() {
           mockupType: activeMockup
         }),
       });
-
+  
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || "Failed to approve creative");
       }
-
-      // Store approval with mockup type
-      setApprovedAds(prev => new Set([...prev, `${activeMockup}:${currentAd.id}`]));
+  
+      // Store approval with mockup type + uniqueId
+      setApprovedAds(prev => new Set([...prev, `${activeMockup}:${uniqueId}`]));
+  
+      // Move to next ad
       handleNext();
       
     } catch (err) {
@@ -107,12 +124,49 @@ export default function Rainbow() {
       setError(err.message);
     }
   }, [ads, currentIndex, handleNext, activeMockup]);
-
-  // Reject handler
-  const handleReject = useCallback(() => {
-    console.log('Creative Rejected');
-    handleNext();
-  }, [handleNext]);
+  
+  // Reject handler with unique ID
+  const handleReject = useCallback(async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  
+    try {
+      const currentAd = ads[activeMockup][currentIndex[activeMockup]];
+      const adUrl = getAdUrl(activeMockup, currentAd);
+      const uniqueId = currentAd.id ?? adUrl;
+  
+      if (!adUrl) {
+        throw new Error("No ad URL found for the current creative");
+      }
+  
+      console.log("Rejecting creative with uniqueId:", uniqueId);
+      const response = await fetch("http://localhost:8000/api/creativesStatus/reject", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          creativeId: adUrl,
+          status: "rejected",
+          mockupType: activeMockup
+        }),
+      });
+  
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to reject creative");
+      }
+  
+      // Move to next ad
+      handleNext();
+      
+    } catch (err) {
+      console.error("Error rejecting creative:", err.message);
+      setError(err.message);
+    }
+  }, [ads, currentIndex, handleNext, activeMockup]);
 
   // Effect to handle initial loading state
   useEffect(() => {
@@ -146,7 +200,8 @@ export default function Rainbow() {
   const renderAllMockups = () => {
     const mockupProps = {
       currentIndex: currentIndex[activeMockup],
-      setCurrentIndex: (index) => setCurrentIndex(prev => ({ ...prev, [activeMockup]: index })),
+      setCurrentIndex: (index) =>
+        setCurrentIndex((prev) => ({ ...prev, [activeMockup]: index })),
     };
 
     switch (activeMockup) {
@@ -155,7 +210,7 @@ export default function Rainbow() {
           <FbStoryAds
             {...mockupProps}
             ads={ads.storyAds}
-            setAds={(newAds) => setAds(prev => ({ ...prev, storyAds: newAds }))}
+            setAds={(newAds) => setAds((prev) => ({ ...prev, storyAds: newAds }))}
           />
         );
       case "feedCarousel":
@@ -163,7 +218,7 @@ export default function Rainbow() {
           <FbFeedCarousel
             {...mockupProps}
             ads={ads.feedCarousel}
-            setAds={(newAds) => setAds(prev => ({ ...prev, feedCarousel: newAds }))}
+            setAds={(newAds) => setAds((prev) => ({ ...prev, feedCarousel: newAds }))}
           />
         );
       case "displayAds":
@@ -171,7 +226,7 @@ export default function Rainbow() {
           <GoogleDisplayAds
             {...mockupProps}
             ads={ads.displayAds}
-            setAds={(newAds) => setAds(prev => ({ ...prev, displayAds: newAds }))}
+            setAds={(newAds) => setAds((prev) => ({ ...prev, displayAds: newAds }))}
           />
         );
       case "animatedAds":
@@ -179,9 +234,11 @@ export default function Rainbow() {
           <GoogleAnimatedAds
             {...mockupProps}
             ads={ads.animatedAds}
-            setAds={(newAds) => setAds(prev => ({ ...prev, animatedAds: newAds }))}
+            setAds={(newAds) => setAds((prev) => ({ ...prev, animatedAds: newAds }))}
           />
         );
+      default:
+        return null;
     }
   };
 

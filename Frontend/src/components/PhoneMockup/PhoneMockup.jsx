@@ -15,6 +15,7 @@ const PhoneMockup = ({
 }) => {
   const [time] = useState("4:28");
   const [isAccepting, setIsAccepting] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   const onNextClick = useCallback(() => {
     console.log('Next button clicked');
@@ -44,12 +45,20 @@ const PhoneMockup = ({
     }
   }, [onAccept, isAccepting]);
 
-  const onRejectClick = useCallback((e) => {
+  const onRejectClick = useCallback(async (e) => {
+    if (isRejecting) return; // Prevent multiple clicks
+    
     e.preventDefault();
     e.stopPropagation();
+    
     console.log('Reject button clicked');
-    if (onReject) onReject();
-  }, [onReject]);
+    setIsRejecting(true);
+    try {
+      await onReject(e);
+    } finally {
+      setIsRejecting(false);
+    }
+  }, [onReject, isRejecting]);
 
   return (
     <div className="relative flex flex-col items-center justify-center h-[34rem] mt-6">
@@ -119,9 +128,9 @@ const PhoneMockup = ({
       <div className="flex gap-4 mt-8">
         {isApproved ? (
           // Approved state - single centered button
-          <div className="w-48 md:w-72">
+          <div className="w-48 md:w-36">
             <button
-              className="w-full h-10 md:h-12 bg-neutral-800 rounded-lg text-green-500 font-semibold text-sm md:text-base cursor-default"
+              className="w-full h-10 md:h-12 bg-green-500 rounded-lg text-white font-semibold text-sm md:text-base cursor-default"
             >
               Approved
             </button>
@@ -132,7 +141,7 @@ const PhoneMockup = ({
             <button
               className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-red-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={onRejectClick}
-              disabled={isAccepting}
+              disabled={isRejecting}
             >
               Reject
             </button>

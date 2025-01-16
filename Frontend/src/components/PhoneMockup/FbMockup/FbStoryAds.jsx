@@ -8,7 +8,7 @@ export default function FacebookStory({ currentIndex, setCurrentIndex, ads, setA
   const [appName, setAppName] = useState("");
   const [appLogo, setAppLogo] = useState("");
   const [loadingAds, setLoadingAds] = useState(false);
-  const [dataFetched, setDataFetched] = useState(false);
+  const [setDataFetched] = useState(false);
 
   const storedAppId = localStorage.getItem("appId") || "";
 
