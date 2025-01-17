@@ -12,18 +12,32 @@ export const approveCreativeService = async (creativeId) => {
   const creativesCollection = db.collection("Creatives");
 
   try {
-    const result = await creativesCollection.updateOne(
+    // First try to update in adUrls array (for static ads)
+    let result = await creativesCollection.updateOne(
       { "adUrls.creativeUrl.adUrl": creativeId },
       { $set: { "adUrls.$[elem].status": "approved" } },
       { arrayFilters: [{ "elem.creativeUrl.adUrl": creativeId }] }
     );
 
+    // If not found in adUrls, try animationUrls array
+    if (result.modifiedCount === 0) {
+      result = await creativesCollection.updateOne(
+        { "animationUrls.creativeUrl.animationUrl": creativeId },
+        { $set: { "animationUrls.$[elem].status": "approved" } },
+        { arrayFilters: [{ "elem.creativeUrl.animationUrl": creativeId }] }
+      );
+    }
+
     if (result.modifiedCount === 0) {
       throw new Error("Creative not found or already approved.");
     }
 
+    // Find the updated document
     const updatedCreative = await creativesCollection.findOne({
-      "adUrls.creativeUrl.filePath": creativeId,
+      $or: [
+        { "adUrls.creativeUrl.adUrl": creativeId },
+        { "animationUrls.creativeUrl.animationUrl": creativeId }
+      ]
     });
 
     return updatedCreative;
@@ -43,18 +57,32 @@ export const rejectCreativeService = async (creativeId) => {
   const creativesCollection = db.collection("Creatives");
 
   try {
-    const result = await creativesCollection.updateOne(
+    // First try to update in adUrls array
+    let result = await creativesCollection.updateOne(
       { "adUrls.creativeUrl.adUrl": creativeId },
       { $set: { "adUrls.$[elem].status": "rejected" } },
       { arrayFilters: [{ "elem.creativeUrl.adUrl": creativeId }] }
     );
 
+    // If not found in adUrls, try animationUrls array
+    if (result.modifiedCount === 0) {
+      result = await creativesCollection.updateOne(
+        { "animationUrls.creativeUrl.animationUrl": creativeId },
+        { $set: { "animationUrls.$[elem].status": "rejected" } },
+        { arrayFilters: [{ "elem.creativeUrl.animationUrl": creativeId }] }
+      );
+    }
+
     if (result.modifiedCount === 0) {
       throw new Error("Creative not found or already rejected.");
     }
 
+    // Find the updated document
     const updatedCreative = await creativesCollection.findOne({
-      "adUrls.creativeUrl.filePath": creativeId,
+      $or: [
+        { "adUrls.creativeUrl.adUrl": creativeId },
+        { "animationUrls.creativeUrl.animationUrl": creativeId }
+      ]
     });
 
     return updatedCreative;
@@ -75,7 +103,12 @@ export const fetchCreativesByStatus = async (status) => {
 
   try {
     const creatives = await creativesCollection
-      .find({ "adUrls.status": status })
+      .find({
+        $or: [
+          { "adUrls.status": status },
+          { "animationUrls.status": status }
+        ]
+      })
       .toArray();
 
     return creatives;

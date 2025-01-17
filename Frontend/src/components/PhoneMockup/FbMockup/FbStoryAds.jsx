@@ -1,104 +1,49 @@
-import { useEffect, useState } from "react";
-import { X, Share } from "lucide-react";
 import PropTypes from "prop-types";
-import { getGeneratedAds } from "../../../logic/rainbow/rainbowApi.js";
+import { X, Share } from "lucide-react";
 
-export default function FacebookStory({ currentIndex, setCurrentIndex, ads, setAds }) {
-  const [error, setError] = useState("");
-  const [appName, setAppName] = useState("");
-  const [appLogo, setAppLogo] = useState("");
-  const [loadingAds, setLoadingAds] = useState(false);
-  const [setDataFetched] = useState(false);
+export default function FbStoryAds({
+  currentIndex,
+  // If you don't need the child to set its own index, you can remove the line below:
+  // setCurrentIndex,
+  ads,
+  appName,
+  appLogo
+}) {
+  // Safely get current ad
+  const currentAd = ads?.[currentIndex] || null;
+  const mainAdUrl = currentAd?.creativeUrl?.adUrl;
 
-  const storedAppId = localStorage.getItem("appId") || "";
-
-  useEffect(() => {
-    let mounted = true;
-    if (!storedAppId) return;
-
-    async function fetchAdsForApp() {
-      // Only fetch if we don't already have ads
-      if (ads.length > 0) return;
-
-      console.log('Fetching ads for appId:', storedAppId);
-      try {
-        setLoadingAds(true);
-        setError("");
-
-        const data = await getGeneratedAds(storedAppId);
-
-        // Check if component is still mounted
-        if (!mounted) return;
-
-        console.log('Received data:', data);
-
-        if (data.appName) setAppName(data.appName);
-
-        if (data.logo) setAppLogo(data.logo);
-
-        // Explicitly filter for story ads size
-        const storyAds = data.ads.filter(
-          (item) => item.creativeUrl?.size === "1440x2560"
-        );
-
-        console.log('Filtered story ads:', storyAds);
-
-        if (storyAds.length > 0) {
-          setAds(storyAds);
-          // Only set index if we have control and if it's not already set
-          if (setCurrentIndex && currentIndex === 0) {
-            setCurrentIndex(0);
-          }
-        } else {
-          setError("No story ads (1440x2560) found.");
-        }
-
-        setDataFetched(true);
-      } catch (err) {
-        if (!mounted) return;
-        console.error("[getGeneratedAds] Error:", err.message);
-        setError(err.message || "Error fetching story ads");
-      } finally {
-        if (mounted) {
-          setLoadingAds(false);
-        }
-      }
-    }
-
-    fetchAdsForApp();
-
-    // Cleanup function
-    return () => {
-      mounted = false;
-    };
-  }, [storedAppId, ads, currentIndex, setAds, setCurrentIndex, setDataFetched]);
-
-  // Get current ad data safely
-  const currentAd = ads[currentIndex] || {};
-  const mainAdUrl = currentAd.creativeUrl?.adUrl;
-
-  // Error and loading states
-  if (error) {
-    return <p className="text-red-500 text-center mb-4">{error}</p>;
-  }
-  if (loadingAds) {
-    return <p className="text-gray-700 text-center mb-4">Loading story ads...</p>;
+  // If no ads in the array, show fallback
+  if (!ads?.length) {
+    return <p className="text-gray-500 text-center">No Story Ads found.</p>;
   }
 
   return (
     <div className="relative w-full h-full bg-black flex flex-col">
       {/* Story progress bar */}
       <div className="absolute top-8 left-4 right-4 h-0.5 bg-gray-700 rounded-full">
-        <div className="h-0.5 bg-white rounded-full" style={{ width: "70%" }}></div>
+        <div
+          className="h-0.5 bg-white rounded-full"
+          style={{ width: "70%" }}
+        ></div>
       </div>
 
       {/* App header */}
       <div className="absolute top-10 left-4 right-4 flex justify-between items-center">
         <div className="flex items-center">
-          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-            <img src={appLogo} alt={appName} className="w-full h-full object-cover" />
-          </div>
-          <span className="ml-2 text-white text-sm font-semibold">{appName}</span>
+          {/* If you have a logo: */}
+          {appLogo ? (
+            <img
+              src={appLogo}
+              alt="App Logo"
+              className="w-6 h-6 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-6 h-6 bg-blue-500 rounded-full"></div>
+          )}
+          <span className="ml-2 text-white text-sm font-semibold">
+            {appName || "App Name"}
+          </span>
         </div>
         <button className="text-white">
           <X size={22} />
@@ -107,8 +52,14 @@ export default function FacebookStory({ currentIndex, setCurrentIndex, ads, setA
 
       {/* Main ad content */}
       <div className="flex-grow flex items-center justify-center mt-[38px] mb-20">
-        {mainAdUrl && (
-          <img src={mainAdUrl} alt="Story Ad" className="w-full h-full object-contain" />
+        {mainAdUrl ? (
+          <img
+            src={mainAdUrl}
+            alt="Story Ad"
+            className="w-full h-full object-contain"
+          />
+        ) : (
+          <p className="text-white">No ad URL available.</p>
         )}
       </div>
 
@@ -123,9 +74,10 @@ export default function FacebookStory({ currentIndex, setCurrentIndex, ads, setA
   );
 }
 
-FacebookStory.propTypes = {
+FbStoryAds.propTypes = {
   currentIndex: PropTypes.number.isRequired,
-  setCurrentIndex: PropTypes.func,
+  setCurrentIndex: PropTypes.func, // Only if needed
   ads: PropTypes.array.isRequired,
-  setAds: PropTypes.func.isRequired
+  appName: PropTypes.string,
+  appLogo: PropTypes.string
 };

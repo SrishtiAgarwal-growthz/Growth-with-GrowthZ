@@ -1,93 +1,57 @@
-import { useEffect, useState } from "react";
-import { Plus, Search, MessageCircle, MoreHorizontal, Home, PlaySquare, Users, X } from 'lucide-react';
 import PropTypes from "prop-types";
-import { getGeneratedAds } from "../../../logic/rainbow/rainbowApi.js";
+import {
+  Plus,
+  Search,
+  MessageCircle,
+  MoreHorizontal,
+  Home,
+  PlaySquare,
+  Users,
+  X
+} from "lucide-react";
 
 function shortCaption(phrase) {
   if (!phrase || typeof phrase !== "string") return null;
   const cleaned = phrase.replace(/^\d+\.\s*/, "").trim();
   const words = cleaned.split(/\s+/);
-  const firstThree = words.slice(0, 5).join(" ");
+  const firstFive = words.slice(0, 5).join(" ");
   return (
     <>
-      {firstThree}{" "}
+      {firstFive}{" "}
       <span style={{ color: "#0096FF" }}> ... See More</span>
     </>
   );
 }
 
-export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ads, setAds }) {
-  const [error, setError] = useState("");
-  const [loadingAds, setLoadingAds] = useState(false);
-  const [appName, setAppName] = useState("");
-  const [appLogo, setAppLogo] = useState("");
-  const [ setDataFetched] = useState(false);
+export default function FacebookFeedCarousel({
+  currentIndex,
+  ads,
+  appName,
+  appLogo
+}) {
+  console.log("FbFeedCarousel - currentIndex:", currentIndex);
+  console.log("FbFeedCarousel - ads:", ads);
+  console.log("FbFeedCarousel - appName:", appName);
+  console.log("FbFeedCarousel - appLogo:", appLogo);
 
-  const storedAppId = localStorage.getItem("appId") || "";
-
-  useEffect(() => {
-    let mounted = true;
-    if (!storedAppId) return;
-
-    async function fetchAdsForApp() {
-      if (ads.length > 0) return;
-
-      try {
-        setLoadingAds(true);
-        setError("");
-
-        const data = await getGeneratedAds(storedAppId);
-
-        if (!mounted) return;
-
-        if (data.appName) setAppName(data.appName);
-
-        if (data.logo) setAppLogo(data.logo);
-
-        const carouselAds = data.animations?.filter(
-          (item) => item.creativeUrl?.size === "1080x1080"
-        );
-        console.log('Filtered story ads:', carouselAds);
-        if (carouselAds?.length > 0) {
-          setAds(carouselAds);
-          if (setCurrentIndex && currentIndex === 0) {
-            setCurrentIndex(0);
-          }
-        } else {
-          setError("No carousel ads (1080x1080) found.");
-        }
-
-        setDataFetched(true);
-      } catch (err) {
-        if (!mounted) return;
-        console.error("[getGeneratedAds] Error:", err.message);
-        setError(err.message || "Error fetching carousel ads");
-      } finally {
-        if (mounted) {
-          setLoadingAds(false);
-        }
-      }
-    }
-
-    fetchAdsForApp();
-
-    return () => {
-      mounted = false;
-    };
-  }, [storedAppId, ads, currentIndex, setAds, setCurrentIndex, setDataFetched]);
+  if (!ads?.length) {
+    console.log("FbFeedCarousel - No ads found.");
+    return <p className="text-gray-500 text-center">No feed carousel ads found.</p>;
+  }
 
   const currentAd = ads[currentIndex] || {};
-  const mainAdUrl = currentAd.creativeUrl?.animationUrl;
-  const rawPhrase = currentAd.creativeUrl?.phrase || "";
+  const mainAdUrl = currentAd?.creativeUrl?.animationUrl;
+  const rawPhrase = currentAd?.creativeUrl?.phrase || "";
   const adCaption = shortCaption(rawPhrase);
+
+  console.log("FbFeedCarousel - currentAd:", currentAd);
+  console.log("FbFeedCarousel - mainAdUrl:", mainAdUrl);
+  console.log("FbFeedCarousel - adCaption:", adCaption);
 
   return (
     <>
-      {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-      {loadingAds && <p className="text-gray-700 text-center mb-4"></p>}
-
       {/* Facebook Header */}
-      <div className="bg-[#3a3b3c] text-white px-3 pt-7 pb-1.5">
+      <div className="bg-[#242526] text-white px-3 pt-7 pb-1.5">
         <div className="flex justify-between items-center">
           <span className="text-xl font-bold text-[#0866ff]">Fb</span>
           <div className="flex items-center space-x-2">
@@ -99,25 +63,37 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
             </button>
             <button className="bg-[#3a3b3c] p-1.5 rounded-full relative">
               <MessageCircle size={14} className="text-white" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-[8px] w-3 h-3 flex items-center justify-center rounded-full">4</span>
+              <span className="absolute -top-1 -right-1 bg-red-500 text-[8px] w-3 h-3 flex items-center justify-center rounded-full">
+                4
+              </span>
             </button>
           </div>
         </div>
       </div>
 
-      <div className="h-[1px] bg-black"></div>
+      <div className="h-[1px] bg-[#3a3b3c]"></div>
 
       {/* Post Content */}
-      <div className="bg-[#3a3b3c] text-white px-3">
+      <div className="bg-[#242526] text-white px-3">
         <div className="py-2">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-[#3a3b3c] rounded-full flex items-center justify-center text-white text-[10px] font-bold mr-2">
-                <img src={appLogo} alt={appName} className="w-full h-full object-cover" />
+              <div className="w-8 h-8 bg-[#3a3b3c] rounded-full flex items-center justify-center text-white text-[10px] font-bold mr-2 overflow-hidden">
+                {appLogo ? (
+                  <img
+                    src={appLogo}
+                    alt={appName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  "Logo"
+                )}
               </div>
               <div>
                 <div className="flex items-center">
-                  <p className="text-[10px] font-semibold">{appName || "MyApp"}</p>
+                  <p className="text-[10px] font-semibold">
+                    {appName || "MyApp"}
+                  </p>
                 </div>
                 <p className="text-[8px] text-gray-400">Sponsored · </p>
               </div>
@@ -132,11 +108,17 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
 
           {/* Post Image */}
           <div className="rounded-lg overflow-hidden bg-[#242526]">
-            <img
-              src={mainAdUrl}
-              alt="Carousel Ad"
-              className="w-full h-[225px] object-contain"
-            />
+            {mainAdUrl ? (
+              <img
+                src={mainAdUrl}
+                alt="Carousel Ad"
+                className="w-full h-[225px] object-contain"
+              />
+            ) : (
+              <p className="text-center text-gray-400 py-8">
+                No animation URL available
+              </p>
+            )}
           </div>
 
           {/* Action Buttons */}
@@ -157,7 +139,7 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
         </div>
       </div>
 
-      <div className="h-[1px] bg-black"></div>
+      <div className="h-[1px] bg-[#3a3b3c]"></div>
 
       {/* Bottom Navigation */}
       <div className="absolute bottom-0 w-full bg-[#242526] border-t border-[#3a3b3c] mb-[10px]">
@@ -182,7 +164,7 @@ export default function FacebookFeedCarousel({ currentIndex, setCurrentIndex, ad
 
 FacebookFeedCarousel.propTypes = {
   currentIndex: PropTypes.number.isRequired,
-  setCurrentIndex: PropTypes.func,
   ads: PropTypes.array.isRequired,
-  setAds: PropTypes.func.isRequired
+  appName: PropTypes.string,
+  appLogo: PropTypes.string
 };
