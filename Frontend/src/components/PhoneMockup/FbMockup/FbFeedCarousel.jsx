@@ -53,7 +53,7 @@ export default function FacebookFeedCarousel({
       {/* Facebook Header */}
       <div className="bg-[#242526] text-white px-3 pt-7 pb-1.5">
         <div className="flex justify-between items-center">
-          <span className="text-xl font-bold text-[#0866ff]">Fb</span>
+          <span className="text-xl font-bold text-[#0866ff]">Facebook</span>
           <div className="flex items-center space-x-2">
             <button className="bg-[#3a3b3c] p-1.5 rounded-full">
               <Plus size={14} className="text-white" />
