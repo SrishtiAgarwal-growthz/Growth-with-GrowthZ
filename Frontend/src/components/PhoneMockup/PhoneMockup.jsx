@@ -11,7 +11,7 @@ const PhoneMockup = ({
   handlePrev,
   onAccept,
   onReject,
-  isApproved
+  adStatus // Changed from isApproved to adStatus
 }) => {
   const [time] = useState("4:28");
   const [isAccepting, setIsAccepting] = useState(false);
@@ -32,7 +32,7 @@ const PhoneMockup = ({
   }, [handlePrev]);
 
   const onAcceptClick = useCallback(async (e) => {
-    if (isAccepting) return; // Prevent multiple clicks
+    if (isAccepting) return;
     
     e.preventDefault();
     e.stopPropagation();
@@ -46,7 +46,7 @@ const PhoneMockup = ({
   }, [onAccept, isAccepting]);
 
   const onRejectClick = useCallback(async (e) => {
-    if (isRejecting) return; // Prevent multiple clicks
+    if (isRejecting) return;
     
     e.preventDefault();
     e.stopPropagation();
@@ -59,6 +59,47 @@ const PhoneMockup = ({
       setIsRejecting(false);
     }
   }, [onReject, isRejecting]);
+
+  const renderActionButtons = () => {
+    switch (adStatus) {
+      case 'approved':
+        return (
+          <div className="w-48 md:w-36">
+            <button className="w-full h-10 md:h-12 bg-green-500 rounded-lg text-white font-semibold text-sm md:text-base cursor-default">
+              Approved
+            </button>
+          </div>
+        );
+      case 'rejected':
+        return (
+          <div className="w-48 md:w-36">
+            <button className="w-full h-10 md:h-12 bg-red-500 rounded-lg text-white font-semibold text-sm md:text-base cursor-default">
+              Rejected
+            </button>
+          </div>
+        );
+      default:
+        return (
+          <>
+            <button
+              className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-red-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={onRejectClick}
+              disabled={isRejecting}
+            >
+              Reject
+            </button>
+            <button
+              type="button"
+              className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-green-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={onAcceptClick}
+              disabled={isAccepting}
+            >
+              Approve
+            </button>
+          </>
+        );
+    }
+  };
 
   return (
     <div className="relative flex flex-col items-center justify-center h-[34rem] mt-6">
@@ -126,35 +167,7 @@ const PhoneMockup = ({
 
       {/* Action Buttons */}
       <div className="flex gap-4 mt-8">
-        {isApproved ? (
-          // Approved state - single centered button
-          <div className="w-48 md:w-36">
-            <button
-              className="w-full h-10 md:h-12 bg-green-500 rounded-lg text-white font-semibold text-sm md:text-base cursor-default"
-            >
-              Approved
-            </button>
-          </div>
-        ) : (
-          // Normal state - reject and approve buttons
-          <>
-            <button
-              className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-red-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={onRejectClick}
-              disabled={isRejecting}
-            >
-              Reject
-            </button>
-            <button
-              type="button"
-              className="w-24 md:w-36 h-10 md:h-12 bg-neutral-800 rounded-lg text-green-500 font-semibold text-sm md:text-base hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={onAcceptClick}
-              disabled={isAccepting}
-            >
-              Approve
-            </button>
-          </>
-        )}
+        {renderActionButtons()}
       </div>
     </div>
   );
@@ -166,7 +179,7 @@ PhoneMockup.propTypes = {
   handlePrev: PropTypes.func,
   onAccept: PropTypes.func,
   onReject: PropTypes.func,
-  isApproved: PropTypes.bool
+  adStatus: PropTypes.bool
 };
 
 PhoneMockup.defaultProps = {

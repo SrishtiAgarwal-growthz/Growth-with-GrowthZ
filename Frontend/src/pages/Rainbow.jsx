@@ -29,7 +29,10 @@ export default function Rainbow() {
     animatedAds: 0
   });
 
-  const [approvedAds, setApprovedAds] = useState(new Set());
+  const [adStatuses, setAdStatuses] = useState({
+    approved: new Set(),
+    rejected: new Set()
+  });
 
   const [activeApp, setActiveApp] = useState("facebook");
   const [activeMockup, setActiveMockup] = useState("storyAds");
@@ -193,7 +196,11 @@ export default function Rainbow() {
   
     return null;
   };
-  
+  const getAdIdentifier = useCallback((mockupType, currentAd) => {
+    const url = getAdUrl(mockupType, currentAd);
+    return `${mockupType}:${currentAd?.id || url}`;
+  }, []);
+
   const handleAccept = useCallback(async (e) => {
     if (e) {
       e.preventDefault();
@@ -211,7 +218,6 @@ export default function Rainbow() {
         throw new Error("No URL found for the current creative");
       }
   
-      // Construct the payload
       const payload = {
         creativeId: creativeUrl,
         status: "approved"
@@ -233,18 +239,30 @@ export default function Rainbow() {
         throw new Error(data.message || "Failed to approve creative");
       }
   
-      // Mark ad as approved in the local set
-      setApprovedAds((prev) => new Set([...prev, `${activeMockup}:${currentAd.id || creativeUrl}`]));
+      // Get unique identifier for the current ad
+      const adIdentifier = getAdIdentifier(activeMockup, currentAd);
   
-      // Move to next ad automatically
+      // Update statuses - add to approved and remove from rejected if present
+      setAdStatuses(prev => {
+        const newApproved = new Set(prev.approved);
+        const newRejected = new Set(prev.rejected);
+        
+        newApproved.add(adIdentifier);
+        newRejected.delete(adIdentifier);
+        
+        return {
+          approved: newApproved,
+          rejected: newRejected
+        };
+      });
+  
       handleNext();
     } catch (err) {
       console.error("Error approving creative:", err.message);
       setError(err.message);
     }
-  }, [ads, currentIndex, activeMockup, handleNext]);
+  }, [ads, currentIndex, activeMockup, handleNext, getAdIdentifier]);
   
-  // Update handleReject similarly
   const handleReject = useCallback(async (e) => {
     if (e) {
       e.preventDefault();
@@ -274,20 +292,47 @@ export default function Rainbow() {
         const data = await response.json();
         throw new Error(data.message || "Failed to reject creative");
       }
+
+      // Get unique identifier for the current ad
+      const adIdentifier = getAdIdentifier(activeMockup, currentAd);
   
-      // Move to next ad automatically
+      // Update statuses - add to rejected and remove from approved if present
+      setAdStatuses(prev => {
+        const newApproved = new Set(prev.approved);
+        const newRejected = new Set(prev.rejected);
+        
+        newRejected.add(adIdentifier);
+        newApproved.delete(adIdentifier);
+        
+        return {
+          approved: newApproved,
+          rejected: newRejected
+        };
+      });
+  
       handleNext();
     } catch (err) {
       console.error("Error rejecting creative:", err.message);
       setError(err.message);
     }
-  }, [ads, currentIndex, activeMockup, handleNext]);
-  // Calculate if current ad is approved
-  const isCurrentAdApproved = (() => {
+  }, [ads, currentIndex, activeMockup, handleNext, getAdIdentifier]);
+
+  // Update the function to check current ad status
+  const getCurrentAdStatus = () => {
     const currentAd = ads[activeMockup]?.[currentIndex[activeMockup]];
-    if (!currentAd) return false;
-    return approvedAds.has(`${activeMockup}:${currentAd.id}`);
-  })();
+    if (!currentAd) return null;
+    
+    const adIdentifier = getAdIdentifier(activeMockup, currentAd);
+    
+    if (adStatuses.approved.has(adIdentifier)) {
+      return 'approved';
+    }
+    if (adStatuses.rejected.has(adIdentifier)) {
+      return 'rejected';
+    }
+    return null;
+  };
+
 
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER CHILD MOCKUPS
@@ -423,7 +468,7 @@ export default function Rainbow() {
               handlePrev={handlePrev}
               onAccept={handleAccept}
               onReject={handleReject}
-              isApproved={isCurrentAdApproved}
+              adStatus={getCurrentAdStatus()}
             >
               {renderAllMockups()}
             </PhoneMockup>
