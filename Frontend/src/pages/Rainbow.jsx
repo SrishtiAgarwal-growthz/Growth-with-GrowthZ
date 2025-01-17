@@ -225,7 +225,7 @@ export default function Rainbow() {
   
       console.log("API Request Payload:", JSON.stringify(payload, null, 2));
   
-      const response = await fetch("http://localhost:8000/api/creativesStatus/approve", {
+      const response = await fetch("https://growth-with-growthz.onrender.com/api/creativesStatus/approve", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -277,7 +277,7 @@ export default function Rainbow() {
         throw new Error("No URL found for the current creative");
       }
   
-      const response = await fetch("http://localhost:8000/api/creativesStatus/reject", {
+      const response = await fetch("https://growth-with-growthz.onrender.com/api/creativesStatus/reject", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
