@@ -71,7 +71,7 @@ export default function FacebookStory({ currentIndex, setCurrentIndex, ads, setA
     return () => {
       mounted = false;
     };
-  }, [storedAppId, ads, currentIndex, setAds, setCurrentIndex]);
+  }, [storedAppId, ads, currentIndex, setAds, setCurrentIndex, setDataFetched]);
 
   // Get current ad data safely
   const currentAd = ads[currentIndex] || {};
