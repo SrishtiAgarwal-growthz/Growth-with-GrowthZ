@@ -4,8 +4,8 @@ export const connectToMongo = async () => {
   const uri = process.env.MONGODB_URI;
 
   const client = new MongoClient(uri, {
-    // useNewUrlParser: true,
-    // useUnifiedTopology: true,
+    // 
+    
     tls: true,
     tlsAllowInvalidCertificates: true, // Temporary for debugging
   });

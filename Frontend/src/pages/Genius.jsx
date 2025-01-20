@@ -13,7 +13,7 @@ import logo from "../assets/logo.png";
 import frame from "../assets/Frame.png";
 import { useNavigate } from "react-router-dom";
 
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "http://localhost:8000";
 
 const GeniusMarketingForm = () => {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ const GeniusMarketingForm = () => {
 
   // This single loading flag is used for both generating phrases & creatives
   const [loading, setLoading] = useState(false);
-
+  const [showWebsiteInput, setShowWebsiteInput] = useState(false);
   // State to hold phrases and their approval status
   const [phrases, setPhrases] = useState(null);
   const [approvalStates, setApprovalStates] = useState([]);
@@ -346,7 +346,7 @@ const GeniusMarketingForm = () => {
                 name="google_play"
                 value={formData.google_play}
                 onChange={handleInputChange}
-                className="w-full h-[70px] rounded-[16px] bg-gray-900/80 border border-gray-800 text-gray-300 px-4 focus:outline-none focus:border-purple-500"
+                className="w-full h-[70px] rounded-[16px] bg-gray-900/80 border border-gray-800 text-gray-300 px-4 focus:outline-none focus:border-purple-500 placeholder:text-gray-600"
                 placeholder="https://play.google.com/store/apps/details?id=..."
               />
             </div>
@@ -361,9 +361,71 @@ const GeniusMarketingForm = () => {
                 name="apple_app"
                 value={formData.apple_app}
                 onChange={handleInputChange}
-                className="w-full h-[70px] rounded-[16px] bg-gray-900/80 border border-gray-800 text-gray-300 px-4 focus:outline-none focus:border-purple-500"
+                className="w-full h-[70px] rounded-[16px] bg-gray-900/80 border border-gray-800 text-gray-300 px-4 focus:outline-none focus:border-purple-500 placeholder:text-gray-600"
                 placeholder="https://apps.apple.com/in/app/..."
               />
+            </div>
+
+            <div className="">
+              <div   
+                // onClick={() => setShowWebsiteInput(!showWebsiteInput)}
+                className="text-white"
+              >
+                Don&apos;t have an app? <button
+                type="button"
+                onClick={() => setShowWebsiteInput(!showWebsiteInput)}
+                className="text-blue-500 	text-decoration-line: underline"
+                >
+                Click here
+                  </button> to get Ad copies for your website
+              </div>
+            </div>
+
+            <div
+              className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                showWebsiteInput ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="space-y-2">
+                <p className="text-white text-[16px]">
+                  Enter you website URL!
+                </p>
+                <div className="relative">
+                  <input
+                    type="url"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleInputChange}
+                    className="w-full h-[70px] rounded-[16px] bg-gray-900/80 border border-gray-800 text-gray-300 px-4 pr-12 focus:outline-none focus:border-purple-500 placeholder:text-gray-600"
+                    placeholder="Paste your Website Link Here"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-4 top-1/2 -translate-y-1/2"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="11"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                      <path
+                        d="M10 8L14 12L10 16"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Error Message */}
@@ -439,47 +501,7 @@ const GeniusMarketingForm = () => {
             </button>
 
             {/* Website Link Input */}
-            <div className="space-y-2">
-              <p className="text-white text-[16px]">
-                Don&apos;t have the App Store/ Google Play Store Link? No
-                worries!
-              </p>
-              <div className="relative">
-                <input
-                  type="url"
-                  name="website"
-                  value={formData.website}
-                  onChange={handleInputChange}
-                  className="w-full h-[70px] rounded-[16px] bg-gray-900/80 border border-gray-800 text-gray-300 px-4 pr-12 focus:outline-none focus:border-purple-500"
-                  placeholder="Paste your Website Link Here"
-                />
-                <button
-                  type="button"
-                  className="absolute right-4 top-1/2 -translate-y-1/2"
-                >
-                  <svg
-                    className="w-6 h-6"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="11"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
-                    <path
-                      d="M10 8L14 12L10 16"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
+           
           </form>
         </div>
       </div>
