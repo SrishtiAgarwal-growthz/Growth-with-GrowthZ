@@ -12,8 +12,9 @@ import {
 import logo from "../assets/logo.png";
 import frame from "../assets/Frame.png";
 import { useNavigate } from "react-router-dom";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "https://growth-with-growthz.onrender.com";
 
 const GeniusMarketingForm = () => {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ const GeniusMarketingForm = () => {
   // This single loading flag is used for both generating phrases & creatives
   const [loading, setLoading] = useState(false);
   const [showWebsiteInput, setShowWebsiteInput] = useState(false);
+  const [isPhrasesExpanded, setIsPhrasesExpanded] = useState(true);
   // State to hold phrases and their approval status
   const [phrases, setPhrases] = useState(null);
   const [approvalStates, setApprovalStates] = useState([]);
@@ -90,11 +92,14 @@ const GeniusMarketingForm = () => {
       if (!userEmail) throw new Error("User email is not available.");
 
       // Fetch user ID from backend
-      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail }),
-      });
+      const userResponse = await fetch(
+        `${BASE_URL}/api/users/get-user-by-email`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userEmail }),
+        }
+      );
       if (!userResponse.ok) throw new Error("Failed to fetch userId.");
       const userData = await userResponse.json();
       const userId = userData._id;
@@ -141,7 +146,10 @@ const GeniusMarketingForm = () => {
         generatedPhrases.phrases
       ) {
         // 4) If we have status="success" and .phrases is an array or object
-        console.log("generatedPhrases.phrases content:", generatedPhrases.phrases);
+        console.log(
+          "generatedPhrases.phrases content:",
+          generatedPhrases.phrases
+        );
         if (Array.isArray(generatedPhrases.phrases)) {
           setPhrases({ uspPhrases: generatedPhrases.phrases });
           setApprovalStates(
@@ -161,6 +169,8 @@ const GeniusMarketingForm = () => {
 
       // Now that we have phrases, move to the next step => "Get Creatives"
       setButtonState("getCreatives");
+         // Collapse the phrases section
+        //  setIsPhrasesExpanded(false);
     } catch (err) {
       setError(err.message);
       console.error("Error during form submission:", err);
@@ -177,31 +187,38 @@ const GeniusMarketingForm = () => {
       alert("No App ID found. Please generate phrases first.");
       return;
     }
-
+  
     try {
+      setIsPhrasesExpanded(false);
       setLoading(true);
-
+  
       // Fetch user ID
       const auth = getAuth();
       const userEmail = auth.currentUser?.email;
       if (!userEmail) throw new Error("User email is not available.");
-
-      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail }),
-      });
+  
+      const userResponse = await fetch(
+        `${BASE_URL}/api/users/get-user-by-email`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userEmail }),
+        }
+      );
       if (!userResponse.ok) throw new Error("Failed to fetch userId.");
       const userData = await userResponse.json();
       const userId = userData._id;
-
+  
       // Add creatives to tasks and create ads/animations
       await addCreativeToTasks(userId, appId);
       await createAds(userId, appId);
       await createAnimations(userId, appId);
-
+  
       // Once creatives are ready, change button to "Show Creatives"
       setButtonState("showCreatives");
+  
+      // Collapse the phrases section
+      // setIsPhrasesExpanded(false);
     } catch (err) {
       console.error("Error generating creatives:", err.message);
       alert(err.message);
@@ -209,7 +226,6 @@ const GeniusMarketingForm = () => {
       setLoading(false);
     }
   };
-
   /**
    * 3) Show Creatives Page
    */
@@ -367,29 +383,29 @@ const GeniusMarketingForm = () => {
             </div>
 
             <div className="">
-              <div   
+              <div
                 // onClick={() => setShowWebsiteInput(!showWebsiteInput)}
                 className="text-white"
               >
-                Don&apos;t have an app? <button
-                type="button"
-                onClick={() => setShowWebsiteInput(!showWebsiteInput)}
-                className="text-blue-500 	text-decoration-line: underline"
+                Don&apos;t have an app?{" "}
+                <button
+                  type="button"
+                  onClick={() => setShowWebsiteInput(!showWebsiteInput)}
+                  className="text-blue-500 	text-decoration-line: underline"
                 >
-                Click here
-                  </button> to get Ad copies for your website
+                  Click here
+                </button>{" "}
+                to get Ad copies for your website
               </div>
             </div>
 
             <div
               className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                showWebsiteInput ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                showWebsiteInput ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
               }`}
             >
               <div className="space-y-2">
-                <p className="text-white text-[16px]">
-                  Enter you website URL!
-                </p>
+                <p className="text-white text-[16px]">Enter you website URL!</p>
                 <div className="relative">
                   <input
                     type="url"
@@ -433,63 +449,95 @@ const GeniusMarketingForm = () => {
 
             {/* Display Phrases */}
             {phrases?.uspPhrases && (
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-                {phrases.uspPhrases.map((phraseObjOrString, index) => {
-                  const text =
-                    typeof phraseObjOrString === "object"
-                      ? phraseObjOrString.text
-                      : phraseObjOrString;
+              <div className="space-y-4">
+                <button
+                  onClick={() => setIsPhrasesExpanded(!isPhrasesExpanded)}
+                  className="w-full flex items-center justify-between bg-gray-900/80 p-4 rounded-t-[16px] border border-gray-800 hover:bg-gray-900/90 transition-all cursor-pointer"
+                >
+                  {/* Centered text container */}
+                  <div className="flex-1 flex justify-center">
+                    <h3 className="text-2xl font-semibold text-white">
+                      Press ✓ to get the creative assets
+                    </h3>
+                  </div>
 
-                  return (
-                    <div
-                      key={index}
-                      className="p-4 rounded-[16px] bg-gray-900/80 border border-gray-800 flex justify-between items-center group hover:bg-gray-900/90 transition-all"
-                    >
-                      <div className="flex-1">
-                        <p className="text-white text-lg">{text}</p>
-                      </div>
-                      <div className="ml-4 flex items-center space-x-2">
-                        {approvalStates[index] === "approved" ? (
-                          <button
-                            type="button"
-                            className="px-3 py-2 rounded-lg border border-green-500 text-green-500"
-                            disabled
-                          >
-                            Approved
-                          </button>
-                        ) : approvalStates[index] === "rejected" ? (
-                          <button
-                            type="button"
-                            className="px-3 py-2 rounded-lg border border-red-500 text-red-500"
-                            disabled
-                          >
-                            Rejected
-                          </button>
-                        ) : (
-                          <>
+                  {/* Icon at the end */}
+                  <div className="text-white">
+                    {isPhrasesExpanded ? (
+                      <ChevronUp className="w-6 h-6" />
+                    ) : (
+                      <ChevronDown className="w-6 h-6" />
+                    )}
+                  </div>
+                </button>
+
+                <div
+                  className={`transition-all duration-300 ease-in-out space-y-4 overflow-y-auto scrollbar-custom ${
+                    isPhrasesExpanded
+                      ? "max-h-[60vh] opacity-100"
+                      : "max-h-0 opacity-0"
+                  }`}
+                  style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "#4865F4 #374151",
+                  }}
+                >
+                  {phrases.uspPhrases.map((phraseObjOrString, index) => {
+                    const text =
+                      typeof phraseObjOrString === "object"
+                        ? phraseObjOrString.text
+                        : phraseObjOrString;
+
+                    return (
+                      <div
+                        key={index}
+                        className="p-4 rounded-[16px] bg-gray-900/80 border border-gray-800 flex justify-between items-center group hover:bg-gray-900/90 transition-all"
+                      >
+                        <div className="flex-1">
+                          <p className="text-white text-lg">{text}</p>
+                        </div>
+                        <div className="ml-4 flex items-center space-x-2">
+                          {approvalStates[index] === "approved" ? (
                             <button
-                              onClick={() => handleTickClick(index)}
-                              className="px-3 py-2 rounded-lg border border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-colors"
-                              aria-label="Approve"
+                              type="button"
+                              className="px-3 py-2 rounded-lg border border-green-500 text-green-500"
+                              disabled
                             >
-                              ✓
+                              Approved
                             </button>
+                          ) : approvalStates[index] === "rejected" ? (
                             <button
-                              onClick={() => handleCrossClick(index)}
-                              className="px-3 py-2 rounded-lg border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
-                              aria-label="Reject"
+                              type="button"
+                              className="px-3 py-2 rounded-lg border border-red-500 text-red-500"
+                              disabled
                             >
-                              ✕
+                              Rejected
                             </button>
-                          </>
-                        )}
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleTickClick(index)}
+                                className="px-3 py-2 rounded-lg border border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-colors"
+                                aria-label="Approve"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={() => handleCrossClick(index)}
+                                className="px-3 py-2 rounded-lg border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                                aria-label="Reject"
+                              >
+                                ✕
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )}
-
             {/* Single Button handling all steps */}
             <button
               type="button"
@@ -501,7 +549,6 @@ const GeniusMarketingForm = () => {
             </button>
 
             {/* Website Link Input */}
-           
           </form>
         </div>
       </div>
