@@ -18,7 +18,7 @@ export const scrapeWebsiteContent = async (websiteUrl) => {
     });
 
     // Navigate to the website
-    await page.goto(websiteUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(websiteUrl, { waitUntil: 'domcontentloaded', timeout: 100000 });
 
     // Delay to allow for dynamic content loading
     await new Promise((resolve) => setTimeout(resolve, 2000));

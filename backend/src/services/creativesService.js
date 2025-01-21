@@ -45,9 +45,13 @@ export const processAppImages = async (appId, userId) => {
       throw new Error(`App not found for id: ${appId}`);
     }
 
-    // 1) If imagesProcessed is already true, skip remove-bg
-    if (appDoc.imagesProcessed) {
-      console.log("[processAppImages] imagesProcessed is true => Skipping remove-bg calls.");
+    // Explicitly convert to boolean and log the value for debugging
+    const isProcessed = Boolean(appDoc.imagesProcessed);
+    console.log("[processAppImages] Current imagesProcessed value:", isProcessed);
+
+    // Check if already processed
+    if (isProcessed === true) {
+      console.log("[processAppImages] Images already processed => Skipping remove-bg calls.");
       return {
         message: "Images were already processed. Skipped remove-bg.",
         updatedImages: appDoc.images || [],
@@ -89,8 +93,8 @@ export const processAppImages = async (appId, userId) => {
       console.warn("[processAppImages] 'images' is not an array in the app doc.");
     } else {
       // Take only the first three images for processing
-      const imagesToProcess = appDoc.images.slice(0, 3);
-      const remainingImages = appDoc.images.slice(3);
+      const imagesToProcess = appDoc.images.slice(0, 5);
+      const remainingImages = appDoc.images.slice(5);
 
       for (const image of imagesToProcess) {
         if (!image.screenshot) {
@@ -173,11 +177,18 @@ export const processAppImages = async (appId, userId) => {
 
     console.log("[processAppImages] Images updated successfully and imagesProcessed set to true.");
 
+    // Verify the update
+    const verifyDoc = await appsCollection.findOne({ _id: new ObjectId(appId) });
+    console.log("[processAppImages] Verified imagesProcessed value after update:", Boolean(verifyDoc.imagesProcessed));
+
     // Return updated data
     return {
       updatedImages,
-      message: "Images processed (or attempted) successfully.",
+      message: "Images processed successfully.",
     };
+  } catch (error) {
+    console.error("[processAppImages] Error:", error);
+    throw error;
   } finally {
     await client.close();
     console.log("[processAppImages] MongoDB connection closed.");

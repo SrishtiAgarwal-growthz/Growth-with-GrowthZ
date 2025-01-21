@@ -1659,21 +1659,6 @@ export const adTemplates = {
               justify-content: center;
             }
 
-            .logo {
-              width: 100%;
-              height: 100%;
-              object-fit: contain;
-            }
-
-            .logo-container {
-              position: absolute;
-              top: 60px;
-              right: 60px;
-              width: 200px;
-              height: 200px;
-              z-index: 2;
-            }
-
             .main-image {
               width: 100%;
               height: auto;
@@ -1741,9 +1726,6 @@ export const adTemplates = {
         </head>
         <body>
         <div class="ad-container">
-            <div class="logo-container">
-                <img src="${logoUrl}" alt="Logo" class="logo">
-            </div>
             <div class="content-wrapper">
                 <div class="text-section">
                     <div id="textContainer" class="text-container"></div>

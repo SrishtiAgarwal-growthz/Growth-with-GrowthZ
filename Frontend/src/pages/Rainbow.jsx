@@ -9,6 +9,8 @@ import { getGeneratedAds } from "../logic/rainbow/rainbowApi";
 import FacebookIcon from "../assets/PhoneMockup/FB.png";
 import GoogleIcon from "../assets/PhoneMockup/Google.png";
 
+const BASE_URL = "https://growth-with-growthz.onrender.com";
+
 export default function Rainbow() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -225,7 +227,7 @@ export default function Rainbow() {
   
       console.log("API Request Payload:", JSON.stringify(payload, null, 2));
   
-      const response = await fetch("https://growth-with-growthz.onrender.com/api/creativesStatus/approve", {
+      const response = await fetch(`${BASE_URL}/api/creativesStatus/approve`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -277,7 +279,7 @@ export default function Rainbow() {
         throw new Error("No URL found for the current creative");
       }
   
-      const response = await fetch("https://growth-with-growthz.onrender.com/api/creativesStatus/reject", {
+      const response = await fetch(`${BASE_URL}/api/creativesStatus/reject`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

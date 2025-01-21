@@ -4,6 +4,20 @@ import { connectToMongo } from "../config/db.js";
 import { extractGooglePlayAppId, extractAppleAppId } from "../utils/extractors.js";
 import { processAppImages } from "./creativesService.js"; // We'll import from creativesService
 
+// Retry logic with exponential backoff
+const retryWithBackoff = async (fn, retries = 3, delay = 1000) => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries === 0) throw error;
+
+    console.log(`Retrying after ${delay}ms... (${retries} attempts left)`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+
+    return retryWithBackoff(fn, retries - 1, delay * 2);
+  }
+};
+
 /**
  * fetchOrCreateApp:
  *   - Checks if app doc is already in `Apps` by googleBundleId or appleBundleId.
@@ -70,7 +84,19 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
     if (!googleAppId) throw new Error("Invalid Google Play URL.");
 
     console.log("[saveAppDetailsInDb] Scraping Google Play store details...");
-    const googlePlayData = await gplay.app({ appId: googleAppId });
+    const googlePlayData = await retryWithBackoff(async () => {
+      try {
+        const data = await gplay.app({
+          appId: googleAppId,
+          throttle: 10, // Add throttling
+        });
+        console.log("[saveAppDetailsInDb] Successfully fetched Google Play data");
+        return data;
+      } catch (error) {
+        console.error("[saveAppDetailsInDb] Google Play fetch error:", error);
+        throw error;
+      }
+    });
 
     appDetails = {
       ...appDetails,
@@ -93,24 +119,36 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
 
   // Fetch details from Apple App Store
   if (appleAppUrl) {
-    const match = appleAppUrl.match(/id(\d+)/); // Extract ID from Apple URL
-    const appleAppId = match ? match[1] : null;
+    const match = appleAppUrl.match(/\/id(\d+)(?:\/)?/);
+    const appleId = match ? match[1] : null;
 
-    if (!appleAppId) {
-      throw new Error("Invalid Apple App Store URL.");
+    if (!appleId) {
+      console.warn("[saveAppDetailsInDb] Invalid Apple App Store URL, skipping Apple data fetch");
+    } else {
+      try {
+        console.log("[saveAppDetailsInDb] Fetching Apple App Store details for ID:", appleId);
+
+        const appleData = await store.app({
+          id: appleId,
+          country: 'in'  // Explicitly set country to India
+        });
+
+        console.log("[saveAppDetailsInDb] Successfully fetched Apple Store data");
+
+        appDetails = {
+          ...appDetails,
+          appleAppUrl: appleData.url,
+          appleBundleId: appleData.id,
+          appleReviews: appleData.reviews,
+          appleVersion: appleData.version,
+        };
+      } catch (error) {
+        console.warn("[saveAppDetailsInDb] Apple Store fetch failed, continuing with Google data only:", error.message);
+        // Don't throw error, continue with Google Play data
+      }
     }
-
-    console.log("[saveAppDetailsInDb] Fetching Apple App Store details...");
-    const appleData = await store.app({ id: appleAppId });
-
-    appDetails = {
-      ...appDetails,
-      appleAppUrl: appleData.url,
-      appleBundleId: appleData.id,
-      appleReviews: appleData.reviews,
-      appleVersion: appleData.version,
-    };
   }
+
   // 3) If direct website link
   if (websiteUrl) {
     appDetails.websiteLink = websiteUrl;
@@ -118,11 +156,13 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
 
   // 4) Upsert - Save to database
   console.log("[saveAppDetailsInDb] Saving app details to database...");
-  await appsCollection.updateOne(
-    { appId: appDetails.appId }, // Query to find the document by appId
-    { $set: appDetails }, // Update the document with appDetails
-    { upsert: true } // Create a new document if it doesn’t exist
-  );
+  await retryWithBackoff(async () => {
+    await appsCollection.updateOne(
+      { appId: appDetails.appId },
+      { $set: appDetails },
+      { upsert: true }
+    );
+  });
 
   console.log("[saveAppDetailsInDb] Saved app details to database.");
 
