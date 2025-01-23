@@ -12,7 +12,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/genius" element={<Genius />} />
-        <Route path="/rainbow" element={<Rainbow />} />
+        <Route path="/rainbow" element={<Rainbow key={window.location.pathname} />} /> {/* Add key */}
         <Route path="/privacy_policy" element={<Privacy />} />
       </Routes>
     </BrowserRouter>
