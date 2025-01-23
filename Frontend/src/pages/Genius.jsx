@@ -14,7 +14,7 @@ import frame from "../assets/Frame.png";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "http://localhost:8000";
 
 const GeniusMarketingForm = () => {
   const navigate = useNavigate();

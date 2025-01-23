@@ -5,14 +5,15 @@ import {
   extractGooglePlayDescription,
   extractAppStoreDescription,
   generateUSPhrases,
-  saveGeneratedPhrases,
   fetchUserAdCopies,
   saveGeneratedPhrasesForUser,
 } from "../services/reviewsService.js";
 
 import { fetchOrCreateApp } from "../services/appService.js";
 import { scrapeWebsiteContent } from "../services/websiteScrapeService.js";
+import { generatePhrasesFromWebsite } from "../services/reviewsService.js";
 import { saveTask } from "../services/taskService.js";
+import { connectToMongo } from "../config/db.js";
 import { extractGooglePlayAppId } from "../utils/extractors.js";
 import { extractMeaningfulWords } from "../utils/word_extractor.js";
 
@@ -176,5 +177,98 @@ export const generateUSPhrasesHandler = async (req, res) => {
       message: "Error generating USP phrases.",
       error: error.message,
     });
+  }
+};
+
+export const generateWebsiteAdCopies = async (req, res) => {
+  const client = await connectToMongo();
+  const db = client.db("GrowthZ");
+  const adCopiesCollection = db.collection("AdCopies");
+
+  console.log("[generateWebsiteAdCopies] Initial Request Body:", req.body);
+
+  try {
+    const { website_link, userId } = req.body;
+
+    // Validate required parameters
+    if (!website_link || !userId) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Both website_link and userId are required'
+      });
+    }
+
+    console.log(`[generateWebsiteAdCopies] Processing website: ${website_link}`);
+
+    // Check for existing ad copies
+    const existingCopies = await adCopiesCollection.findOne({
+      website: website_link,
+      userId: userId,
+    });
+
+    if (existingCopies) {
+      console.log(`[generateWebsiteAdCopies] Found existing copies for website: ${website_link}`);
+      return res.status(200).json({
+        status: 'already_exists',
+        adCopies: existingCopies,
+        message: "Phrases already exist for this user & website.",
+      });
+    }
+
+    // 3) Otherwise, create/fetch the Task for (userId, finalAppId) 
+    console.log("[generateWebsiteAdCopies] Creating or fetching Task doc...");
+    const task = await saveTask(userId, website_link);
+    console.log("[generateWebsiteAdCopies] Task doc found/created =>", task);
+    const taskId = task._id.toString();
+
+    // Scrape website content
+    console.log(`[generateWebsiteAdCopies] Scraping content from: ${website_link}`);
+    const websiteContent = await scrapeWebsiteContent(website_link);
+
+    const combinedReviews = [
+      websiteContent.metadata.metaDescription || "",
+      websiteContent.metadata.keywords || "",
+      ...websiteContent.headings.map((h) => h.text),
+      ...websiteContent.tables.flat().join(" "),
+    ];
+
+    // Generate phrases from website content
+    const generatedPhrases = await generatePhrasesFromWebsite(combinedReviews);
+
+    // Prepare phrases with metadata
+    const phrasesWithMetadata = generatedPhrases.map(phrase => ({
+      text: phrase,
+      status: 'pending',
+    }));
+
+    // Save to database
+    const savedCopies = await adCopiesCollection.insertOne({
+      userId: userId,
+      taskId: taskId,
+      source: 'website',
+      website: website_link,
+      phrases: phrasesWithMetadata,
+      createdAt: new Date(),
+    });
+
+    console.log(`[generateWebsiteAdCopies] Successfully generated ad copies for: ${website_link}`);
+
+    res.status(200).json({
+      status: 'success',
+      adCopies: {
+        _id: savedCopies.insertedId,
+        website: website_link,
+        phrases: phrasesWithMetadata
+      }
+    });
+
+  } catch (error) {
+    console.error('[generateWebsiteAdCopies] Error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message || 'Failed to generate ad copies'
+    });
+  } finally {
+    await client.close();
   }
 };

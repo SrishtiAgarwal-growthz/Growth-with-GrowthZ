@@ -250,30 +250,84 @@ export const generateUSPhrases = async (appName, keywords) => {
   }
 };
 
-// 1.6) Save phrases in AdCopies collection for this user
-export const saveGeneratedPhrases = async (appId, taskId, phrases) => {
-  console.log("[saveGeneratedPhrases] appId =>", appId, "taskId =>", taskId);
+export const generatePhrasesFromWebsite = async (websiteContent) => {
+  const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
-  const client = await connectToMongo();
-  const db = client.db("GrowthZ");
-  const adCopiesCollection = db.collection("AdCopies");
+  const prompt = `
+    You are an expert ad copywriter. You have real user feedback (in everyday language) and brand features.
+    Generate only 50 compelling ad copy pairs for ${websiteContent}. Each pair should be two sentences:
+
+    Sentence 1: A punchy headline
+    Sentence 2: A supporting description that expands on the headline
+    Make the USPs concise, engaging, and user-centric. Highlight the app's benefits and unique features.
+    
+    Context:
+    - Key Features: ${websiteContent}
+    - User Benefits: ${websiteContent}
+    
+    Focus on making these ad copies persuasive and tailored to potential users.
+
+    Format:
+    [Headline]. [Description]
+
+    Examples of perfect pairs:
+    Skip the Ads, Not the Fun. YouTube Premium gives you uninterrupted entertainment.
+
+     Examples to avoid:
+    ❌ "Website_Name: Master Your Future" (Don't prefix with app name)
+    ❌ "Website_Name is the best choice" (Don't start with app name)
+    
+    Requirements:
+    - Keep headlines catchy
+    - Make descriptions informative
+    - Don't start sentences with the app name
+    - Ensure the description naturally flows from the headline
+    - Use active, engaging language
+    - Focus on specific benefits
+    - No labels, numbers, symbols or prefixes
+    - Each pair should be on a new line
+    - Period after each sentence
+    
+    Avoid:
+    - Generic marketing language
+    - Technical jargon
+    - Repetitive phrases
+    - Labels like "Headline:" or "Description:"
+    - Numbered lists or punctuations
+  `;
 
   try {
-    const doc = {
-      appId,
-      taskId,
-      phrases: phrases.map(text => ({
-        text,
-        status: "pending",
-      })),
-      createdAt: new Date(),
-    };
+    console.log("[generatePhrasesFromWebsite] Sending request to Gemini API...");
+    const response = await axios.post(
+      apiUrl,
+      {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: prompt,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": process.env.GEMINI_API_KEY,
+        },
+      }
+    );
 
-    const result = await adCopiesCollection.insertOne(doc);
-    console.log("[saveGeneratedPhrases] Inserted =>", result.insertedId);
-    return { ...doc, _id: result.insertedId };
-  } finally {
-    await client.close();
+    const phrases = response.data.candidates[0].content.parts[0].text
+      .trim()
+      .split("\n")
+      .filter((phrase) => phrase.trim() !== "");
+    console.log("[generatePhrasesFromWebsite] Generated USP Phrases:", phrases);
+    return phrases;
+  } catch (error) {
+      console.error('[generatePhrasesFromWebsite] Error:', error);
   }
 };
 
@@ -318,6 +372,37 @@ export const saveGeneratedPhrasesForUser = async (userId, appId, taskId, phrases
     const doc = {
       userId,
       appId,
+      taskId,
+      phrases: phrases.map((text) => ({
+        text,
+        status: "pending",
+      })),
+      createdAt: new Date(),
+    };
+
+    const result = await adCopiesCollection.insertOne(doc);
+    console.log("[saveGeneratedPhrasesForUser] Inserted =>", result.insertedId);
+    return { ...doc, _id: result.insertedId };
+  } finally {
+    await client.close();
+  }
+};
+
+/**
+ * saveWebsiteGeneratedPhrasesForUser:
+ *   If you want to store userId in AdCopies, so each user can have their own phrases,
+ *   this is a variant of your 'saveWebsiteGeneratedPhrases' but also includes userId.
+ */
+export const saveWebsiteGeneratedPhrasesForUser = async (userId, taskId, phrases) => {
+  console.log("[saveWebsiteGeneratedPhrasesForUser] userId:", userId, "taskId:", taskId);
+
+  const client = await connectToMongo();
+  const db = client.db("GrowthZ");
+  const adCopiesCollection = db.collection("AdCopies");
+
+  try {
+    const doc = {
+      userId,
       taskId,
       phrases: phrases.map((text) => ({
         text,

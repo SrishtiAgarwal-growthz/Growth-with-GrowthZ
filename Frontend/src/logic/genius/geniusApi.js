@@ -1,4 +1,4 @@
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "http://localhost:8000";
 
 /**
  * Save app details by making a POST request to the backend.
@@ -84,6 +84,38 @@ export const generatePhrases = async (formData, appId, userId) => {
                 apple_app: formData.apple_app,
                 website_link: formData.website,
                 appId,
+                userId,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to generate phrases');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error generating phrases:', error.message);
+        throw error;
+    }
+};
+
+/**
+ * Generate USP phrases for website by making a POST request to the backend.
+ *
+ * @param {Object} formData - The form data containing app URLs.
+ * @param {string} website - The ID of the saved app.
+ * @returns {Promise<Object>} - The generated phrases from the backend.
+ */
+export const generateWebsitePhrases = async (formData, userId) => {
+    try {
+        const response = await fetch(`${BASE_URL}/api/reviews/generate-website-copies`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                website_link: formData.website,
                 userId,
             }),
         });

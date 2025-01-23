@@ -10,18 +10,18 @@ import {
   X
 } from "lucide-react";
 
-function shortCaption(phrase) {
-  if (!phrase || typeof phrase !== "string") return null;
-  const cleaned = phrase.replace(/^\d+\.\s*/, "").trim();
-  const words = cleaned.split(/\s+/);
-  const firstFive = words.slice(0, 5).join(" ");
-  return (
-    <>
-      {firstFive}{" "}
-      <span style={{ color: "#0096FF" }}> ... See More</span>
-    </>
-  );
-}
+// function shortCaption(phrase) {
+//   if (!phrase || typeof phrase !== "string") return null;
+//   const cleaned = phrase.replace(/^\d+\.\s*/, "").trim();
+//   const words = cleaned.split(/\s+/);
+//   const firstFive = words.slice(0, 5).join(" ");
+//   return (
+//     <>
+//       {firstFive}{" "}
+//       <span style={{ color: "#0096FF" }}> ... See More</span>
+//     </>
+//   );
+// }
 
 export default function FacebookFeedCarousel({
   currentIndex,
@@ -42,11 +42,10 @@ export default function FacebookFeedCarousel({
   const currentAd = ads[currentIndex] || {};
   const mainAdUrl = currentAd?.creativeUrl?.animationUrl;
   const rawPhrase = currentAd?.creativeUrl?.phrase || "";
-  const adCaption = shortCaption(rawPhrase);
 
   console.log("FbFeedCarousel - currentAd:", currentAd);
   console.log("FbFeedCarousel - mainAdUrl:", mainAdUrl);
-  console.log("FbFeedCarousel - adCaption:", adCaption);
+  console.log("FbFeedCarousel - adCaption:", rawPhrase);
 
   return (
     <>
@@ -104,7 +103,7 @@ export default function FacebookFeedCarousel({
             </div>
           </div>
 
-          <p className="text-xs mb-2">{adCaption}</p>
+          <p className="text-xs mb-2">{rawPhrase}</p>
 
           {/* Post Image */}
           <div className="rounded-lg overflow-hidden bg-[#242526]">

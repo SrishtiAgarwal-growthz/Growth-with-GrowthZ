@@ -9,7 +9,7 @@ import { getGeneratedAds } from "../logic/rainbow/rainbowApi";
 import FacebookIcon from "../assets/PhoneMockup/FB.png";
 import GoogleIcon from "../assets/PhoneMockup/Google.png";
 
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "http://localhost:8000";
 
 export default function Rainbow() {
   const [error, setError] = useState("");
