@@ -128,7 +128,7 @@ const PricingTable = () => {
         Pricing
       </h1>
       <p className="text-center text-white mb-8 md:mb-12 text-3xl md:text-4xl lg:text-[49px]">
-        Lorem ipsum dolor sit amet consectetur.
+        Coming Soon!!
       </p>
 
       {/* Toggle Pricing Options */}

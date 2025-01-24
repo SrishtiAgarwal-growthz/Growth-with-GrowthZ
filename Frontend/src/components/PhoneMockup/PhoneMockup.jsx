@@ -104,11 +104,13 @@ const PhoneMockup = ({
   return (
     <div className="relative flex flex-col items-center justify-center h-[34rem] mt-6">
       {/* Background */}
-      <div className="absolute inset-6 z-0">
+       {/* Background with glow */}
+       <div className="absolute inset-6 z-0">
+        <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full transform -translate-y-8"></div>
         <img
           src={bg}
           alt="Background Grid"
-          className="w-full h-full object-cover"
+          className="relative w-full h-full object-cover"
         />
       </div>
 

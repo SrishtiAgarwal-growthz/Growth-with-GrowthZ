@@ -14,7 +14,7 @@ const GrowthCarousel = () => {
   ];
 
   const dummyText = [
-    "Lorem ipsum dolor sit amet consectetur. Ut pharetra pellentesque sed justo metus amet congue. Auctor ac mauris sed donec. Eget purus sed viverra feugiat mollis nec. Convallis enim et pellentesque quis leo aliquam.",
+    "Launching Soon!!",
     "Second slide content about the rainbow of possibilities...",
     "Third slide content about opportunities...",
     "Fourth slide content about wildcards...",
@@ -30,7 +30,7 @@ const GrowthCarousel = () => {
     <div className="min-h-screen overflow-x-hidden  bg-black text-white p-4 sm:p-8 lg:p-32 relative">
   {/* Main heading */}
   <h1 className="text-[24px] sm:text-[36px] lg:text-5xl font-bold text-center mb-6 sm:mb-8">
-    Lorem ipsum dolor sit amet consectetur.
+    Launching Soon!!
   </h1>
 
   {/* Top Letters Section */}
