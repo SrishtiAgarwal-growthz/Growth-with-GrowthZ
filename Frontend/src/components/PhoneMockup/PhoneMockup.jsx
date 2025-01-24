@@ -147,7 +147,7 @@ const PhoneMockup = ({
           </div>
 
           {/* Content Area */}
-          <div className="relative h-full w-full bg-black overflow-hidden">
+          <div className="relative h-full w-full bg-[#242526] overflow-hidden">
             {children}
           </div>
 

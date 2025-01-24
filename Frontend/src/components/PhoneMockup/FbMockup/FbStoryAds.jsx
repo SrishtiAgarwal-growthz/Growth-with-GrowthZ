@@ -1,5 +1,9 @@
 import PropTypes from "prop-types";
-import { X, Share } from "lucide-react";
+import { X } from "lucide-react";
+import share from "../../../assets/PhoneMockup/share.png";
+import thumbs from "../../../assets/PhoneMockup/thumbs-up.png";
+import heart from "../../../assets/PhoneMockup/heart.png";
+import laugh from "../../../assets/PhoneMockup/laughing.png";
 
 export default function FbStoryAds({
   currentIndex,
@@ -7,7 +11,7 @@ export default function FbStoryAds({
   // setCurrentIndex,
   ads,
   appName,
-  appLogo
+  appLogo,
 }) {
   // Safely get current ad
   const currentAd = ads?.[currentIndex] || null;
@@ -64,11 +68,20 @@ export default function FbStoryAds({
       </div>
 
       {/* Share button */}
-      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
-        <button className="flex items-center bg-white bg-opacity-20 backdrop-blur-sm rounded-full px-4 py-2 text-white font-semibold">
-          <Share size={12} className="mr-2" />
-          Share
-        </button>
+      <div className="absolute bottom-2 left-0 right-0 flex items-center px-1">
+        <div className="flex items-center rounded-full px-2 py-2 flex-1">
+          <img
+            src={share}
+            alt="Share"
+            className="w-31 h-6 mr-2"
+          />
+          
+        </div>
+        <div className="flex gap-1 ml-1">
+          <img src={heart} alt="Heart" className="w-6 h-6" />
+          <img src={thumbs} alt="Thumbs Up" className="w-6 h-6" />
+          <img src={laugh} alt="Laugh" className="w-6 h-6" />
+        </div>
       </div>
     </div>
   );
@@ -79,5 +92,5 @@ FbStoryAds.propTypes = {
   setCurrentIndex: PropTypes.func, // Only if needed
   ads: PropTypes.array.isRequired,
   appName: PropTypes.string,
-  appLogo: PropTypes.string
+  appLogo: PropTypes.string,
 };

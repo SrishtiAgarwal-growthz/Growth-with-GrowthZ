@@ -5,17 +5,20 @@ import FbStoryAds from "../components/PhoneMockup/FbMockup/FbStoryAds";
 import GoogleAnimatedAds from "../components/PhoneMockup/GoogleMockup/GoogleAnimatedads";
 import GoogleDisplayAds from "../components/PhoneMockup/GoogleMockup/GoogleDisplayads";
 import { getGeneratedAds } from "../logic/rainbow/rainbowApi";
-
+import { useNavigate } from "react-router-dom";
 import FacebookIcon from "../assets/PhoneMockup/FB.png";
 import GoogleIcon from "../assets/PhoneMockup/Google.png";
+import loader from "../assets/PhoneMockup/loader.mp4";
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "https://growth-with-growthz.onrender.com";
 
 export default function Rainbow() {
+  const navigate = useNavigate();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [appName, setAppName] = useState("");
   const [appLogo, setAppLogo] = useState("");
+  const[websiteLink, setWebsiteLink] = useState("");
 
   const [ads, setAds] = useState({
     storyAds: [],
@@ -47,8 +50,8 @@ export default function Rainbow() {
   useEffect(() => {
     const storedAppId = localStorage.getItem("appId");
     if (!storedAppId) {
-      setError("No App ID found in local storage.");
-      setLoading(false);
+      console.log("No appId found, redirecting to genius");
+      navigate("/genius");
       return;
     }
   
@@ -64,7 +67,7 @@ export default function Rainbow() {
         // Set app info
         setAppName(data.appName || "");
         setAppLogo(data.logo || "");
-  
+        setWebsiteLink(data.website || "");
         // Log the raw ads arrays from the API
         console.log("Raw Static Ads from API:", data.ads);
         console.log("Raw Animation Ads from API:", data.animations);
@@ -136,7 +139,7 @@ export default function Rainbow() {
     };
   
     fetchAds();
-  }, []);
+  }, [navigate]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // HANDLE APP SWITCHING (FACEBOOK -> storyAds/feedCarousel, GOOGLE -> display/animated)
@@ -258,12 +261,12 @@ export default function Rainbow() {
         };
       });
   
-      handleNext();
+      // handleNext();
     } catch (err) {
       console.error("Error approving creative:", err.message);
       setError(err.message);
     }
-  }, [ads, currentIndex, activeMockup, handleNext, getAdIdentifier]);
+  }, [ads, currentIndex, activeMockup,  getAdIdentifier]);
   
   const handleReject = useCallback(async (e) => {
     if (e) {
@@ -312,12 +315,12 @@ export default function Rainbow() {
         };
       });
   
-      handleNext();
+      // handleNext();
     } catch (err) {
       console.error("Error rejecting creative:", err.message);
       setError(err.message);
     }
-  }, [ads, currentIndex, activeMockup, handleNext, getAdIdentifier]);
+  }, [ads, currentIndex, activeMockup,  getAdIdentifier]);
 
   // Update the function to check current ad status
   const getCurrentAdStatus = () => {
@@ -352,7 +355,8 @@ export default function Rainbow() {
 
       // For display in the child (if needed):
       appName,
-      appLogo
+      appLogo,
+      websiteLink
     };
 
     switch (activeMockup) {
@@ -373,7 +377,20 @@ export default function Rainbow() {
   // UI RENDER
   // ─────────────────────────────────────────────────────────────────────────────
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        backgroundColor: 'black' 
+      }}>
+        <video autoPlay loop muted style={{ width: '200px', height: '200px' }}>
+          <source src={loader} type="video/mp4" />
+          Loading ...
+        </video>
+      </div>
+    );
   }
 
   return (

@@ -8,7 +8,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'https://growth-with-growthz.onrender.com';
 
 const isBlockedEmailDomain = (email) => {
     const blockedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "aol.com", "icloud.com"];
@@ -54,7 +54,7 @@ export const signIn = async (email, password) => {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
   if (!userCredential.user.emailVerified) {
       await auth.signOut();
-      throw new Error('Please verify your email before signing in.');
+      throw new Error('We have sent you a verification mail. Please verify your email before signing in.');
   }
   
   localStorage.setItem('loggedInUserId', userCredential.user.uid);
