@@ -3,6 +3,7 @@ import { getAuth } from "firebase/auth";
 import {
   saveAppDetails,
   generatePhrases,
+  generateWebsitePhrases,
   approvePhrase,
   rejectPhrase,
   addCreativeToTasks,
@@ -16,69 +17,81 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 const BASE_URL = "http://localhost:8000";
 
-const GeniusMarketingForm = () => {
+export default function GeniusMarketingForm() {
   const navigate = useNavigate();
+
+  // Form fields for app or website
   const [formData, setFormData] = useState({
     google_play: "",
     apple_app: "",
     website: "",
   });
-  const [error, setError] = useState(null);
 
-  // This single loading flag is used for both generating phrases & creatives
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Show/hide the website input field
   const [showWebsiteInput, setShowWebsiteInput] = useState(false);
+
+  // Whether the phrases list is expanded
   const [isPhrasesExpanded, setIsPhrasesExpanded] = useState(true);
-  // State to hold phrases and their approval status
+
+  // The phrases we get from the backend, plus their local approval states
   const [phrases, setPhrases] = useState(null);
   const [approvalStates, setApprovalStates] = useState([]);
 
-  // State for app ID
+  // We store either the "appId" (for app docs) or the "_id" (for website docs).
   const [appId, setAppId] = useState(null);
 
   /**
-   * buttonState can be:
-   *  "generateCopies"  -> show "Generate Ad Copies"
-   *  "getCreatives"    -> show "Get Creatives"
-   *  "showCreatives"   -> show "Show Creatives"
+   * Button states:
+   * "generateCopies" => "Generate Ad Copies"
+   * "getCreatives"   => "Get Creatives"
+   * "showCreatives"  => "Show Creatives"
    */
   const [buttonState, setButtonState] = useState("generateCopies");
 
-  // Effect to handle phrases and approval states
+  /**
+   * Once we set phrases, we may need to fill or update the approvalStates array
+   */
   useEffect(() => {
     if (!phrases) return;
 
-    // If phrases already exist in the database
-    if (phrases.status === "already_exists" && phrases.phrases?.phrases) {
+    // If phrases are "already_exists" from an app
+    if (phrases.status === "already_exists" && phrases.phrases?.phrases && !phrases.uspPhrases) {
       const dbPhrases = phrases.phrases.phrases;
-      const phraseItems = dbPhrases.map((item) => item);
-      const statesFromDB = dbPhrases.map((item) => item.status || "pending");
-
       setPhrases((prev) => ({
         ...prev,
-        uspPhrases: phraseItems,
+        uspPhrases: dbPhrases,
       }));
-      setApprovalStates(statesFromDB);
+      setApprovalStates(dbPhrases.map((item) => item.status || "pending"));
     }
-    // If phrases are new
+    // If phrases are new or from "uspPhrases"
     else if (phrases.uspPhrases && approvalStates.length === 0) {
       setApprovalStates(new Array(phrases.uspPhrases.length).fill("pending"));
     }
-  }, [phrases, approvalStates.length]);
+  }, [phrases]);
 
-  // Input change handler
+  /**
+   * Input change handler
+   */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   /**
-   * 1) Generate Ad Copies
+   * Step 1) Generate Ad Copies
    */
   const handleGenerateAdCopies = async () => {
-    // Validate
-    if (!formData.google_play && !formData.apple_app) {
-      setError("Please provide at least one app store URL.");
+    // Trim user input
+    const googlePlayUrl = formData.google_play.trim();
+    const appleAppUrl = formData.apple_app.trim();
+    const websiteUrl = formData.website.trim();
+
+    // Must have at least one URL
+    if (!googlePlayUrl && !appleAppUrl && !websiteUrl) {
+      setError("Please provide at least one App URL or a Website URL.");
       return;
     }
 
@@ -86,91 +99,138 @@ const GeniusMarketingForm = () => {
       setLoading(true);
       setError(null);
 
-      // Get user email from Firebase Auth
+      // Get user from Firebase
       const auth = getAuth();
       const userEmail = auth.currentUser?.email;
       if (!userEmail) throw new Error("User email is not available.");
 
       // Fetch user ID from backend
-      const userResponse = await fetch(
-        `${BASE_URL}/api/users/get-user-by-email`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: userEmail }),
-        }
-      );
+      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail }),
+      });
       if (!userResponse.ok) throw new Error("Failed to fetch userId.");
       const userData = await userResponse.json();
       const userId = userData._id;
 
-      // Save app details
-      const savedApp = await saveAppDetails(formData);
-      if (!savedApp._id)
-        throw new Error("App ID not returned from saveAppDetails.");
-      setAppId(savedApp._id);
+      let generatedPhrasesResponse;
 
-      // Generate phrases
-      const generatedPhrases = await generatePhrases(
-        formData,
-        savedApp._id,
-        userId
-      );
-      console.log("Generated Phrases Response:", generatedPhrases);
+      // If google_play or apple_app => call /generate-phrases
+      if (googlePlayUrl || appleAppUrl) {
+        // Save the app
+        const savedApp = await saveAppDetails(formData);
+        if (!savedApp._id) {
+          throw new Error("App ID not returned from saveAppDetails.");
+        }
+        // Store appId
+        setAppId(savedApp._id);
 
-      // --- Different ways the backend might return phrases ---
-      if (Array.isArray(generatedPhrases)) {
-        // 1) If backend returns an array of strings
-        setPhrases({ uspPhrases: generatedPhrases });
-        setApprovalStates(new Array(generatedPhrases.length).fill("pending"));
+        // Generate phrases for the app
+        generatedPhrasesResponse = await generatePhrases(
+          formData,
+          savedApp._id,
+          userId
+        );
+        console.log("Generated Phrases Response:", generatedPhrasesResponse);
+
+      } else {
+        // Otherwise, website => /generate-website-copies
+        generatedPhrasesResponse = await generateWebsitePhrases(formData, userId);
+        console.log("Generated Website Phrases Response:", generatedPhrasesResponse);
+      }
+
+      // Now handle different shapes of returned data
+      if (Array.isArray(generatedPhrasesResponse)) {
+        // Just an array of phrases
+        setPhrases({ uspPhrases: generatedPhrasesResponse });
+        setApprovalStates(new Array(generatedPhrasesResponse.length).fill("pending"));
+
       } else if (
-        generatedPhrases.status === "already_exists" &&
-        generatedPhrases.phrases?.phrases
+        // "already_exists" for an app
+        generatedPhrasesResponse.status === "already_exists" &&
+        generatedPhrasesResponse.phrases?.phrases
       ) {
-        // 2) If phrases already exist
-        const dbPhrases = generatedPhrases.phrases.phrases;
+        const dbPhrases = generatedPhrasesResponse.phrases.phrases;
         setPhrases({
           status: "already_exists",
           phrases: { phrases: dbPhrases },
           uspPhrases: dbPhrases,
         });
         setApprovalStates(dbPhrases.map((item) => item.status || "pending"));
-      } else if (generatedPhrases.uspPhrases) {
-        // 3) If there's a direct array in generatedPhrases.uspPhrases
-        setPhrases(generatedPhrases);
+
+      } else if (generatedPhrasesResponse.uspPhrases) {
+        // Direct "uspPhrases"
+        setPhrases(generatedPhrasesResponse);
         setApprovalStates(
-          new Array(generatedPhrases.uspPhrases.length).fill("pending")
+          new Array(generatedPhrasesResponse.uspPhrases.length).fill("pending")
         );
+
       } else if (
-        generatedPhrases.status === "success" &&
-        generatedPhrases.phrases
+        generatedPhrasesResponse.status === "success" &&
+        generatedPhrasesResponse.phrases
       ) {
-        // 4) If we have status="success" and .phrases is an array or object
-        console.log(
-          "generatedPhrases.phrases content:",
-          generatedPhrases.phrases
-        );
-        if (Array.isArray(generatedPhrases.phrases)) {
-          setPhrases({ uspPhrases: generatedPhrases.phrases });
+        // success + phrases
+        if (Array.isArray(generatedPhrasesResponse.phrases)) {
+          setPhrases({ uspPhrases: generatedPhrasesResponse.phrases });
           setApprovalStates(
-            new Array(generatedPhrases.phrases.length).fill("pending")
+            new Array(generatedPhrasesResponse.phrases.length).fill("pending")
           );
-        } else if (Array.isArray(generatedPhrases.phrases.phrases)) {
-          setPhrases({ uspPhrases: generatedPhrases.phrases.phrases });
+        } else if (Array.isArray(generatedPhrasesResponse.phrases.phrases)) {
+          setPhrases({ uspPhrases: generatedPhrasesResponse.phrases.phrases });
           setApprovalStates(
-            new Array(generatedPhrases.phrases.phrases.length).fill("pending")
+            new Array(generatedPhrasesResponse.phrases.phrases.length).fill(
+              "pending"
+            )
           );
         } else {
-          console.warn("No phrase array found in generatedPhrases.phrases!");
+          console.warn("No phrase array found in .phrases!");
         }
+
+      } else if (
+        // "already_exists" for a website
+        generatedPhrasesResponse.status === "already_exists" &&
+        generatedPhrasesResponse.adCopies &&
+        Array.isArray(generatedPhrasesResponse.adCopies.phrases)
+      ) {
+        console.log("Found existing website-based doc:", generatedPhrasesResponse.adCopies);
+        setPhrases({
+          status: "already_exists",
+          adCopies: generatedPhrasesResponse.adCopies,
+          uspPhrases: generatedPhrasesResponse.adCopies.phrases,
+        });
+        setApprovalStates(
+          generatedPhrasesResponse.adCopies.phrases.map(
+            (item) => item.status || "pending"
+          )
+        );
+        // If we need the doc's _id for approvals
+        if (generatedPhrasesResponse.adCopies._id) {
+          setAppId(generatedPhrasesResponse.adCopies._id);
+        }
+
+      } else if (
+        // success + adCopies => website scenario
+        generatedPhrasesResponse.status === "success" &&
+        generatedPhrasesResponse.adCopies &&
+        Array.isArray(generatedPhrasesResponse.adCopies.phrases)
+      ) {
+        console.log("Handling website-based adCopies (new doc)...");
+        // Set doc's _id for approvals
+        if (generatedPhrasesResponse.adCopies._id) {
+          setAppId(generatedPhrasesResponse.adCopies._id);
+        }
+        setPhrases({ uspPhrases: generatedPhrasesResponse.adCopies.phrases });
+        setApprovalStates(
+          new Array(generatedPhrasesResponse.adCopies.phrases.length).fill("pending")
+        );
+
       } else {
         console.warn("No recognized phrase array in the response.");
       }
 
-      // Now that we have phrases, move to the next step => "Get Creatives"
+      // Now that we have some phrases, move to the next step
       setButtonState("getCreatives");
-         // Collapse the phrases section
-        //  setIsPhrasesExpanded(false);
     } catch (err) {
       setError(err.message);
       console.error("Error during form submission:", err);
@@ -180,45 +240,40 @@ const GeniusMarketingForm = () => {
   };
 
   /**
-   * 2) Generate Creatives
+   * Step 2) Generate Creatives
    */
   const handleGenerateCreatives = async () => {
+    // Usually only relevant if we saved an app with appId
+    // If you also handle "website creatives," you could skip or adapt this
     if (!appId) {
-      alert("No App ID found. Please generate phrases first.");
+      alert("No App ID found. Please generate phrases first (or store doc ID).");
       return;
     }
-  
+
     try {
       setIsPhrasesExpanded(false);
       setLoading(true);
-  
-      // Fetch user ID
+
+      // Get user from Firebase
       const auth = getAuth();
       const userEmail = auth.currentUser?.email;
       if (!userEmail) throw new Error("User email is not available.");
-  
-      const userResponse = await fetch(
-        `${BASE_URL}/api/users/get-user-by-email`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: userEmail }),
-        }
-      );
+
+      const userResponse = await fetch(`${BASE_URL}/api/users/get-user-by-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail }),
+      });
       if (!userResponse.ok) throw new Error("Failed to fetch userId.");
       const userData = await userResponse.json();
       const userId = userData._id;
-  
-      // Add creatives to tasks and create ads/animations
+
+      // Add tasks, create ads, create animations
       await addCreativeToTasks(userId, appId);
       await createAds(userId, appId);
       await createAnimations(userId, appId);
-  
-      // Once creatives are ready, change button to "Show Creatives"
+
       setButtonState("showCreatives");
-  
-      // Collapse the phrases section
-      // setIsPhrasesExpanded(false);
     } catch (err) {
       console.error("Error generating creatives:", err.message);
       alert(err.message);
@@ -226,8 +281,9 @@ const GeniusMarketingForm = () => {
       setLoading(false);
     }
   };
+
   /**
-   * 3) Show Creatives Page
+   * Step 3) Show Creatives Page
    */
   const handleShowCreatives = () => {
     if (appId) {
@@ -237,34 +293,27 @@ const GeniusMarketingForm = () => {
   };
 
   /**
-   * A single onClick handler for the unified button
+   * Single button that triggers the appropriate step
    */
   const handleMainButtonClick = () => {
-    if (loading) return; // Prevent multiple clicks while loading
-
-    if (buttonState === "generateCopies") {
-      handleGenerateAdCopies();
-    } else if (buttonState === "getCreatives") {
-      handleGenerateCreatives();
-    } else if (buttonState === "showCreatives") {
-      handleShowCreatives();
-    }
+    if (loading) return;
+    if (buttonState === "generateCopies") handleGenerateAdCopies();
+    else if (buttonState === "getCreatives") handleGenerateCreatives();
+    else if (buttonState === "showCreatives") handleShowCreatives();
   };
 
-  // Approve a phrase
+  /**
+   * Approve a phrase
+   */
   const handleTickClick = async (index) => {
     if (!phrases?.uspPhrases) return;
 
     const phraseObjOrString = phrases.uspPhrases[index];
     const phraseText =
-      typeof phraseObjOrString === "object"
-        ? phraseObjOrString.text
-        : phraseObjOrString;
+      typeof phraseObjOrString === "object" ? phraseObjOrString.text : phraseObjOrString;
 
     try {
       await approvePhrase(phraseText, appId);
-
-      // Update approval state to "approved"
       const newStates = [...approvalStates];
       newStates[index] = "approved";
       setApprovalStates(newStates);
@@ -274,15 +323,15 @@ const GeniusMarketingForm = () => {
     }
   };
 
-  // Reject a phrase
+  /**
+   * Reject a phrase
+   */
   const handleCrossClick = async (index) => {
     if (!phrases?.uspPhrases) return;
 
     const phraseObjOrString = phrases.uspPhrases[index];
     const phraseText =
-      typeof phraseObjOrString === "object"
-        ? phraseObjOrString.text
-        : phraseObjOrString;
+      typeof phraseObjOrString === "object" ? phraseObjOrString.text : phraseObjOrString;
 
     try {
       await rejectPhrase(appId, phraseText);
@@ -302,22 +351,24 @@ const GeniusMarketingForm = () => {
     console.log("Button State:", buttonState);
   }, [phrases, approvalStates, buttonState]);
 
-  // Decide button label based on buttonState
+  /**
+   * Decide the main button label
+   */
   const getButtonLabel = () => {
     if (loading) return "Processing...";
     if (buttonState === "generateCopies") return "Generate Ad Copies";
     if (buttonState === "getCreatives") return "Get Creatives";
     if (buttonState === "showCreatives") return "Show Creatives";
-    return "Generate Ad Copies"; // Fallback
+    return "Generate Ad Copies";
   };
 
-  // Decide if we disable the button:
-  // In the first step, only enable if we have google_play or apple_app
+  // For the first step, require at least one URL
+  const hasAnyURL =
+    formData.google_play.trim() ||
+    formData.apple_app.trim() ||
+    formData.website.trim();
   const isButtonDisabled =
-    loading ||
-    (buttonState === "generateCopies" &&
-      !formData.google_play &&
-      !formData.apple_app);
+    loading || (buttonState === "generateCopies" && !hasAnyURL);
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
@@ -367,7 +418,7 @@ const GeniusMarketingForm = () => {
               />
             </div>
 
-            {/* Apple App Input */}
+            {/* Apple App Store Input */}
             <div>
               <label className="block text-white mb-2 text-[16px]">
                 Enter App Store URL
@@ -382,16 +433,14 @@ const GeniusMarketingForm = () => {
               />
             </div>
 
-            <div className="">
-              <div
-                // onClick={() => setShowWebsiteInput(!showWebsiteInput)}
-                className="text-white"
-              >
+            {/* Website Collapsible Section */}
+            <div>
+              <div className="text-white">
                 Don&apos;t have an app?{" "}
                 <button
                   type="button"
                   onClick={() => setShowWebsiteInput(!showWebsiteInput)}
-                  className="text-blue-500 	text-decoration-line: underline"
+                  className="text-blue-500 underline"
                 >
                   Click here
                 </button>{" "}
@@ -405,7 +454,7 @@ const GeniusMarketingForm = () => {
               }`}
             >
               <div className="space-y-2">
-                <p className="text-white text-[16px]">Enter you website URL!</p>
+                <p className="text-white text-[16px]">Enter your website URL!</p>
                 <div className="relative">
                   <input
                     type="url"
@@ -413,38 +462,13 @@ const GeniusMarketingForm = () => {
                     value={formData.website}
                     onChange={handleInputChange}
                     className="w-full h-[70px] rounded-[16px] bg-gray-900/80 border border-gray-800 text-gray-300 px-4 pr-12 focus:outline-none focus:border-purple-500 placeholder:text-gray-600"
-                    placeholder="Paste your Website Link Here"
+                    placeholder="https://www.example.com"
                   />
-                  <button
-                    type="button"
-                    className="absolute right-4 top-1/2 -translate-y-1/2"
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="11"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M10 8L14 12L10 16"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Error Message */}
+            {/* Display Error if any */}
             {error && <div className="text-red-500 text-sm">{error}</div>}
 
             {/* Display Phrases */}
@@ -454,14 +478,11 @@ const GeniusMarketingForm = () => {
                   onClick={() => setIsPhrasesExpanded(!isPhrasesExpanded)}
                   className="w-full flex items-center justify-between bg-gray-900/80 p-4 rounded-t-[16px] border border-gray-800 hover:bg-gray-900/90 transition-all cursor-pointer"
                 >
-                  {/* Centered text container */}
                   <div className="flex-1 flex justify-center">
                     <h3 className="text-2xl font-semibold text-white">
                       Press ✓ to get the creative assets
                     </h3>
                   </div>
-
-                  {/* Icon at the end */}
                   <div className="text-white">
                     {isPhrasesExpanded ? (
                       <ChevronUp className="w-6 h-6" />
@@ -538,7 +559,8 @@ const GeniusMarketingForm = () => {
                 </div>
               </div>
             )}
-            {/* Single Button handling all steps */}
+
+            {/* Single button for the 3 steps */}
             <button
               type="button"
               onClick={handleMainButtonClick}
@@ -547,13 +569,9 @@ const GeniusMarketingForm = () => {
             >
               {getButtonLabel()}
             </button>
-
-            {/* Website Link Input */}
           </form>
         </div>
       </div>
     </div>
   );
-};
-
-export default GeniusMarketingForm;
+}
