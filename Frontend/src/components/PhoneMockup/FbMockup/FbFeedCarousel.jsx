@@ -133,7 +133,7 @@ export default function FacebookFeedCarousel({
             </div>
             <button
               onClick={() =>
-                window.open("http://aka.ms/microsoftteams", "_blank")
+                window.open({websiteLink}, "_blank")
               }
               className="bg-[#3a3b3c] px-3 py-1 rounded text-[10px]"
             >
