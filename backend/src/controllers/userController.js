@@ -7,12 +7,15 @@ export const getUserByEmail = async (req, res) => {
     return res.status(400).json({ message: "Email is required." });
   }
 
+  let client;
   try {
-    const client = await connectToMongo();
+    client = await connectToMongo();
     const db = client.db("GrowthZ");
     const usersCollection = db.collection("Users");
 
-    const user = await usersCollection.findOne({ email });
+    const user = await usersCollection.findOne({ 
+      userEmail: { $regex: new RegExp(`^${email}$`, 'i') }
+    });
 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -22,5 +25,9 @@ export const getUserByEmail = async (req, res) => {
   } catch (error) {
     console.error("[getUserByEmail] Error:", error.message);
     res.status(500).json({ message: "Failed to fetch user by email.", error: error.message });
+  } finally {
+    if (client) {
+      await client.close();
+    }
   }
 };

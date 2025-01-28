@@ -5,13 +5,13 @@ import { approvePhraseService, rejectPhraseService  } from "../services/reviewsS
  */
 export const saveApprovedPhrase = async (req, res) => {
   try {
-    const { text, appId } = req.body;
+    const { text, appId, userId } = req.body;
 
-    if (!text || !appId) {
-      return res.status(400).json({ message: "Both phrase text and appId are required." });
+    if (!text || !appId || !userId) {
+      return res.status(400).json({ message: "Need text, appId, and userId" });
     }
 
-    const result = await approvePhraseService(text, appId);
+    const result = await approvePhraseService(text, appId, userId);
 
     if (result.modifiedCount > 0) {
       return res.status(200).json({ message: "Phrase approved successfully." });
@@ -29,13 +29,13 @@ export const saveApprovedPhrase = async (req, res) => {
  */
 export const saveRejectedPhrase = async (req, res) => {
   try {
-    const { text, appId } = req.body;
+    const { text, appId, userId } = req.body;
 
-    if (!text || !appId) {
-      return res.status(400).json({ message: "Both phrase text and appId are required." });
+    if (!text || !appId || !userId) {
+      return res.status(400).json({ message: "Need text, appId, and userId" });
     }
 
-    const result = await rejectPhraseService(text, appId);
+    const result = await rejectPhraseService(text, appId, userId);
 
     if (result.modifiedCount > 0) {
       return res.status(200).json({ message: "Phrase rejected successfully." });

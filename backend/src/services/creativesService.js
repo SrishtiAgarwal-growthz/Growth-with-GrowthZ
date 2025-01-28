@@ -10,7 +10,6 @@ import {
   extractTextColor,
   fetchIconUrl,
   fetchWebsiteUrl,
-  fetchFont,
   // fetchCTAForCategory,
 } from "../utils/imageProcessingSteps.js";
 import {
@@ -28,11 +27,7 @@ import { createAnimations } from "../utils/animationGenerator.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/**
- * Process app images: remove background, upload to S3, extract background color, and identify font.
- * Checks if "imagesProcessed" is already true in the app doc; if so, it skips.
- */
-export const processAppImages = async (appId, userId) => {
+export const processAppImages = async (appId) => {
   const client = await connectToMongo();
   const db = client.db("GrowthZ");
   const appsCollection = db.collection("Apps");
@@ -45,13 +40,8 @@ export const processAppImages = async (appId, userId) => {
       throw new Error(`App not found for id: ${appId}`);
     }
 
-    // Explicitly convert to boolean and log the value for debugging
-    const isProcessed = Boolean(appDoc.imagesProcessed);
-    console.log("[processAppImages] Current imagesProcessed value:", isProcessed);
-
-    // Check if already processed
-    if (isProcessed === true) {
-      console.log("[processAppImages] Images already processed => Skipping remove-bg calls.");
+    // If already processed, skip
+    if (appDoc.imagesProcessed) {
       return {
         message: "Images were already processed. Skipped remove-bg.",
         updatedImages: appDoc.images || [],
@@ -60,22 +50,22 @@ export const processAppImages = async (appId, userId) => {
 
     console.log("[processAppImages] imagesProcessed is false => Running remove-bg...");
 
-    // -- Fetch icon URL
+    // --- Fetch icon URL
     const iconUrl = await fetchIconUrl(appId);
     console.log(`[processAppImages] Icon URL fetched: ${iconUrl}`);
 
     const iconBackgroundColor = await extractBackgroundColor(iconUrl);
     console.log(`[processAppImages] Extracting logo background color for: ${iconUrl}`);
 
-    // -- Fetch website URL
+    // --- Fetch website URL
     const websiteUrl = await fetchWebsiteUrl(appId);
     console.log(`[processAppImages] Website URL fetched: ${websiteUrl}`);
 
-    // // -- Fetch CTA
+    // // --- Fetch CTA if needed
     // const CTA = await fetchCTAForCategory(appId);
     // console.log(`[processAppImages] CTA fetched: ${CTA}`);
 
-    // Save some fields in the app doc
+    // Save additional fields in the app doc
     await appsCollection.updateOne(
       { _id: new ObjectId(appId) },
       {
@@ -87,12 +77,16 @@ export const processAppImages = async (appId, userId) => {
     );
     console.log(`[processAppImages] Additional fields saved in the app doc for appId: ${appId}`);
 
-    // 2) Loop over screenshots
+    // ---------------------
+    // Process up to 5 images
+    // ---------------------
+    let successCount = 0;
     let updatedImages = [];
+
     if (!Array.isArray(appDoc.images)) {
       console.warn("[processAppImages] 'images' is not an array in the app doc.");
     } else {
-      // Take only the first three images for processing
+      // We only process the first 5 screenshots
       const imagesToProcess = appDoc.images.slice(0, 5);
       const remainingImages = appDoc.images.slice(5);
 
@@ -111,6 +105,7 @@ export const processAppImages = async (appId, userId) => {
         if (image.removed_bg_image) {
           console.log(`[processAppImages] Skipping already processed image: ${image.screenshot}`);
           updatedImages.push(image);
+          successCount++; // This image was presumably processed before
           continue;
         }
 
@@ -134,57 +129,57 @@ export const processAppImages = async (appId, userId) => {
           updatedImages.push({
             originalUrl: image.screenshot,
             removedBgUrl: s3Url,
-            backgroundColor: backgroundColor,
-            textColor: textColor,
+            backgroundColor,
+            textColor,
           });
+          successCount++;
         } catch (error) {
-          console.error(
-            `[processAppImages] Error processing image: ${image.screenshot}`,
-            error.message
-          );
+          console.error(`[processAppImages] Error processing image: ${image.screenshot}`, error.message);
           updatedImages.push({
             originalUrl: image.screenshot,
             removedBgUrl: null,
-            backgroundColor: null,
-            textColor: null,
             error: error.message,
           });
         }
       }
 
-      // Add remaining images to updatedImages without processing
-      updatedImages = [...updatedImages, ...remainingImages.map(image => ({
-        originalUrl: image.screenshot,
-        removedBgUrl: null,
-        backgroundColor: null,
-        textColor: null,
-        skipped: "Image beyond first three limit"
-      }))];
+      // Add the remaining images unprocessed
+      updatedImages.push(
+        ...remainingImages.map((image) => ({
+          originalUrl: image.screenshot,
+          removedBgUrl: null,
+          skipped: "beyond first 5 images",
+        }))
+      );
     }
 
-    console.log(`[processAppImages] Updating images in database for app: ${appId}`);
+    // Only mark imagesProcessed = true if *all* the first 5 processed
+    const imagesToProcessCount = Math.min(appDoc.images?.length || 0, 5);
+    const allSuccessful = successCount === imagesToProcessCount;
 
-    // 3) Mark imagesProcessed = true after we finish the loop (Even if some failed, we won't keep re-trying).
+    // Update the doc in Mongo
     await appsCollection.updateOne(
       { _id: new ObjectId(appId) },
       {
         $set: {
           images: updatedImages,
-          imagesProcessed: true,
+          imagesProcessed: allSuccessful, // <--- only true if all succeeded
         },
       }
     );
 
-    console.log("[processAppImages] Images updated successfully and imagesProcessed set to true.");
+    console.log(`[processAppImages] Updated images. imagesProcessed = ${allSuccessful}`);
 
     // Verify the update
     const verifyDoc = await appsCollection.findOne({ _id: new ObjectId(appId) });
-    console.log("[processAppImages] Verified imagesProcessed value after update:", Boolean(verifyDoc.imagesProcessed));
+    console.log("[processAppImages] Verified imagesProcessed value:", Boolean(verifyDoc.imagesProcessed));
 
-    // Return updated data
+    // Return final data
     return {
       updatedImages,
-      message: "Images processed successfully.",
+      message: allSuccessful
+        ? "All images processed successfully."
+        : "Some images failed; imagesProcessed remains false.",
     };
   } catch (error) {
     console.error("[processAppImages] Error:", error);
@@ -212,7 +207,7 @@ export const generateAdImages = async (appId, userId) => {
     }
 
     // Fetch approved phrases
-    const adCopy = await adCopiesCollection.findOne({ appId });
+    const adCopy = await adCopiesCollection.findOne({ userId, appId });
     if (!adCopy || !Array.isArray(adCopy.phrases)) {
       throw new Error("[generateAdImages] No phrases found for appId: " + appId);
     }
@@ -229,10 +224,10 @@ export const generateAdImages = async (appId, userId) => {
 
     // Fetch font family and font file
     console.log("[generateAdImages] Fetching font details from the app's website...");
-    const fontDetails = await fetchFont(app.websiteUrl);
+    const fontDetails = await fetchFont(app.appName, app.websiteUrl);
     console.log("[generateAdImages] Font details fetched successfully:", fontDetails);
     console.log(
-      `[generateAdImages] Font Family fetched: ${fontDetails.fontName}, URL: ${fontDetails.fontPath}`
+      `[generateAdImages] Font Family fetched: ${fontDetails.fontFamily}`
     );
 
     const ads = [];
@@ -241,7 +236,7 @@ export const generateAdImages = async (appId, userId) => {
     // Use only the first three images with `removedBgUrl`
     const processedImages = app.images
       .filter((image) => image.removedBgUrl && image.backgroundColor)
-      .slice(0, 3); // Limit to first three images
+      .slice(0, 5); // Limit to first three images
 
     for (const { width, height, name } of adDimensionsConfig) {
       for (const image of processedImages) {
@@ -273,8 +268,9 @@ export const generateAdImages = async (appId, userId) => {
         const adOptions = {
           logoUrl: app.iconUrl,
           mainImageUrl: image.removedBgUrl,
-          fontName: fontDetails.fontName,
+          fontFamily: fontDetails.fontFamily,
           fontPath: fontDetails.fontPath,
+          fontFormat: fontDetails.format,
           phrase: currentPhrase,
           outputDir: path.join(process.cwd(), "ads", name),
           bgColor: image.backgroundColor,
@@ -286,7 +282,7 @@ export const generateAdImages = async (appId, userId) => {
           ctaTextColor: adjustedCTATextColor,
         };
 
-        console.log("[CreativeService] Generating ad with options:", adOptions);
+        console.log("[CreativeService] Generating ad with options!");
 
         try {
           const adPath = await createAd(adOptions);
@@ -354,7 +350,7 @@ export const generateAdAnimation = async (appId, userId) => {
     }
 
     // Fetch approved phrases
-    const adCopy = await adCopiesCollection.findOne({ appId });
+    const adCopy = await adCopiesCollection.findOne({ userId, appId });
     if (!adCopy || !Array.isArray(adCopy.phrases)) {
       throw new Error("[generateAdAnimation] No phrases found for appId: " + appId);
     }
@@ -371,7 +367,7 @@ export const generateAdAnimation = async (appId, userId) => {
 
     // Fetch font family and font file
     console.log("[generateAdAnimation] Fetching font details from the app's website...");
-    const fontDetails = await fetchFont(app.websiteUrl);
+    const fontDetails = await fetchFont(app.appName, app.websiteUrl);
     console.log("[generateAdAnimation] Font details fetched successfully:", fontDetails);
 
     const animations = [];
@@ -380,7 +376,7 @@ export const generateAdAnimation = async (appId, userId) => {
     // Use only the first three images with `removedBgUrl`
     const processedImages = app.images
       .filter((image) => image.removedBgUrl && image.backgroundColor)
-      .slice(0, 3); // Limit to first three images
+      .slice(0, 5); // Limit to first three images
 
     for (const { width, height, name } of animationDimensionsConfig) {
       for (const image of processedImages) {
@@ -412,8 +408,9 @@ export const generateAdAnimation = async (appId, userId) => {
         const adOptions = {
           logoUrl: app.iconUrl,
           mainImageUrl: image.removedBgUrl,
-          fontName: fontDetails.fontName,
+          fontFamily: fontDetails.fontFamily,
           fontPath: fontDetails.fontPath,
+          fontFormat: fontDetails.format,
           phrase: currentPhrase,
           outputDir: path.join(process.cwd(), "animations", name),
           bgColor: image.backgroundColor,
@@ -425,7 +422,7 @@ export const generateAdAnimation = async (appId, userId) => {
           ctaTextColor: adjustedCTATextColor,
         };
 
-        console.log("[CreativeService] Generating animations with options:", adOptions);
+        console.log("[CreativeService] Generating animations with options!");
 
         try {
           const animationPath = await createAnimations(adOptions);

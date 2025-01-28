@@ -10,7 +10,7 @@ import FacebookIcon from "../assets/PhoneMockup/FB.png";
 import GoogleIcon from "../assets/PhoneMockup/Google.png";
 import loader from "../assets/PhoneMockup/loader.mp4";
 
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "http://localhost:8000";
 
 export default function Rainbow() {
   const navigate = useNavigate();
@@ -59,8 +59,9 @@ export default function Rainbow() {
       try {
         setLoading(true);
         setError("");
-  
-        const data = await getGeneratedAds(storedAppId);
+
+        const userId = localStorage.getItem('loggedInMongoUserId');
+        const data = await getGeneratedAds(storedAppId, userId);
   
         console.log("API Response Data:", data); // Log the entire API response
   

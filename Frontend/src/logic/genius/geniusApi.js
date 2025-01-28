@@ -1,4 +1,4 @@
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "http://localhost:8000";
 
 /**
  * Save app details by making a POST request to the backend.
@@ -139,8 +139,8 @@ export const generateWebsitePhrases = async (formData, userId) => {
  * @param {string} text - The USP phrase to approve.
  * @returns {Promise<Object>} - The approval response from the backend.
  */
-export const approvePhrase = async (text, appId) => {
-    console.log("approvePhrase - Sending:", { text, appId }); // Verify appId and text
+export const approvePhrase = async (text, appId, userId) => {
+    console.log("approvePhrase - Sending:", { text, appId, userId }); // Verify appId and text
     try {
         const response = await fetch(`${BASE_URL}/api/adCopyStatus/approved`, {
             method: 'POST',
@@ -150,8 +150,11 @@ export const approvePhrase = async (text, appId) => {
             body: JSON.stringify({
                 text: text,   // Ensure text is being passed correctly
                 appId: appId, // Ensure appId is correct
+                userId: userId, // Ensure userId is correct
             }),
         });
+
+        console.log('Logged-in user ID:', userId);
 
         if (!response.ok) {
             const errorData = await response.json();
@@ -172,7 +175,8 @@ export const approvePhrase = async (text, appId) => {
  * @param {string} text - The USP phrase to reject.
  * @returns {Promise<Object>} - The rejection response from the backend.
  */
-export const rejectPhrase = async (appId, text) => {
+export const rejectPhrase = async (text, appId, userId) => {
+    console.log("rejectPhrase - Sending:", { text, appId, userId }); // Verify appId and text
     try {
         const response = await fetch(`${BASE_URL}/api/adCopyStatus/rejected`, {
             method: 'POST',
@@ -180,8 +184,9 @@ export const rejectPhrase = async (appId, text) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                appId: appId,
                 text: text,
+                appId: appId,
+                userId: localStorage.getItem('loggedInMongoUserId'),
             }),
         });
 
