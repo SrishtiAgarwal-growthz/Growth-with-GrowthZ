@@ -9,7 +9,7 @@ import { ObjectId } from "mongodb";
 import { s3 } from "../config/aws.js";
 import { fileURLToPath } from "url";
 import { getBackgroundColor } from "./colorExtraction.js";
-import { saveFontToTemp } from "./fontDownload.js";
+// import { fetchFont } from "./fontDownload.js";
 import { createCanvas, loadImage } from 'canvas';
 dotenv.config();
 
@@ -236,72 +236,6 @@ export const fetchWebsiteUrl = async (appId) => {
   }
 };
 
-/**
- * Fetch the font for an app from the website URL.
- * @param {string} websiteUrl - The website URL for which to fetch the font.
- * @returns {Promise<{fontName: string, fontPath: string}>} - The font family and its local path.
- */
-const genericFonts = ["system-ui", "sans-serif", "serif", "monospace", "cursive", "fantasy"];
-
-export const fetchFont = async (websiteUrl) => {
-  let browser = null;
-  try {
-    console.log(`[fetchFont] Fetching font for website: ${websiteUrl}`);
-
-    browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
-
-    console.log(`[fetchFont] Navigating to ${websiteUrl}`);
-    await page.goto(websiteUrl, { waitUntil: "networkidle2", timeout: 60000 });
-    console.log(`[fetchFont] Website loaded successfully.`);
-
-    console.log(`[fetchFont] Extracting font-family from <h1>`);
-    const fontDetails = await page.evaluate(() => {
-      const h1 = document.querySelector("h1");
-      if (!h1) return { fontFamily: null };
-
-      const computedStyle = window.getComputedStyle(h1);
-      return {
-        fontFamily: computedStyle.fontFamily || null,
-      };
-    });
-
-    let fontName = fontDetails.fontFamily || "default";
-
-    fontName = fontName.replace(/['"]/g, "").split(",")[0].trim();
-
-    // Skip generic fonts
-    if (genericFonts.includes(fontName.toLowerCase())) {
-      console.warn(`[fetchFont] Generic font "${fontName}" detected. Using fallback font "Inter".`);
-      return {
-        fontName: "Inter",
-        fontPath: null,
-        fontUrl: null,
-      };
-    }
-
-    console.log(`[fetchFont] Extracted prioritized font: ${fontName}`);
-
-    const fontFile = await saveFontToTemp(fontName, websiteUrl);
-    console.log(`[fetchFont] Font saved at: ${fontFile.fontPath}`);
-    return {
-      fontName: fontFile.fontName,
-      fontPath: fontFile.fontPath,
-      fontUrl: fontFile.fontUrl,
-    };
-  } catch (error) {
-    console.error(`[fetchFont] Error fetching font: ${error.message}`);
-    return {
-      fontName: "Inter", // Default fallback font
-      fontPath: null,
-      fontUrl: null,
-    };
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
-  }
-};
 
 /**
  * Fetch the text color for an app from the image URL.

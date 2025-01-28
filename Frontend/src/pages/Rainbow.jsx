@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import FacebookIcon from "../assets/PhoneMockup/FB.png";
 import GoogleIcon from "../assets/PhoneMockup/Google.png";
 import loader from "../assets/PhoneMockup/loader.mp4";
+import IgFeedCarousel from "../components/PhoneMockup/InstaMockup/InstaFeedCarousel";
+import IgStoryAds from "../components/PhoneMockup/InstaMockup/InstaStoryAds";
 
 const BASE_URL = "https://growth-with-growthz.onrender.com";
 
@@ -24,14 +26,18 @@ export default function Rainbow() {
     storyAds: [],
     feedCarousel: [],
     displayAds: [],
-    animatedAds: []
+    animatedAds: [],
+    igFeedCarousel: [],
+    igStoryAds: []
   });
 
   const [currentIndex, setCurrentIndex] = useState({
     storyAds: 0,
     feedCarousel: 0,
     displayAds: 0,
-    animatedAds: 0
+    animatedAds: 0,
+    igFeedCarousel: 0,
+    igStoryAds: 0
   });
 
   const [adStatuses, setAdStatuses] = useState({
@@ -44,16 +50,17 @@ export default function Rainbow() {
 
   const apps = [
     { id: "facebook", alt: "Facebook", icon: FacebookIcon },
-    { id: "google", alt: "Google", icon: GoogleIcon }
+    { id: "google", alt: "Google", icon: GoogleIcon },
+    { id: "instagram", alt: "Instagram"}
   ];
 
   useEffect(() => {
     const storedAppId = localStorage.getItem("appId");
-    if (!storedAppId) {
-      console.log("No appId found, redirecting to genius");
-      navigate("/genius");
-      return;
-    }
+    // if (!storedAppId) {
+    //   console.log("No appId found, redirecting to genius");
+    //   navigate("/genius");
+    //   return;
+    // }
   
     const fetchAds = async () => {
       try {
@@ -86,6 +93,16 @@ export default function Rainbow() {
               type: "storyAd"
             }
           }));
+
+          const igStoryAds = rawStaticAds
+          .filter((ad) => ad.creativeUrl?.size === "1440x2560" && ad.creativeUrl?.adUrl)
+          .map((ad) => ({
+            ...ad,
+            creativeUrl: {
+              ...ad.creativeUrl,
+              type: "igStoryAd"
+            }
+          }));
   
         const displayAds = rawStaticAds
           .filter((ad) => ad.creativeUrl?.size === "300x250" && ad.creativeUrl?.adUrl)
@@ -105,6 +122,15 @@ export default function Rainbow() {
             creativeUrl: {
               ...ad.creativeUrl,
               type: "feedCarousel"
+            }
+          }));
+          const igFeedCarousel = rawAnimationAds
+          .filter((ad) => ad.creativeUrl?.size === "1080x1080" && ad.creativeUrl?.animationUrl)
+          .map((ad) => ({
+            ...ad,
+            creativeUrl: {
+              ...ad.creativeUrl,
+              type: "igFeedCarousel"
             }
           }));
   
@@ -128,7 +154,9 @@ export default function Rainbow() {
           storyAds,
           feedCarousel,
           displayAds,
-          animatedAds
+          animatedAds,
+          igFeedCarousel,
+          igStoryAds,
         });
       } catch (err) {
         console.error("[Rainbow] Error fetching ads:", err);
@@ -149,7 +177,8 @@ export default function Rainbow() {
       setActiveMockup("displayAds");
     } else if (activeApp === "facebook") {
       setActiveMockup("storyAds");
-    }
+    } else if (activeApp === "instagram")
+      setActiveMockup("igStoryAds")
   }, [activeApp]);
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -189,13 +218,13 @@ export default function Rainbow() {
     }
   
     // For animated ads (feedCarousel and animatedAds)
-    if (mockupType === "feedCarousel" || mockupType === "animatedAds") {
+    if (mockupType === "feedCarousel" || mockupType === "animatedAds" || mockupType === "igFeedCarousel") {
       // Return the raw animation URL without any encoding
       return currentAd.creativeUrl.animationUrl || null;
     }
   
     // For static ads (storyAds and displayAds)
-    if (mockupType === "storyAds" || mockupType === "displayAds") {
+    if (mockupType === "storyAds" || mockupType === "displayAds" || mockupType=== "igStoryAds") {
       return currentAd.creativeUrl.adUrl || null;
     }
   
@@ -368,6 +397,10 @@ export default function Rainbow() {
         return <GoogleDisplayAds {...mockupProps} />;
       case "animatedAds":
         return <GoogleAnimatedAds {...mockupProps} />;
+      case "igStoryAds":
+        return <IgStoryAds {...mockupProps} />;
+      case "igFeedCarousel":
+        return <IgFeedCarousel {...mockupProps} />;
       default:
         return null;
     }
@@ -398,11 +431,12 @@ export default function Rainbow() {
       {error && <p className="text-red-500 text-center">{error}</p>}
 
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-16 bg-[#0F0F0F] flex flex-col items-center justify-center gap-8 z-10">
+      <div className="fixed left-0 top-0 h-full w-[6rem] bg-[#0F0F0F] flex flex-col items-center justify-center gap-8 z-10">
+        <div className="text-white">Back</div>
         {apps.map((app) => (
           <div key={app.id} className="relative flex items-center">
             {activeApp === app.id && (
-              <div className="absolute -right-2 h-6 w-1 bg-blue-500 rounded-full" />
+              <div className="absolute -right-6 h-12 w-1 bg-blue-600 rounded-full" />
             )}
             <button
               onClick={() => setActiveApp(app.id)}
@@ -426,58 +460,95 @@ export default function Rainbow() {
       <div className="ml-16 w-[calc(100%-4rem)] p-4 md:p-6">
         {/* Buttons Container */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-8 w-full">
-          {activeApp === "facebook" ? (
-            <>
-              <button
-                onClick={() => setActiveMockup("storyAds")}
-                className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
-                  ${
-                    activeMockup === "storyAds"
-                      ? "selected-gradient"
-                      : "unselected-gradient"
-                  }`}
-              >
-                Story Ads
-              </button>
-              <button
-                onClick={() => setActiveMockup("feedCarousel")}
-                className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
-                  ${
-                    activeMockup === "feedCarousel"
-                      ? "selected-gradient"
-                      : "unselected-gradient"
-                  }`}
-              >
-                Feed Carousel
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setActiveMockup("displayAds")}
-                className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
-                  ${
-                    activeMockup === "displayAds"
-                      ? "selected-gradient"
-                      : "unselected-gradient"
-                  }`}
-              >
-                Display Ads
-              </button>
-              <button
-                onClick={() => setActiveMockup("animatedAds")}
-                className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
-                  ${
-                    activeMockup === "animatedAds"
-                      ? "selected-gradient"
-                      : "unselected-gradient"
-                  }`}
-              >
-                Animated Ads
-              </button>
-            </>
-          )}
-        </div>
+  {activeApp === "facebook" ? (
+    <>
+      <button
+        onClick={() => setActiveMockup("storyAds")}
+        className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
+          ${
+            activeMockup === "storyAds"
+              ? "selected-gradient"
+              : "unselected-gradient"
+          }`}
+      >
+        Story Ads
+      </button>
+      <button
+        onClick={() => setActiveMockup("feedCarousel")}
+        className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
+          ${
+            activeMockup === "feedCarousel"
+              ? "selected-gradient"
+              : "unselected-gradient"
+          }`}
+      >
+        Feed Carousel
+      </button>
+    </>
+  ) : activeApp === "google" ? (
+    <>
+      <button
+        onClick={() => setActiveMockup("displayAds")}
+        className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
+          ${
+            activeMockup === "displayAds"
+              ? "selected-gradient"
+              : "unselected-gradient"
+          }`}
+      >
+        Display Ads
+      </button>
+      <button
+        onClick={() => setActiveMockup("animatedAds")}
+        className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
+          ${
+            activeMockup === "animatedAds"
+              ? "selected-gradient"
+              : "unselected-gradient"
+          }`}
+      >
+        Animated Ads
+      </button>
+    </>
+  ) : (
+    // Instagram 
+    <>
+      <button
+        onClick={() => setActiveMockup("igStoryAds")}
+        className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
+          ${
+            activeMockup === "igStoryAds"
+              ? "selected-gradient"
+              : "unselected-gradient"
+          }`}
+      >
+        Story Ads
+      </button>
+      <button
+        onClick={() => setActiveMockup("igFeedCarousel")}
+        className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
+          ${
+            activeMockup === "igFeedCarousel"
+              ? "selected-gradient"
+              : "unselected-gradient"
+          }`}
+      >
+        Feed Carousel
+      </button>
+      {/* <button
+        onClick={() => setActiveMockup("igReels")}
+        className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
+          ${
+            activeMockup === "igReels"
+              ? "selected-gradient"
+              : "unselected-gradient"
+          }`}
+      >
+        Reels Ads
+      </button> */}
+    </>
+  )}
+</div>
 
         {/* Phone Mockup Container */}
         <div className="flex justify-center items-center w-full">

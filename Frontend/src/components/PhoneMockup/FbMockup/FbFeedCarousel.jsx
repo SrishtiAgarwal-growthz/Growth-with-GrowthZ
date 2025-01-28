@@ -10,19 +10,6 @@ import {
   X,
 } from "lucide-react";
 
-// function shortCaption(phrase) {
-//   if (!phrase || typeof phrase !== "string") return null;
-//   const cleaned = phrase.replace(/^\d+\.\s*/, "").trim();
-//   const words = cleaned.split(/\s+/);
-//   const firstFive = words.slice(0, 5).join(" ");
-//   return (
-//     <>
-//       {firstFive}{" "}
-//       <span style={{ color: "#0096FF" }}> ... See More</span>
-//     </>
-//   );
-// }
-
 export default function FacebookFeedCarousel({
   currentIndex,
   ads,
@@ -133,7 +120,7 @@ export default function FacebookFeedCarousel({
             </div>
             <button
               onClick={() =>
-                window.open({websiteLink}, "_blank")
+                window.open(websiteLink, "_blank")
               }
               className="bg-[#3a3b3c] px-3 py-1 rounded text-[10px]"
             >

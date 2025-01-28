@@ -1,22 +1,22 @@
 function processAdText(text) {
   try {
-    if (!text || typeof text !== 'string') {
-      console.error('[processAdText] Invalid text input:', text);
-      return { primaryText: '', secondaryText: '' };
+    if (!text || typeof text !== "string") {
+      console.error("[processAdText] Invalid text input:", text);
+      return { primaryText: "", secondaryText: "" };
     }
 
     let processedText = text
-      .replace(/^\d+\.\s*/, '')        // Remove numbering
-      .replace(/\*+/g, '')             // Remove asterisks
-      .replace(/\s*\([^)]*\)/g, '')    // Remove parenthetical text
-      .replace(/\s+/g, ' ')            // Normalize spaces
-      .replace(/\.{2,}/g, '.')         // Fix multiple dots
-      .replace(/[""]/g, '"')           // Normalize quotes
-      .replace(/['']/g, "'")           // Normalize apostrophes
+      .replace(/^\d+\.\s*/, "") // Remove numbering
+      .replace(/\*+/g, "") // Remove asterisks
+      .replace(/\s*\([^)]*\)/g, "") // Remove parenthetical text
+      .replace(/\s+/g, " ") // Normalize spaces
+      .replace(/\.{2,}/g, ".") // Fix multiple dots
+      .replace(/[""]/g, '"') // Normalize quotes
+      .replace(/['']/g, "'") // Normalize apostrophes
       .trim();
 
     // Handle colon in text
-    const colonParts = processedText.split(':');
+    const colonParts = processedText.split(":");
     if (colonParts.length > 1 && colonParts[1].trim().length > 0) {
       processedText = colonParts[1].trim();
     }
@@ -24,48 +24,64 @@ function processAdText(text) {
     // Split into sentences
     const sentences = processedText
       .split(/(?<=[.!?])\s+/)
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
 
     // Format the text based on number of sentences
     if (sentences.length > 1) {
       const midpoint = Math.ceil(sentences.length / 2);
       return {
-        primaryText: sentences.slice(0, midpoint).join(' '),
-        secondaryText: sentences.slice(midpoint).join(' ')
+        primaryText: sentences.slice(0, midpoint).join(" "),
+        secondaryText: sentences.slice(midpoint).join(" "),
       };
     }
 
     return {
       primaryText: processedText,
-      secondaryText: ''
+      secondaryText: "",
     };
   } catch (error) {
-    console.error('[processAdText] Error processing text:', error);
+    console.error("[processAdText] Error processing text:", error);
     return {
-      primaryText: text || '',
-      secondaryText: ''
+      primaryText: text || "",
+      secondaryText: "",
     };
   }
 }
 
 export const adTemplates = {
-
   "300x250": (options) => {
-    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+    const {
+      fontFamily,
+      fontFormat,
+      fontPath,
+      adDimensions,
+      bgColor,
+      textColor,
+      ctaColor,
+      ctaTextColor,
+      logoUrl,
+      mainImageUrl,
+      phrase,
+      ctaText,
+    } = options;
 
     const processedPhrase = processAdText(phrase);
-    console.log('[createAd] Processed phrase:', processedPhrase);
+    console.log("[createAd] Processed phrase:", processedPhrase);
 
     // Generate the font-face rule only if fontPath is available
     const fontFaceRule = fontPath
       ? `
-          @font-face {
-            font-family: '${fontName}';
-            src: url('${fontPath}');
-          }
+         @font-face {
+  font-family: '${fontFamily}';
+  src: url('${fontPath}') format('${fontFormat}');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block; /* <--- ensures text is shown ASAP once font is ready */
+}
+
         `
-      : ''; // No font-face if fontPath is null
+      : ""; // No font-face if fontPath is null
 
     return `
     <!DOCTYPE html>
@@ -118,7 +134,7 @@ export const adTemplates = {
       }
 
       .text-section {
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         margin: 0 auto;
         max-width: 100%;
         position: relative;
@@ -133,7 +149,7 @@ export const adTemplates = {
 
       .primary-text {
         color: ${textColor};
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 16px;
         font-weight: 700;
         hyphens: auto;
@@ -149,7 +165,7 @@ export const adTemplates = {
 
       .secondary-text {
         color: ${textColor};
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 14px;
         font-weight: 500;
         hyphens: auto;
@@ -208,7 +224,7 @@ export const adTemplates = {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 12px;
         font-weight: 600;
         letter-spacing: 1px;
@@ -304,19 +320,37 @@ export const adTemplates = {
 
   // 160 x 600
   "160x600": (options) => {
-    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+    const {
+      fontFamily,
+      fontFormat,
+      fontPath,
+      adDimensions,
+      bgColor,
+      textColor,
+      ctaColor,
+      ctaTextColor,
+      logoUrl,
+      mainImageUrl,
+      phrase,
+      ctaText,
+    } = options;
 
     const processedPhrase = processAdText(phrase);
-    console.log('[createAd] Processed phrase:', processedPhrase);
+    console.log("[createAd] Processed phrase:", processedPhrase);
 
+    // Generate the font-face rule only if fontPath is available
     const fontFaceRule = fontPath
       ? `
-        @font-face {
-          font-family: '${fontName}';
-          src: url('${fontPath}');
-        }
-    `
-      : '';
+         @font-face {
+  font-family: '${fontFamily}';
+  src: url('${fontPath}') format('${fontFormat}');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block; /* <--- ensures text is shown ASAP once font is ready */
+}
+
+        `
+      : "";
 
     return `
     <!DOCTYPE html>
@@ -369,7 +403,7 @@ export const adTemplates = {
       }
 
       .text-section {
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         margin: 0 auto;
         max-width: 85%;
         position: relative;
@@ -384,7 +418,7 @@ export const adTemplates = {
 
       .primary-text {
         color: ${textColor};
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 18px;
         font-weight: 600;
         hyphens: auto;
@@ -399,7 +433,7 @@ export const adTemplates = {
 
       .secondary-text {
         color: ${textColor};
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 14px;
         font-weight: 500;
         hyphens: auto;
@@ -459,7 +493,7 @@ export const adTemplates = {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 14px;
         font-weight: 600;
         letter-spacing: 2px;
@@ -553,20 +587,37 @@ export const adTemplates = {
   },
 
   "320x480": (options) => {
-    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+    const {
+      fontFamily,
+      fontFormat,
+      fontPath,
+      adDimensions,
+      bgColor,
+      textColor,
+      ctaColor,
+      ctaTextColor,
+      logoUrl,
+      mainImageUrl,
+      phrase,
+      ctaText,
+    } = options;
 
     const processedPhrase = processAdText(phrase);
-    console.log('[createAd] Processed phrase:', processedPhrase);
+    console.log("[createAd] Processed phrase:", processedPhrase);
 
     // Generate the font-face rule only if fontPath is available
     const fontFaceRule = fontPath
       ? `
-            @font-face {
-                font-family: '${fontName}';
-                src: url('${fontPath}');
-            }
+         @font-face {
+  font-family: '${fontFamily}';
+  src: url('${fontPath}') format('${fontFormat}');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block; /* <--- ensures text is shown ASAP once font is ready */
+}
+
         `
-      : ''; // No font-face if fontPath is null
+      : ""; // No font-face if fontPath is null
 
     return `
     <!DOCTYPE html>
@@ -619,7 +670,7 @@ export const adTemplates = {
       }
 
       .text-section {
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         margin: 0 auto;
         max-width: 95%;
         position: relative;
@@ -634,7 +685,7 @@ export const adTemplates = {
 
       .primary-text {
         color: ${textColor};
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 20px;
         font-weight: 600;
         hyphens: auto;
@@ -650,7 +701,7 @@ export const adTemplates = {
 
       .secondary-text {
         color: ${textColor};
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 18px;
         font-weight: 500;
         hyphens: auto;
@@ -710,7 +761,7 @@ export const adTemplates = {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 14px;
         font-weight: 600;
         letter-spacing: 1px;
@@ -805,20 +856,37 @@ export const adTemplates = {
   },
 
   "1080x1080": (options) => {
-    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+    const {
+      fontFamily,
+      fontFormat,
+      fontPath,
+      adDimensions,
+      bgColor,
+      textColor,
+      ctaColor,
+      ctaTextColor,
+      logoUrl,
+      mainImageUrl,
+      phrase,
+      ctaText,
+    } = options;
 
     const processedPhrase = processAdText(phrase);
-    console.log('[createAd] Processed phrase:', processedPhrase);
+    console.log("[createAd] Processed phrase:", processedPhrase);
 
     // Generate the font-face rule only if fontPath is available
     const fontFaceRule = fontPath
       ? `
-            @font-face {
-                font-family: '${fontName}';
-                src: url('${fontPath}');
-            }
+         @font-face {
+  font-family: '${fontFamily}';
+  src: url('${fontPath}') format('${fontFormat}');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block; /* <--- ensures text is shown ASAP once font is ready */
+}
+
         `
-      : ''; // No font-face if fontPath is null
+      : ""; // No font-face if fontPath is null
 
     return `
     <!DOCTYPE html>
@@ -864,7 +932,7 @@ export const adTemplates = {
             //   display: flex;
             //   align-items: center;
             //   justify-content: center;
-            //   font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+            //   font-family: ${fontFamily};
             //   font-size: 40px;
             //   font-weight: 600;
             //   height: 150px;
@@ -931,7 +999,7 @@ export const adTemplates = {
 
             .primary-text {
               color: ${textColor};
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               font-size: 56px;
               font-weight: 600;
               hyphens: auto;
@@ -947,7 +1015,7 @@ export const adTemplates = {
                 
             .secondary-text {
               color: ${textColor};
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               font-size: 46px;
               font-weight: 400;
               hyphens: auto;
@@ -968,7 +1036,7 @@ export const adTemplates = {
             }
 
             .text-section {
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               margin-top: 0
               margin-bottom: 0;
               margin: 0 auto;
@@ -1059,20 +1127,37 @@ export const adTemplates = {
   },
 
   "1440x1440": (options) => {
-    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+    const {
+      fontFamily,
+      fontFormat,
+      fontPath,
+      adDimensions,
+      bgColor,
+      textColor,
+      ctaColor,
+      ctaTextColor,
+      logoUrl,
+      mainImageUrl,
+      phrase,
+      ctaText,
+    } = options;
 
     const processedPhrase = processAdText(phrase);
-    console.log('[createAd] Processed phrase:', processedPhrase);
+    console.log("[createAd] Processed phrase:", processedPhrase);
 
     // Generate the font-face rule only if fontPath is available
     const fontFaceRule = fontPath
       ? `
-            @font-face {
-                font-family: '${fontName}';
-                src: url('${fontPath}');
-            }
+         @font-face {
+  font-family: '${fontFamily}';
+  src: url('${fontPath}') format('${fontFormat}');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block; /* <--- ensures text is shown ASAP once font is ready */
+}
+
         `
-      : ''; // No font-face if fontPath is null
+      : "";// No font-face if fontPath is null
 
     return `
         <!DOCTYPE html>
@@ -1119,7 +1204,7 @@ export const adTemplates = {
               display: flex;
               align-items: center;
               justify-content: center;
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               font-size: 36px;
               font-weight: 600;
               height: 100px;
@@ -1188,7 +1273,7 @@ export const adTemplates = {
 
             .primary-text {
               color: ${textColor};
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               font-size: 72px;
               font-weight: 600;
               hyphens: auto;
@@ -1204,7 +1289,7 @@ export const adTemplates = {
                 
             .secondary-text {
               color: ${textColor};
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               font-size: 46px;
               font-weight: 400;
               hyphens: auto;
@@ -1226,7 +1311,7 @@ export const adTemplates = {
             }
 
             .text-section {
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               margin-bottom: 40px;
               max-width: 80%;
               padding-top: 40px;
@@ -1317,20 +1402,37 @@ export const adTemplates = {
   },
 
   "1440x1800": (options) => {
-    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+    const {
+      fontFamily,
+      fontFormat,
+      fontPath,
+      adDimensions,
+      bgColor,
+      textColor,
+      ctaColor,
+      ctaTextColor,
+      logoUrl,
+      mainImageUrl,
+      phrase,
+      ctaText,
+    } = options;
 
     const processedPhrase = processAdText(phrase);
-    console.log('[createAd] Processed phrase:', processedPhrase);
+    console.log("[createAd] Processed phrase:", processedPhrase);
 
     // Generate the font-face rule only if fontPath is available
     const fontFaceRule = fontPath
       ? `
-            @font-face {
-                font-family: '${fontName}';
-                src: url('${fontPath}');
-            }
+         @font-face {
+  font-family: '${fontFamily}';
+  src: url('${fontPath}') format('${fontFormat}');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block; /* <--- ensures text is shown ASAP once font is ready */
+}
+
         `
-      : ''; // No font-face if fontPath is null
+      : "";// No font-face if fontPath is null
 
     return `
         <!DOCTYPE html>
@@ -1376,7 +1478,7 @@ export const adTemplates = {
               display: flex;
               align-items: center;
               justify-content: center;
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               font-size: 80px;
               font-weight: 600;
               height: 150px;
@@ -1443,7 +1545,7 @@ export const adTemplates = {
 
             .primary-text {
               color: ${textColor};
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               font-size: 72px;
               font-weight: 600;
               hyphens: auto;
@@ -1459,7 +1561,7 @@ export const adTemplates = {
                 
             .secondary-text {
               color: ${textColor};
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               font-size: 52px;
               font-weight: 400;
               hyphens: auto;
@@ -1480,7 +1582,7 @@ export const adTemplates = {
             }
 
             .text-section {
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               margin-top: 0
               margin-bottom: 0;
               max-width: 95%;
@@ -1572,20 +1674,37 @@ export const adTemplates = {
   },
 
   "1440x2560": (options) => {
-    const { fontPath, fontName, adDimensions, bgColor, textColor, ctaColor, ctaTextColor, logoUrl, mainImageUrl, phrase, ctaText } = options;
+    const {
+      fontFamily,
+      fontFormat,
+      fontPath,
+      adDimensions,
+      bgColor,
+      textColor,
+      ctaColor,
+      ctaTextColor,
+      logoUrl,
+      mainImageUrl,
+      phrase,
+      ctaText,
+    } = options;
 
     const processedPhrase = processAdText(phrase);
-    console.log('[createAd] Processed phrase:', processedPhrase);
+    console.log("[createAd] Processed phrase:", processedPhrase);
 
     // Generate the font-face rule only if fontPath is available
     const fontFaceRule = fontPath
       ? `
-            @font-face {
-                font-family: '${fontName}';
-                src: url('${fontPath}');
-            }
+         @font-face {
+  font-family: '${fontFamily}';
+  src: url('${fontPath}') format('${fontFormat}');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block; /* <--- ensures text is shown ASAP once font is ready */
+}
+
         `
-      : ''; // No font-face if fontPath is null
+      : ""; // No font-face if fontPath is null
 
     return `
         <!DOCTYPE html>
@@ -1631,7 +1750,7 @@ export const adTemplates = {
               display: flex;
               align-items: center;
               justify-content: center;
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               font-size: 80px;
               font-weight: 600;
               height: 100px;
@@ -1682,7 +1801,7 @@ export const adTemplates = {
 
             .primary-text {
               color: ${textColor};
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               font-size: 90px;
               font-weight: 700;
               hyphens: auto;
@@ -1697,7 +1816,7 @@ export const adTemplates = {
                 
             .secondary-text {
               color: ${textColor};
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               font-size: 76px;
               font-weight: 500;
               hyphens: auto;
@@ -1716,7 +1835,7 @@ export const adTemplates = {
             }
 
             .text-section {
-              font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+              font-family: ${fontFamily};
               margin: 0 auto;
               max-width: 100%;
               position: relative;
@@ -1801,4 +1920,3 @@ export const adTemplates = {
     </html>`;
   },
 };
-
