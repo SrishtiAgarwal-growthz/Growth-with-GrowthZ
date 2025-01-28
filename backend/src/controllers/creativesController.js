@@ -104,9 +104,9 @@ export const createAnimations = async (req, res) => {
 
 export const getAdsForApp = async (req, res) => {
   try {
-    const { appId } = req.query; // Extract appId from query
-    if (!appId) {
-      return res.status(400).json({ message: "Missing appId query parameter" });
+    const { appId, userId } = req.query;   // or req.body
+    if (!appId || !userId) {
+      return res.status(400).json({ message: "Missing appId or userId" });
     }
 
     const client = await connectToMongo();
@@ -114,22 +114,23 @@ export const getAdsForApp = async (req, res) => {
     const appCollection = db.collection("Apps");
     const creativesCollection = db.collection("Creatives");
 
-    // Find the app to get the name
+    // 1) Find the app to get name / icon / etc.
     const app = await appCollection.findOne({ _id: new ObjectId(appId) });
     if (!app) {
       return res.status(404).json({ message: "App not found for this appId" });
     }
-    const appName = app.appName;
 
-    // Find the creatives document
-    const doc = await creativesCollection.findOne({ appId });
+    // 2) Find the *user-specific* creative doc
+    const doc = await creativesCollection.findOne({ userId, appId });
     if (!doc) {
-      return res.status(404).json({ message: "No creatives found for this appId" });
+      return res.status(404).json({ message: "No creatives found for this user/app" });
     }
 
+    // Return user’s own ads
     res.status(200).json({
       appId: doc.appId,
-      appName: appName,
+      userId: doc.userId,
+      appName: app.appName,
       ads: doc.adUrls || [],
       logo: app.iconUrl,
       website: app.websiteUrl,

@@ -15,7 +15,7 @@ import frame from "../assets/Frame.png";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "http://localhost:8000";
 
 export default function GeniusMarketingForm() {
   const navigate = useNavigate();
@@ -313,7 +313,8 @@ export default function GeniusMarketingForm() {
       typeof phraseObjOrString === "object" ? phraseObjOrString.text : phraseObjOrString;
 
     try {
-      await approvePhrase(phraseText, appId);
+      const userId = localStorage.getItem('loggedInMongoUserId');
+      await approvePhrase(phraseText, appId, userId);
       const newStates = [...approvalStates];
       newStates[index] = "approved";
       setApprovalStates(newStates);
@@ -334,7 +335,8 @@ export default function GeniusMarketingForm() {
       typeof phraseObjOrString === "object" ? phraseObjOrString.text : phraseObjOrString;
 
     try {
-      await rejectPhrase(appId, phraseText);
+      const userId = localStorage.getItem('loggedInMongoUserId');
+      await rejectPhrase(phraseText, appId, userId);
       const newStates = [...approvalStates];
       newStates[index] = "rejected";
       setApprovalStates(newStates);
@@ -449,9 +451,8 @@ export default function GeniusMarketingForm() {
             </div>
 
             <div
-              className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                showWebsiteInput ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
-              }`}
+              className={`transition-all duration-300 ease-in-out overflow-hidden ${showWebsiteInput ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+                }`}
             >
               <div className="space-y-2">
                 <p className="text-white text-[16px]">Enter your website URL!</p>
@@ -493,11 +494,10 @@ export default function GeniusMarketingForm() {
                 </button>
 
                 <div
-                  className={`transition-all duration-300 ease-in-out space-y-4 overflow-y-auto scrollbar-custom ${
-                    isPhrasesExpanded
+                  className={`transition-all duration-300 ease-in-out space-y-4 overflow-y-auto scrollbar-custom ${isPhrasesExpanded
                       ? "max-h-[60vh] opacity-100"
                       : "max-h-0 opacity-0"
-                  }`}
+                    }`}
                   style={{
                     scrollbarWidth: "thin",
                     scrollbarColor: "#4865F4 #374151",

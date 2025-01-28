@@ -1,5 +1,5 @@
 // rainbowApi.js
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "http://localhost:8000";
 
 /**
  * POST /api/creatives/addCreativeToTasks
@@ -68,9 +68,9 @@ export const createAnimations = async (userId, appId) => {
 };
 
 // in rainbowApi.js
-export const getGeneratedAds = async (appId) => {
+export const getGeneratedAds = async (appId, userId) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}`);
+    const response = await fetch(`${BASE_URL}/api/creatives/get-ads?appId=${appId}&userId=${userId}`);
     if (!response.ok) {
       throw new Error('Failed to fetch generated ads');
     }
