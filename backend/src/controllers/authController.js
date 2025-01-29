@@ -21,12 +21,16 @@ export const createUserInMongoDB = async (req, res) => {
     // Convert email to lowercase for consistency
     const userEmail = email.toLowerCase().trim();
 
+    const nowUTC = new Date(); // Get current UTC time
+    const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+    const createdAtIST = new Date(nowUTC.getTime() + ISTOffset);
+
     // Insert into Mongo
     const newUser = {
       userEmail,      // or just "email"
       fullName,
       companyName,
-      createdAt: new Date(),
+      createdAt: createdAtIST,
     };
 
     const result = await usersCollection.insertOne(newUser);

@@ -113,11 +113,15 @@ export const processAppImages = async (appId) => {
           console.log(`[processAppImages] Removing background for image: ${image.screenshot}`);
           const noBgBuffer = await removeBackground(image.screenshot);
 
+          const nowUTC = new Date(); // Get current UTC time
+          const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+          const createdAtIST = new Date(nowUTC.getTime() + ISTOffset);
+          
           console.log(`[processAppImages] Uploading processed image to S3 for: ${image.screenshot}`);
           const s3Url = await uploadToS3(
             noBgBuffer,
             `extracted_images/${appId}`,
-            `${appId}-${Date.now()}.png`
+            `${appId}-${createdAtIST}.png`
           );
 
           console.log(`[processAppImages] Extracting background color for: ${image.screenshot}`);
@@ -287,11 +291,15 @@ export const generateAdImages = async (appId, userId) => {
         try {
           const adPath = await createAd(adOptions);
 
+          const nowUTC = new Date(); // Get current UTC time
+          const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+          const createdAtIST = new Date(nowUTC.getTime() + ISTOffset);
+
           // If you want to upload to S3:
           const s3Url = await uploadToS3(
             fs.readFileSync(adPath),
             `creatives/${appId}`,
-            `ad-${appId}-${name}-${Date.now()}.png`
+            `ad-${appId}-${name}-${createdAtIST}.png`
           );
 
           ads.push({
@@ -427,10 +435,14 @@ export const generateAdAnimation = async (appId, userId) => {
         try {
           const animationPath = await createAnimations(adOptions);
 
+          const nowUTC = new Date(); // Get current UTC time
+          const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+          const createdAtIST = new Date(nowUTC.getTime() + ISTOffset);
+
           const s3Url = await uploadToS3(
             fs.readFileSync(animationPath),
             `creatives/${appId}`,
-            `animation-${appId}-${name}-${Date.now()}.mp4`
+            `animation-${appId}-${name}-${createdAtIST}.mp4`
           );
 
           animations.push({

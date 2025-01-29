@@ -327,7 +327,7 @@ export const generatePhrasesFromWebsite = async (websiteContent) => {
     console.log("[generatePhrasesFromWebsite] Generated USP Phrases:", phrases);
     return phrases;
   } catch (error) {
-      console.error('[generatePhrasesFromWebsite] Error:', error);
+    console.error('[generatePhrasesFromWebsite] Error:', error);
   }
 };
 
@@ -368,6 +368,10 @@ export const saveGeneratedPhrasesForUser = async (userId, appId, taskId, phrases
   const db = client.db("GrowthZ");
   const adCopiesCollection = db.collection("AdCopies");
 
+  const nowUTC = new Date(); // Get current UTC time
+  const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+  const createdAtIST = new Date(nowUTC.getTime() + ISTOffset);
+
   try {
     const doc = {
       userId,
@@ -377,7 +381,7 @@ export const saveGeneratedPhrasesForUser = async (userId, appId, taskId, phrases
         text,
         status: "pending",
       })),
-      createdAt: new Date(),
+      createdAt: createdAtIST,
     };
 
     const result = await adCopiesCollection.insertOne(doc);
@@ -400,6 +404,10 @@ export const saveWebsiteGeneratedPhrasesForUser = async (userId, taskId, phrases
   const db = client.db("GrowthZ");
   const adCopiesCollection = db.collection("AdCopies");
 
+  const nowUTC = new Date(); // Get current UTC time
+  const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+  const createdAtIST = new Date(nowUTC.getTime() + ISTOffset);
+
   try {
     const doc = {
       userId,
@@ -408,7 +416,7 @@ export const saveWebsiteGeneratedPhrasesForUser = async (userId, taskId, phrases
         text,
         status: "pending",
       })),
-      createdAt: new Date(),
+      createdAt: createdAtIST,
     };
 
     const result = await adCopiesCollection.insertOne(doc);

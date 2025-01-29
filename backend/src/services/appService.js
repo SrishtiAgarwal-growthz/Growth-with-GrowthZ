@@ -66,7 +66,7 @@ export const fetchOrCreateApp = async (googlePlayUrl, appleAppUrl, websiteUrl = 
  *   - Optionally calls remove-bg (processAppImages) if imagesProcessed is still false.
  */
 export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl = null) => {
-  console.log("[saveAppDetailsInDb] Called with:", {googlePlayUrl, appleAppUrl, websiteUrl});
+  console.log("[saveAppDetailsInDb] Called with:", { googlePlayUrl, appleAppUrl, websiteUrl });
 
   const client = await connectToMongo();
   const db = client.db("GrowthZ");
@@ -94,7 +94,7 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
   if (googleAppId) {
     existingQuery = { googleBundleId: googleAppId };
   } else if (appleId) {
-    existingQuery = { appleBundleId: Number(appleId) }; 
+    existingQuery = { appleBundleId: Number(appleId) };
     // 'id' from app-store-scraper is numeric
   }
 
@@ -109,10 +109,14 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
   // 2) Prepare base appDetails object
   //    (Preserve imagesProcessed if doc is found)
   // ------------------------------------------------------------
+  const nowUTC = new Date(); // Get current UTC time
+  const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+  const createdAtIST = new Date(nowUTC.getTime() + ISTOffset);
+  
   let appDetails = {
     // On brand-new docs, set imagesProcessed to false initially
     imagesProcessed: existingDoc?.imagesProcessed ?? false,
-    recordCreated: existingDoc?.recordCreated || new Date(),
+    recordCreated: existingDoc?.recordCreated || createdAtIST,
     images: existingDoc?.images || [],
   };
 

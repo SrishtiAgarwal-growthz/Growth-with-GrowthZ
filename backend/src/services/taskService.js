@@ -21,11 +21,15 @@ export const saveTask = async (userId, appId) => {
       return existingTask;
     }
 
+    const nowUTC = new Date(); // Get current UTC time
+    const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+    const createdAtIST = new Date(nowUTC.getTime() + ISTOffset);
+
     // 2) Otherwise, create a brand-new Task doc
     const newTask = {
       userId,
       appId,
-      createdAt: new Date(),
+      createdAt: createdAtIST,
       tasks: ["AdCopies"], // or any default
     };
 

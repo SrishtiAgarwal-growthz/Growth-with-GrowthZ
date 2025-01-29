@@ -241,6 +241,10 @@ export const generateWebsiteAdCopies = async (req, res) => {
       status: 'pending',
     }));
 
+    const nowUTC = new Date(); // Get current UTC time
+    const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+    const createdAtIST = new Date(nowUTC.getTime() + ISTOffset);
+    
     // Save to database
     const savedCopies = await adCopiesCollection.insertOne({
       userId: userId,
@@ -248,7 +252,7 @@ export const generateWebsiteAdCopies = async (req, res) => {
       source: 'website',
       website: website_link,
       phrases: phrasesWithMetadata,
-      createdAt: new Date(),
+      createdAt: createdAtIST,
     });
 
     console.log(`[generateWebsiteAdCopies] Successfully generated ad copies for: ${website_link}`);

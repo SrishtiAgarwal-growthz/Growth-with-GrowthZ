@@ -120,7 +120,10 @@ export const getAdsForApp = async (req, res) => {
       return res.status(404).json({ message: "App not found for this appId" });
     }
 
-    // 2) Find the *user-specific* creative doc
+    // 2) Extract the first available textColor from processed images
+    const firstProcessedImage = app.images.find(image => image.removedBgUrl && image.textColor);
+
+    // 3) Find the *user-specific* creative doc
     const doc = await creativesCollection.findOne({ userId, appId });
     if (!doc) {
       return res.status(404).json({ message: "No creatives found for this user/app" });
@@ -131,9 +134,10 @@ export const getAdsForApp = async (req, res) => {
       appId: doc.appId,
       userId: doc.userId,
       appName: app.appName,
-      ads: doc.adUrls || [],
       logo: app.iconUrl,
       website: app.websiteUrl,
+      textColor: firstProcessedImage ? firstProcessedImage.textColor : "#FFFFFF",
+      ads: doc.adUrls || [],
       animations: doc.animationUrls || [],
       createdAt: doc.createdAt,
     });

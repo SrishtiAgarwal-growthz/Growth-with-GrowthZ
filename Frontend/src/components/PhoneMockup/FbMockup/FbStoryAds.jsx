@@ -5,6 +5,26 @@ import thumbs from "../../../assets/PhoneMockup/thumbs-up.png";
 import heart from "../../../assets/PhoneMockup/heart.png";
 import laugh from "../../../assets/PhoneMockup/laughing.png";
 
+const getShortAppName = (name) => {
+  if (!name) return "App Name"; // Default fallback
+
+  // Step 1: Check for ":" or "|"
+  if (name.includes(":")) {
+    return name.split(":")[0].trim();
+  }
+
+  if (name.includes("|")) {
+    return name.split("|")[0].trim();
+  }
+
+  if (name.includes("-")) {
+    return name.split("-")[0].trim();
+  }
+
+  // Step 2: Return the full name if no truncation is needed
+  return name.trim();
+};
+
 export default function FbStoryAds({
   currentIndex,
   // If you don't need the child to set its own index, you can remove the line below:
@@ -12,6 +32,7 @@ export default function FbStoryAds({
   ads,
   appName,
   appLogo,
+  textColor,
 }) {
   // Safely get current ad
   const currentAd = ads?.[currentIndex] || null;
@@ -45,8 +66,8 @@ export default function FbStoryAds({
           ) : (
             <div className="w-6 h-6 bg-blue-500 rounded-full"></div>
           )}
-          <span className="ml-2 text-white text-sm font-semibold">
-            {appName || "App Name"}
+          <span className="ml-2 text-sm font-semibold" style={{ color: textColor }}>
+            {getShortAppName(appName)}
           </span>
         </div>
         <button className="text-white">
@@ -75,7 +96,7 @@ export default function FbStoryAds({
             alt="Share"
             className="w-31 h-6 mr-2"
           />
-          
+
         </div>
         <div className="flex gap-1 ml-1">
           <img src={heart} alt="Heart" className="w-6 h-6" />
@@ -93,4 +114,5 @@ FbStoryAds.propTypes = {
   ads: PropTypes.array.isRequired,
   appName: PropTypes.string,
   appLogo: PropTypes.string,
+  textColor: PropTypes.string,
 };
