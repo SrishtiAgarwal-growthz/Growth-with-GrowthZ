@@ -51,17 +51,18 @@ function processAdText(text) {
 
 export const animationTemplates = {
   "300x250": ({
-    fontPath,
-    fontName,
-    logoUrl,
-    mainImageUrl,
-    phrase,
-    bgColor,
-    textColor,
-    ctaText,      // If you want a CTA, uncomment & add to HTML
-    ctaColor,
-    ctaTextColor,
-    adDimensions,
+      fontFamily,
+      fontFormat,
+      fontPath,
+      adDimensions,
+      bgColor,
+      textColor,
+      ctaColor,
+      ctaTextColor,
+      logoUrl,
+      mainImageUrl,
+      phrase,
+      ctaText,
   }) => {
     const processedPhrase = processAdText(phrase);
     console.log("[createAnimation] Processed phrase:", processedPhrase);
@@ -69,11 +70,15 @@ export const animationTemplates = {
     // Optionally define a @font-face if you have a custom font
     const fontFaceRule = fontPath
       ? `
-        @font-face {
-          font-family: '${fontName}';
-          src: url('${fontPath}');
-        }
-      `
+         @font-face {
+  font-family: '${fontFamily}';
+  src: url('${fontPath}') format('${fontFormat}');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block; /* <--- ensures text is shown ASAP once font is ready */
+}
+
+        `
       : "";
 
     // Inline HTML template for the ad
@@ -161,7 +166,7 @@ export const animationTemplates = {
       }
 
       .text-section {
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         margin: 0 auto;
         max-width: 95%;
         position: relative;
@@ -180,7 +185,7 @@ export const animationTemplates = {
 
       .primary-text {
         color: ${textColor};
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 12px;
         font-weight: 600;
         hyphens: auto;
@@ -209,7 +214,7 @@ export const animationTemplates = {
 
       .secondary-text {
         color: ${textColor};
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 8px;
         font-weight: 500;
         hyphens: auto;
@@ -290,7 +295,7 @@ export const animationTemplates = {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: ${fontPath ? `'${fontName}'` : 'Inter'};
+        font-family: ${fontFamily};
         font-size: 12px;
         font-weight: 600;
         letter-spacing: 1px;
@@ -385,17 +390,18 @@ export const animationTemplates = {
   },
 
   "1080x1080": ({
-    fontPath,
-    fontName,
-    logoUrl,
-    mainImageUrl,
-    phrase,
-    bgColor,
-    textColor,
-    // ctaText,      // If you want a CTA, uncomment & add to HTML
-    // ctaColor,
-    // ctaTextColor,
-    adDimensions,
+    fontFamily,
+      fontFormat,
+      fontPath,
+      adDimensions,
+      bgColor,
+      textColor,
+      // ctaColor,
+      // ctaTextColor,
+      logoUrl,
+      mainImageUrl,
+      phrase,
+      // ctaText,
   }) => {
     const processedPhrase = processAdText(phrase);
     console.log("[createAnimation] Processed phrase:", processedPhrase);
@@ -403,11 +409,15 @@ export const animationTemplates = {
     // Optionally define a @font-face if you have a custom font
     const fontFaceRule = fontPath
       ? `
-        @font-face {
-          font-family: '${fontName}';
-          src: url('${fontPath}');
-        }
-      `
+         @font-face {
+  font-family: '${fontFamily}';
+  src: url('${fontPath}') format('${fontFormat}');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block; /* <--- ensures text is shown ASAP once font is ready */
+}
+
+        `
       : "";
 
     // Inline HTML template for the ad
@@ -463,7 +473,7 @@ export const animationTemplates = {
           }
 
           .text-section {
-            font-family: ${fontPath ? `'${fontName}'` : "Arial, sans-serif"};
+            font-family: ${fontFamily};
             margin: 0 auto;
             max-width: 95%;
             text-align: center;
@@ -479,7 +489,7 @@ export const animationTemplates = {
 
           .primary-text {
             color: ${textColor};
-            font-family: inherit;
+            font-family: ${fontFamily};
             font-size: 56px;
             font-weight: 600;
             line-height: 1.15;
@@ -490,7 +500,7 @@ export const animationTemplates = {
 
           .secondary-text {
             color: ${textColor};
-            font-family: inherit;
+            font-family:${fontFamily};
             font-size: 46px;
             font-weight: 400;
             line-height: 1.2;
