@@ -14,6 +14,7 @@ import logo from "../assets/logo.png";
 import frame from "../assets/Frame.png";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import CustomAlert from "../components/Alert.jsx";
 
 const BASE_URL = "http://localhost:8000";
 
@@ -29,7 +30,13 @@ export default function GeniusMarketingForm() {
 
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
+  const showAlert = (message) => {
+    setAlertMessage(message);
+    setIsAlertOpen(true);
+  };
   // Show/hide the website input field
   const [showWebsiteInput, setShowWebsiteInput] = useState(false);
 
@@ -246,7 +253,7 @@ export default function GeniusMarketingForm() {
     // Usually only relevant if we saved an app with appId
     // If you also handle "website creatives," you could skip or adapt this
     if (!appId) {
-      alert("No App ID found. Please generate phrases first (or store doc ID).");
+      showAlert("No App ID found. Please generate phrases first (or store doc ID).");
       return;
     }
 
@@ -276,7 +283,7 @@ export default function GeniusMarketingForm() {
       setButtonState("showCreatives");
     } catch (err) {
       console.error("Error generating creatives:", err.message);
-      alert(err.message);
+      showAlert(err.message);
     } finally {
       setLoading(false);
     }
@@ -320,7 +327,7 @@ export default function GeniusMarketingForm() {
       setApprovalStates(newStates);
     } catch (error) {
       console.error("Error approving phrase:", error.message);
-      alert(error.message);
+      showAlert(error.message);
     }
   };
 
@@ -342,7 +349,7 @@ export default function GeniusMarketingForm() {
       setApprovalStates(newStates);
     } catch (error) {
       console.error("Error rejecting phrase:", error.message);
-      alert(error.message);
+      showAlert(error.message);
     }
   };
 
@@ -572,6 +579,11 @@ export default function GeniusMarketingForm() {
           </form>
         </div>
       </div>
+      <CustomAlert
+              isOpen={isAlertOpen}
+              message={alertMessage}
+              onClose={() => setIsAlertOpen(false)}
+            />
     </div>
   );
 }

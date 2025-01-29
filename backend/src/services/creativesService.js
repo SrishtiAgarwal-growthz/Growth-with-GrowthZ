@@ -23,6 +23,7 @@ import { createAd } from "../utils/puppeteerAdGenerator.js";
 import { adDimensionsConfig } from "../utils/adDimensions.js";
 import { animationDimensionsConfig } from "../utils/animationsDimensions.js";
 import { createAnimations } from "../utils/animationGenerator.js";
+import { fetchFont } from "../utils/fontDownload.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

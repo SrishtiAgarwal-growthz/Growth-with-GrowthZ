@@ -5,18 +5,19 @@ import { adTemplates } from "./adTemplates.js";
 
 export async function createAd(options = {}) {
   const {
+    fontFamily,
+    fontFormat,
+    fontPath,
+    adDimensions,
+    bgColor,
+    textColor,
+    ctaColor,
+    ctaTextColor,
     logoUrl,
     mainImageUrl,
     phrase,
-    outputDir,
-    bgColor,
-    adDimensions,
-    textColor,
     ctaText,
-    ctaColor,
-    ctaTextColor,
-    fontName,
-    fontPath,
+    outputDir,
   } = options;
 
   const sizeKey = `${adDimensions.width}x${adDimensions.height}`;
@@ -24,7 +25,7 @@ export async function createAd(options = {}) {
 
   try {
     console.log(`[createAd] Starting ad creation for size: ${sizeKey}`);
-    console.log("[createAd] Ad options received:", options);
+    console.log("[createAd] Ad options received:",options);
 
     // Ensure the output directory exists
     if (!fs.existsSync(outputDir)) {
@@ -40,17 +41,18 @@ export async function createAd(options = {}) {
 
     // Generate HTML using the template function
     const html = generateHtml({
-      logoUrl,
-      mainImageUrl,
-      phrase,
-      bgColor,
-      textColor,
-      ctaText,
-      ctaColor,
-      ctaTextColor,
-      fontName,
-      fontPath,
-      adDimensions,
+      fontFamily,
+    fontFormat,
+    fontPath,
+    adDimensions,
+    bgColor,
+    textColor,
+    ctaColor,
+    ctaTextColor,
+    logoUrl,
+    mainImageUrl,
+    phrase,
+    ctaText,
     });
 
     console.log("[createAd] HTML content generated successfully.");
@@ -59,7 +61,7 @@ export async function createAd(options = {}) {
     console.log("[createAd] Launching Puppeteer browser...");
     browser = await puppeteer.launch({
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: ["--no-sandbox", "--disable-setuid-sandbox",  "--font-render-hinting=none"],
     });
 
     const page = await browser.newPage();
@@ -76,23 +78,37 @@ export async function createAd(options = {}) {
     console.log("[createAd] Setting HTML content...");
     await page.setContent(html, {
       waitUntil: ["domcontentloaded", "networkidle0"],
-      timeout: 15000,
+      timeout: 30000,
     });
 
     // Wait for fonts and images to load
     console.log("[createAd] Waiting for content to load...");
     await page.evaluate(async () => {
-      await Promise.all([
-        document.fonts.ready,
-        ...Array.from(document.images).map((img) => {
-          if (img.complete) return Promise.resolve();
-          return new Promise((resolve, reject) => {
-            img.addEventListener("load", resolve);
-            img.addEventListener("error", reject);
-          });
-        }),
-      ]);
+      try {
+        // Wait for fonts to load
+        await document.fonts.ready;
+        
+        // Verify font loading
+        const fontLoaded = document.fonts.check(`1em "${fontFamily}"`);
+        console.log(`Font loading status for ${fontFamily}:`, fontLoaded);
+
+        // Wait for images
+        await Promise.all(
+          Array.from(document.images).map((img) => {
+            if (img.complete) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+              img.addEventListener("load", resolve);
+              img.addEventListener("error", reject);
+            });
+          })
+        );
+      } catch (error) {
+        console.error("Error during content loading:", error);
+        // Continue anyway to ensure the process doesn't hang
+      }
     });
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Capture screenshot
     const filename = `ad-${sizeKey}-${Date.now()}.png`;
