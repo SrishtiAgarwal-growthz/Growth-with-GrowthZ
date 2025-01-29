@@ -3,11 +3,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signIn, signUp, resetPassword } from '../firebase/auth';
 import image from "../assets/loginPage.png";
+import CustomAlert from "../components/Alert";  // Import the CustomAlert component
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -22,6 +25,11 @@ const LoginPage = () => {
     });
   };
 
+  const showAlert = (message) => {
+    setAlertMessage(message);
+    setIsAlertOpen(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -32,7 +40,7 @@ const LoginPage = () => {
           formData.fullName,
           formData.companyName
         );
-        alert('Account created successfully. Please verify your email.');
+        showAlert('We have sent you a verification mail. Please verify your email before signing in.');
         setIsSignUp(false);
       } else {
         const user = await signIn(formData.email, formData.password);
@@ -40,20 +48,20 @@ const LoginPage = () => {
         navigate('/genius');
       }
     } catch (error) {
-      alert(error.message);
+      showAlert(error.message);
     }
   };
 
   const handleForgotPassword = async () => {
     if (!formData.email) {
-      alert('Please enter your email address');
+      showAlert('Please enter your email address');
       return;
     }
     try {
       await resetPassword(formData.email);
-      alert('Password reset link sent to your email');
+      showAlert('Password reset link sent to your email');
     } catch (error) {
-      alert(error.message || 'Error sending reset link');
+      showAlert(error.message || 'Error sending reset link');
     }
   };
 
@@ -77,9 +85,9 @@ const LoginPage = () => {
           <div className="w-full lg:w-1/2 flex justify-center lg:justify-start px-4 sm:px-6 lg:px-8">
             <div className="w-full max-w-[430px] space-y-3">
               <div className="mb-4 text-center">
-              <span className="bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-transparent bg-clip-text">
-                    Genius
-                  </span>
+                <span className="bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-transparent bg-clip-text">
+                  Genius
+                </span>
                 <h1 className="text-3xl font-bold mb-2">
                   {isSignUp ? "Welcome to GrowthZ" : "Welcome back !"}
                 </h1>
@@ -194,15 +202,15 @@ const LoginPage = () => {
                 </button>
 
                 <div className="text-center text-sm text-gray-400 pt-4">
-                {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-                <button
-                  type="button"
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  className="bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-transparent bg-clip-text hover:opacity-90 transition-opacity"
-                >
-                  Sign {isSignUp ? "In" : "Up"}
-                </button>
-              </div>
+                  {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-transparent bg-clip-text hover:opacity-90 transition-opacity"
+                  >
+                    Sign {isSignUp ? "In" : "Up"}
+                  </button>
+                </div>
                 <div className="text-center text-sm text-gray-400">
                   By creating an account, you agree to the{" "}
                   <a href="#" className="text-blue-500 hover:text-blue-400">
@@ -218,6 +226,13 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Custom Alert Component */}
+      <CustomAlert
+        isOpen={isAlertOpen}
+        message={alertMessage}
+        onClose={() => setIsAlertOpen(false)}
+      />
     </div>
   );
 };
