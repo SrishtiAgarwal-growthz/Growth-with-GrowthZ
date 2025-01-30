@@ -11,6 +11,7 @@ import GoogleIcon from "../assets/PhoneMockup/Google.png";
 import loader from "../assets/PhoneMockup/loader.mp4";
 import IgFeedCarousel from "../components/PhoneMockup/InstaMockup/InstaFeedCarousel";
 import IgStoryAds from "../components/PhoneMockup/InstaMockup/InstaStoryAds";
+import LinkedInFeedCarousel from "../components/PhoneMockup/LinkedinMockup/LinkedinFeedCarousel";
 
 const BASE_URL = "http://localhost:8000";
 
@@ -28,7 +29,8 @@ export default function Rainbow() {
     displayAds: [],
     animatedAds: [],
     igFeedCarousel: [],
-    igStoryAds: []
+    igStoryAds: [],
+    linkedinFeedCarousel: []
   });
 
   const [currentIndex, setCurrentIndex] = useState({
@@ -37,7 +39,8 @@ export default function Rainbow() {
     displayAds: 0,
     animatedAds: 0,
     igFeedCarousel: 0,
-    igStoryAds: 0
+    igStoryAds: 0,
+    linkedinFeedCarousel:0
   });
 
   const [adStatuses, setAdStatuses] = useState({
@@ -51,16 +54,17 @@ export default function Rainbow() {
   const apps = [
     { id: "facebook", alt: "Facebook", icon: FacebookIcon },
     { id: "google", alt: "Google", icon: GoogleIcon },
-    { id: "instagram", alt: "Instagram"}
+    { id: "instagram", alt: "Instagram"},
+    { id: "linkedin", alt: "Linkedin"}
   ];
 
   useEffect(() => {
     const storedAppId = localStorage.getItem("appId");
-    // if (!storedAppId) {
-    //   console.log("No appId found, redirecting to genius");
-    //   navigate("/genius");
-    //   return;
-    // }
+    if (!storedAppId) {
+      console.log("No appId found, redirecting to genius");
+      navigate("/genius");
+      return;
+    }
   
     const fetchAds = async () => {
       try {
@@ -125,6 +129,17 @@ export default function Rainbow() {
               type: "feedCarousel"
             }
           }));
+
+          const linkedinFeedCarousel = rawAnimationAds
+          .filter((ad) => ad.creativeUrl?.size === "1080x1080" && ad.creativeUrl?.animationUrl)
+          .map((ad) => ({
+            ...ad,
+            creativeUrl: {
+              ...ad.creativeUrl,
+              type: "feedCarousel"
+            }
+          }));
+
           const igFeedCarousel = rawAnimationAds
           .filter((ad) => ad.creativeUrl?.size === "1080x1080" && ad.creativeUrl?.animationUrl)
           .map((ad) => ({
@@ -158,6 +173,7 @@ export default function Rainbow() {
           animatedAds,
           igFeedCarousel,
           igStoryAds,
+          linkedinFeedCarousel,
         });
       } catch (err) {
         console.error("[Rainbow] Error fetching ads:", err);
@@ -180,6 +196,8 @@ export default function Rainbow() {
       setActiveMockup("storyAds");
     } else if (activeApp === "instagram")
       setActiveMockup("igStoryAds")
+      else if (activeApp === 'linkedin')
+        setActiveMockup("linkedinFeedCarousel")
   }, [activeApp]);
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -219,7 +237,7 @@ export default function Rainbow() {
     }
   
     // For animated ads (feedCarousel and animatedAds)
-    if (mockupType === "feedCarousel" || mockupType === "animatedAds" || mockupType === "igFeedCarousel") {
+    if (mockupType === "feedCarousel" || mockupType === "animatedAds" || mockupType === "igFeedCarousel" || mockupType === "linkedinFeedCarousel") {
       // Return the raw animation URL without any encoding
       return currentAd.creativeUrl.animationUrl || null;
     }
@@ -402,6 +420,8 @@ export default function Rainbow() {
         return <IgStoryAds {...mockupProps} />;
       case "igFeedCarousel":
         return <IgFeedCarousel {...mockupProps} />;
+      case "linkedinFeedCarousel":
+        return <LinkedInFeedCarousel {...mockupProps} />;
       default:
         return null;
     }
@@ -433,7 +453,7 @@ export default function Rainbow() {
 
       {/* Sidebar */}
       <div className="fixed left-0 top-0 h-full w-[6rem] bg-[#0F0F0F] flex flex-col items-center justify-center gap-8 z-10">
-        <div className="text-white">Back</div>
+        {/* <div className="text-white">Back</div> */}
         {apps.map((app) => (
           <div key={app.id} className="relative flex items-center">
             {activeApp === app.id && (
@@ -511,7 +531,7 @@ export default function Rainbow() {
         Animated Ads
       </button>
     </>
-  ) : (
+  ) :activeApp === "instagram" ?  (
     // Instagram 
     <>
       <button
@@ -547,6 +567,21 @@ export default function Rainbow() {
       >
         Reels Ads
       </button> */}
+    </>
+  ) : (
+    //Linkedin
+    <>
+    <button
+        onClick={() => setActiveMockup("linkedinFeedCarousel")}
+        className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
+          ${
+            activeMockup === "linkedinFeedCarousel"
+              ? "selected-gradient"
+              : "unselected-gradient"
+          }`}
+      >
+        Feed Carousel
+      </button>
     </>
   )}
 </div>
