@@ -1,10 +1,22 @@
 import axios from "axios";
+import axiosRetry from 'axios-retry';
 import gplay from "google-play-scraper";
 import store from "app-store-scraper";
 import path from "path";
 import { fileURLToPath } from "url";
 import { connectToMongo } from "../config/db.js";
 import { extractGooglePlayAppId, extractAppleAppId } from "../utils/extractors.js";
+
+axiosRetry(axios, {
+  retries: 3, // number of retries
+  retryDelay: (retryCount) => {
+    return retryCount * 1000; // time interval between retries
+  },
+  retryCondition: (error) => {
+    // retry only on 503 errors
+    return error.response.status === 503;
+  },
+});
 
 // so we can get __dirname if needed
 const __filename = fileURLToPath(import.meta.url);
@@ -327,7 +339,11 @@ export const generatePhrasesFromWebsite = async (websiteContent) => {
     console.log("[generatePhrasesFromWebsite] Generated USP Phrases:", phrases);
     return phrases;
   } catch (error) {
-    console.error('[generatePhrasesFromWebsite] Error:', error);
+    console.error("[generateUSPhrases] Error generating USP phrases:", error.message);
+    if (error.response && error.response.status === 503) {
+      console.error("Service Unavailable: The server is temporarily unable to handle the request.");
+    }
+    throw new Error("Failed to generate USP phrases");
   }
 };
 
