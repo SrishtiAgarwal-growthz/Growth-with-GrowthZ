@@ -215,7 +215,7 @@ export const animationTemplates = {
       .secondary-text {
         color: ${textColor};
         font-family: ${fontFamily};
-        font-size: 8px;
+        font-size: 10px;
         font-weight: 500;
         hyphens: auto;
         letter-spacing: 1.2px;
@@ -587,12 +587,42 @@ export const animationTemplates = {
             : \`<p class="primary-text">\${processedText.primaryText}</p>\`;
 
           container.innerHTML = html;
-        }
+        
+          // Dynamic font size adjustment
+          const primaryText = container.querySelector('.primary-text');
+          if (primaryText) {
+            let fontSize = parseInt(window.getComputedStyle(primaryText).fontSize);
+            const minFontSize = 56;
+            
+            while (
+                fontSize > minFontSize && 
+                (primaryText.scrollHeight > primaryText.clientHeight || 
+                primaryText.scrollWidth > primaryText.clientWidth)
+            ) {
+                fontSize -= 2;
+                primaryText.style.fontSize = \`\${fontSize}px\`;
+            }
+          }
 
-        // Wait for fonts to be ready, then insert text
-        document.fonts.ready.then(() => {
-          formatText();
-        });
+          const secondaryText = container.querySelector('.secondary-text');
+          if (secondaryText) {
+            let fontSize = parseInt(window.getComputedStyle(secondaryText).fontSize);
+            const minFontSize = 46;
+            
+            while (
+                fontSize > minFontSize && 
+                (secondaryText.scrollHeight > secondaryText.clientHeight || 
+                secondaryText.scrollWidth > secondaryText.clientWidth)
+            ) {
+                fontSize -= 2;
+                secondaryText.style.fontSize = \`\${fontSize}px\`;
+          }
+        }
+      }
+
+      // Run when DOM is ready and after fonts are loaded
+      formatText();
+      document.fonts.ready.then(formatText);
       </script>
       </body>
       </html>
