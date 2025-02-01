@@ -1,18 +1,26 @@
 
 import PropTypes from 'prop-types';
-import {
-  Home,
-  Users,
-  Bell,
-  Briefcase,
-  Search,
-  MessageSquare,
-  MoreHorizontal,
-  ThumbsUp,
-  MessageCircle,
-  Share2,
-  Send
-} from 'lucide-react';
+import { Home, Users, Bell, Briefcase, Search, MessageSquare, MoreHorizontal, ThumbsUp, MessageCircle, Share2, Send } from 'lucide-react';
+
+const getShortAppName = (name) => {
+  if (!name) return "App Name"; // Default fallback
+
+  // Step 1: Check for ":" or "|"
+  if (name.includes(":")) {
+    return name.split(":")[0].trim();
+  }
+
+  if (name.includes("|")) {
+    return name.split("|")[0].trim();
+  }
+
+  if (name.includes("-")) {
+    return name.split("-")[0].trim();
+  }
+
+  // Step 2: Return the full name if no truncation is needed
+  return name.trim();
+};
 
 export default function LinkedInFeedCarousel({
   currentIndex,
@@ -28,7 +36,7 @@ export default function LinkedInFeedCarousel({
   }
 
   const currentAd = ads[currentIndex] || {};
-  const mainAdUrl = currentAd?.creativeUrl?.animationUrl;
+  const mainAdUrl = currentAd?.creativeUrl?.adUrl;
   const rawPhrase = currentAd?.creativeUrl?.phrase || "";
 
   return (
@@ -74,7 +82,7 @@ export default function LinkedInFeedCarousel({
                 />
               </div>
               <div>
-                <p className="text-sm font-semibold">{appName || "Company Name"}</p>
+                <p className="text-sm font-semibold">{getShortAppName(appName)}</p>
                 <p className="text-xs text-gray-500">Promoted</p>
               </div>
             </div>
@@ -103,7 +111,7 @@ export default function LinkedInFeedCarousel({
           >
             <div className="pl-2">
               <p className="text-gray-400 text-[8px]">{websiteLink}</p>
-              <p className="font-semibold text-[10px]">{appName}</p>
+              <p className="font-semibold text-[10px]">{getShortAppName(appName)}</p>
             </div>
             <button
               onClick={() =>
@@ -111,7 +119,7 @@ export default function LinkedInFeedCarousel({
               }
               className="bg-white px-3 py-1 rounded text-[10px]"
             >
-              Learn More
+              Install Now
             </button>
           </div>
 

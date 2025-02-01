@@ -146,7 +146,7 @@ export const animationTemplates = {
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        padding-top: 34px;
+        padding-top: 32px;
       }
 
       .logo-container {
@@ -168,7 +168,7 @@ export const animationTemplates = {
       .text-section {
         font-family: ${fontFamily};
         margin: 0 auto;
-        max-width: 95%;
+        max-width: 100%;
         position: relative;
         z-index: 1;
       }
@@ -177,7 +177,6 @@ export const animationTemplates = {
         display: flex;
         flex-direction: column;
         width: 100%;
-        opacity: 0;
         transform: translateX(-100px);
         animation: slideInFromLeft 1s ease forwards; /* Add slideInFromLeft animation */
         animation-delay: 0.5s; /* Delay for sequential effect */
@@ -187,17 +186,16 @@ export const animationTemplates = {
         color: ${textColor};
         font-family: ${fontFamily};
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 700;
         hyphens: auto;
         letter-spacing: -0.02em;
         line-height: 1.2;
-        margin: 0 0 8 0;
+        margin: 0;
         max-width: 95%;
         overflow-wrap: break-word;
         padding: 0;
         text-align: center;
         word-wrap: break-word;
-        position: relative;
       }
 
       .primary-text::before {
@@ -220,14 +218,12 @@ export const animationTemplates = {
         hyphens: auto;
         letter-spacing: 1.2px;
         line-height: 1;
-        margin: 0;
-        max-width: 90%;
+        max-width: 100%;
         opacity: 0.9;
         overflow-wrap: break-word;
         padding: 0;
         text-align: center;
         word-wrap: break-word;
-        position: relative;
       }
 
       .secondary-text::before {
@@ -258,7 +254,6 @@ export const animationTemplates = {
         justify-content: center;
         margin: 0 auto;
         position: relative;
-        opacity: 0;
         transform: translateX(100px);
         animation: slideInFromRight 1s ease forwards; /* Add slideInFromRight animation */
         animation-delay: 1s; /* Delay for sequential effect */
@@ -280,7 +275,6 @@ export const animationTemplates = {
         display: flex;
         justify-content: center;
         margin-top: 6px;
-        opacity: 0;
         transform: translateX(-100px);
         animation: slideInFromLeft 1s ease forwards; /* Add slideInFromLeft animation */
         animation-delay: 1.5s; /* Delay for sequential effect */

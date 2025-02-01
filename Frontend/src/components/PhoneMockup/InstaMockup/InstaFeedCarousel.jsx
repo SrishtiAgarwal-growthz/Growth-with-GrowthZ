@@ -105,7 +105,7 @@ export default function InstagramFeedCarousel({
               }
              className="text-[10px] "
              >
-                Shop Now
+                Install Now
              </button>
             <svg 
               viewBox="0 0 24 24" 

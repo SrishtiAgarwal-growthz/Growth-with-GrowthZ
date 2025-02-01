@@ -7,7 +7,7 @@ import { processAppImages } from "./creativesService.js"; // We'll import from c
 // Retry logic with exponential backoff
 const retryWithBackoff = async (fn, retries = 3, delay = 1000) => {
   try {
-    return await fn();
+    return await fn();``
   } catch (error) {
     if (retries === 0) throw error;
 
@@ -62,8 +62,8 @@ export const fetchOrCreateApp = async (googlePlayUrl, appleAppUrl, websiteUrl = 
 /**
  * saveAppDetailsInDb:
  *   - Scrape Google/Apple data, upsert in `Apps`.
- *   - Preserve imagesProcessed if the app already exists; otherwise defaults to false.
- *   - Optionally calls remove-bg (processAppImages) if imagesProcessed is still false.
+ *   - If the doc is new or imagesProcessed is false, we do remove-bg on up to 5 screenshots.
+ *   - We rely on processAppImages to set imagesProcessed=true **only** if all 5 succeed.
  */
 export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl = null) => {
   console.log("[saveAppDetailsInDb] Called with:", { googlePlayUrl, appleAppUrl, websiteUrl });
@@ -74,7 +74,6 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
 
   // ------------------------------------------------------------
   // 1) Try to find if there's already an existing app doc
-  //    (by googleBundleId or appleBundleId).
   // ------------------------------------------------------------
   let existingDoc = null;
   let googleAppId = null;
@@ -89,13 +88,11 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
     appleId = match ? match[1] : null;
   }
 
-  // Attempt a find by either googleBundleId or appleBundleId
   let existingQuery = null;
   if (googleAppId) {
     existingQuery = { googleBundleId: googleAppId };
   } else if (appleId) {
     existingQuery = { appleBundleId: Number(appleId) };
-    // 'id' from app-store-scraper is numeric
   }
 
   if (existingQuery) {
@@ -107,21 +104,18 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
 
   // ------------------------------------------------------------
   // 2) Prepare base appDetails object
-  //    (Preserve imagesProcessed if doc is found)
   // ------------------------------------------------------------
-  const nowUTC = new Date(); // Get current UTC time
-  const ISTOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+  const nowUTC = new Date(); // current UTC time
+  const ISTOffset = 5.5 * 60 * 60 * 1000; // 5hr 30min in ms
   const createdAtIST = new Date(nowUTC.getTime() + ISTOffset);
-  
+
   let appDetails = {
-    // On brand-new docs, set imagesProcessed to false initially
+    // if doc already exists, keep imagesProcessed as is; else default false
     imagesProcessed: existingDoc?.imagesProcessed ?? false,
     recordCreated: existingDoc?.recordCreated || createdAtIST,
     images: existingDoc?.images || [],
   };
 
-  // If the existing doc has a known appId, keep it
-  // or we'll fill it below when we scrape Google
   if (existingDoc?.appId) {
     appDetails.appId = existingDoc.appId;
   }
@@ -185,10 +179,7 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
         appleVersion: appleData.version,
       };
     } catch (error) {
-      console.warn(
-        "[saveAppDetailsInDb] Apple Store fetch failed, continuing with Google data only:",
-        error.message
-      );
+      console.warn("[saveAppDetailsInDb] Apple Store fetch failed, continuing with Google data only:", error.message);
       // do not throw => continue
     }
   }
@@ -231,22 +222,17 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
 
   // ------------------------------------------------------------
   // 7) Optionally call remove-bg once if imagesProcessed is false
+  //    We rely on processAppImages itself to set imagesProcessed = true
   // ------------------------------------------------------------
   if (!savedApp.imagesProcessed) {
     console.log("[saveAppDetailsInDb] imagesProcessed is false => calling processAppImages...");
     try {
       // Perform the background removal
       await processAppImages(savedApp._id);
-      // If success => mark true
-      await appsCollection.updateOne(
-        { _id: savedApp._id },
-        { $set: { imagesProcessed: true } }
-      );
-      console.log("[saveAppDetailsInDb] Marked imagesProcessed = true");
     } catch (err) {
       console.error("[saveAppDetailsInDb] Error processing images =>", err.message);
-      // If you want to skip infinite retries, you could:
-      // await appsCollection.updateOne({ _id: savedApp._id }, { $set: { imagesProcessed: true } });
+      // If you want to skip infinite retries, you can handle it differently,
+      // but do NOT set imagesProcessed = true if we failed to process them.
     }
   } else {
     console.log("[saveAppDetailsInDb] imagesProcessed already true => skip remove-bg calls.");

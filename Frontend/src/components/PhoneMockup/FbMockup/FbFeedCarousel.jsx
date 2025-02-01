@@ -10,6 +10,26 @@ import {
   X,
 } from "lucide-react";
 
+const getShortAppName = (name) => {
+  if (!name) return "App Name"; // Default fallback
+
+  // Step 1: Check for ":" or "|"
+  if (name.includes(":")) {
+    return name.split(":")[0].trim();
+  }
+
+  if (name.includes("|")) {
+    return name.split("|")[0].trim();
+  }
+
+  if (name.includes("-")) {
+    return name.split("-")[0].trim();
+  }
+
+  // Step 2: Return the full name if no truncation is needed
+  return name.trim();
+};
+
 export default function FacebookFeedCarousel({
   currentIndex,
   ads,
@@ -81,7 +101,7 @@ export default function FacebookFeedCarousel({
               </div>
               <div>
                 <div className="flex items-center">
-                  <p className="text-[10px] font-semibold">
+                  <p className="text-[9px] font-semibold">
                     {appName || "MyApp"}
                   </p>
                 </div>
@@ -116,7 +136,7 @@ export default function FacebookFeedCarousel({
           >
             <div className="pl-2">
               <p className="text-gray-400 text-[8px]">{websiteLink}</p>
-              <p className="font-semibold text-[10px]">{appName}</p>
+              <p className="font-semibold text-[10px]">{getShortAppName(appName)}</p>
             </div>
             <button
               onClick={() =>

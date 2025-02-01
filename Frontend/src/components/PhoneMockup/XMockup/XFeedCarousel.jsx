@@ -14,6 +14,26 @@ import {
   // MoreHorizontal,
 } from 'lucide-react';
 
+const getShortAppName = (name) => {
+  if (!name) return "App Name"; // Default fallback
+
+  // Step 1: Check for ":" or "|"
+  if (name.includes(":")) {
+    return name.split(":")[0].trim();
+  }
+
+  if (name.includes("|")) {
+    return name.split("|")[0].trim();
+  }
+
+  if (name.includes("-")) {
+    return name.split("-")[0].trim();
+  }
+
+  // Step 2: Return the full name if no truncation is needed
+  return name.trim();
+};
+
 export default function TwitterFeedCarousel({
   currentIndex,
   ads,
@@ -28,7 +48,7 @@ export default function TwitterFeedCarousel({
   }
 
   const currentAd = ads[currentIndex] || {};
-  const mainAdUrl = currentAd?.creativeUrl?.animationUrl;
+  const mainAdUrl = currentAd?.creativeUrl?.adUrl;
   const rawPhrase = currentAd?.creativeUrl?.phrase || "";
 
   // Format numbers with K/M suffix
@@ -87,10 +107,10 @@ export default function TwitterFeedCarousel({
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center flex-wrap">
-                  <span className="font-bold mr-1 text-[11px]">{appName}</span>
-                  <span className="text-gray-500 text-xs">@{appName.replace(/\s+/g, '')}</span>
+                  <span className="font-bold mr-1 text-[11px]">{getShortAppName(appName)}</span>
+                  <span className="text-gray-500 text-xs">@{getShortAppName(appName)}</span>
                   {/* <span className="text-gray-500 mx-1">·</span> */}
-                  <span className="text-xs px-1 rounded bg-gray-800 text-gray-400">Ad</span>
+                  <span className="text-xs mx-1 px-1 rounded bg-gray-800 text-gray-400">Ad</span>
                 </div>
 
               </div>
