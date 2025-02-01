@@ -181,7 +181,7 @@ PhoneMockup.propTypes = {
   handlePrev: PropTypes.func,
   onAccept: PropTypes.func,
   onReject: PropTypes.func,
-  adStatus: PropTypes.bool
+  adStatus: PropTypes.string
 };
 
 PhoneMockup.defaultProps = {

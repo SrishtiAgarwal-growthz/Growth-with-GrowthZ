@@ -12,6 +12,9 @@ import loader from "../assets/PhoneMockup/loader.mp4";
 import IgFeedCarousel from "../components/PhoneMockup/InstaMockup/InstaFeedCarousel";
 import IgStoryAds from "../components/PhoneMockup/InstaMockup/InstaStoryAds";
 import LinkedInFeedCarousel from "../components/PhoneMockup/LinkedinMockup/LinkedinFeedCarousel";
+import XFeedCarousel from "../components/PhoneMockup/XMockup/XFeedCarousel"
+import TwitterIcon from "../assets/PhoneMockup/Twitter.png"
+import LinkedinIcon from "../assets/PhoneMockup/Linkedin.png"
 
 const BASE_URL = "http://localhost:8000";
 
@@ -30,7 +33,8 @@ export default function Rainbow() {
     animatedAds: [],
     igFeedCarousel: [],
     igStoryAds: [],
-    linkedinFeedCarousel: []
+    linkedinFeedCarousel: [],
+    xFeedCarousel:[]
   });
 
   const [currentIndex, setCurrentIndex] = useState({
@@ -40,7 +44,8 @@ export default function Rainbow() {
     animatedAds: 0,
     igFeedCarousel: 0,
     igStoryAds: 0,
-    linkedinFeedCarousel:0
+    linkedinFeedCarousel:0,
+    xFeedCarousel:0
   });
 
   const [adStatuses, setAdStatuses] = useState({
@@ -55,7 +60,8 @@ export default function Rainbow() {
     { id: "facebook", alt: "Facebook", icon: FacebookIcon },
     { id: "google", alt: "Google", icon: GoogleIcon },
     { id: "instagram", alt: "Instagram"},
-    { id: "linkedin", alt: "Linkedin"}
+    { id: "linkedin", alt: "Linkedin", icon:LinkedinIcon},
+    { id: "x", alt: "X", icon: TwitterIcon}
   ];
 
   useEffect(() => {
@@ -119,6 +125,16 @@ export default function Rainbow() {
             }
           }));
   
+          const xFeedCarousel = rawStaticAds
+          .filter((ad) => ad.creativeUrl?.size === "800x800" && ad.creativeUrl?.adUrl)
+          .map((ad) => ({
+            ...ad,
+            creativeUrl: {
+              ...ad.creativeUrl,
+              type: "xFeedCarousel"
+            }
+          }));
+          
         // Organize animation ads by their types
         const feedCarousel = rawAnimationAds
           .filter((ad) => ad.creativeUrl?.size === "1080x1080" && ad.creativeUrl?.animationUrl)
@@ -130,8 +146,8 @@ export default function Rainbow() {
             }
           }));
 
-          const linkedinFeedCarousel = rawAnimationAds
-          .filter((ad) => ad.creativeUrl?.size === "1080x1080" && ad.creativeUrl?.animationUrl)
+          const linkedinFeedCarousel = rawStaticAds
+          .filter((ad) => ad.creativeUrl?.size === "720x900" && ad.creativeUrl?.adUrl)
           .map((ad) => ({
             ...ad,
             creativeUrl: {
@@ -174,6 +190,7 @@ export default function Rainbow() {
           igFeedCarousel,
           igStoryAds,
           linkedinFeedCarousel,
+          xFeedCarousel,
         });
       } catch (err) {
         console.error("[Rainbow] Error fetching ads:", err);
@@ -198,6 +215,8 @@ export default function Rainbow() {
       setActiveMockup("igStoryAds")
       else if (activeApp === 'linkedin')
         setActiveMockup("linkedinFeedCarousel")
+      else if (activeApp === 'x')
+        setActiveMockup("xFeedCarousel")
   }, [activeApp]);
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -237,13 +256,13 @@ export default function Rainbow() {
     }
   
     // For animated ads (feedCarousel and animatedAds)
-    if (mockupType === "feedCarousel" || mockupType === "animatedAds" || mockupType === "igFeedCarousel" || mockupType === "linkedinFeedCarousel") {
+    if (mockupType === "feedCarousel" || mockupType === "animatedAds" || mockupType === "igFeedCarousel" ) {
       // Return the raw animation URL without any encoding
       return currentAd.creativeUrl.animationUrl || null;
     }
   
     // For static ads (storyAds and displayAds)
-    if (mockupType === "storyAds" || mockupType === "displayAds" || mockupType=== "igStoryAds") {
+    if (mockupType === "storyAds" || mockupType === "displayAds" || mockupType=== "igStoryAds" || mockupType === "linkedinFeedCarousel" || mockupType === "xFeedCarousel") {
       return currentAd.creativeUrl.adUrl || null;
     }
   
@@ -422,6 +441,8 @@ export default function Rainbow() {
         return <IgFeedCarousel {...mockupProps} />;
       case "linkedinFeedCarousel":
         return <LinkedInFeedCarousel {...mockupProps} />;
+      case "xFeedCarousel":
+        return <XFeedCarousel {...mockupProps} />;
       default:
         return null;
     }
@@ -556,19 +577,8 @@ export default function Rainbow() {
       >
         Feed Carousel
       </button>
-      {/* <button
-        onClick={() => setActiveMockup("igReels")}
-        className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
-          ${
-            activeMockup === "igReels"
-              ? "selected-gradient"
-              : "unselected-gradient"
-          }`}
-      >
-        Reels Ads
-      </button> */}
     </>
-  ) : (
+  ) :activeApp === "linkedin" ? (
     //Linkedin
     <>
     <button
@@ -576,6 +586,21 @@ export default function Rainbow() {
         className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
           ${
             activeMockup === "linkedinFeedCarousel"
+              ? "selected-gradient"
+              : "unselected-gradient"
+          }`}
+      >
+        Feed Carousel
+      </button>
+    </>
+  ):(
+    //X
+    <>
+    <button
+        onClick={() => setActiveMockup("xFeedCarousel")}
+        className={`w-32 sm:w-40 h-8 sm:h-9 rounded-xl text-white font-medium transition-all duration-300
+          ${
+            activeMockup === "xFeedCarousel"
               ? "selected-gradient"
               : "unselected-gradient"
           }`}
