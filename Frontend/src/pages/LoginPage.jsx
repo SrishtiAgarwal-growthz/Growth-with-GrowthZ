@@ -1,9 +1,9 @@
-import { Eye } from "lucide-react";
+import { Eye, Loader2 } from "lucide-react";  // Add Loader2 import
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signIn, signUp, resetPassword } from '../firebase/auth';
 import image from "../assets/loginPage.png";
-import CustomAlert from "../components/Alert";  // Import the CustomAlert component
+import CustomAlert from "../components/Alert";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);  // Add loading state
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -32,6 +33,7 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);  // Start loading
     try {
       if (isSignUp) {
         await signUp(
@@ -49,6 +51,8 @@ const LoginPage = () => {
       }
     } catch (error) {
       showAlert(error.message);
+    } finally {
+      setIsLoading(false);  // Stop loading regardless of outcome
     }
   };
 
@@ -57,11 +61,14 @@ const LoginPage = () => {
       showAlert('Please enter your email address');
       return;
     }
+    setIsLoading(true);  // Start loading
     try {
       await resetPassword(formData.email);
       showAlert('Password reset link sent to your email');
     } catch (error) {
       showAlert(error.message || 'Error sending reset link');
+    } finally {
+      setIsLoading(false);  // Stop loading
     }
   };
 
@@ -69,6 +76,7 @@ const LoginPage = () => {
     <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 min-h-screen">
         <div className="flex min-h-screen items-center justify-center gap-20">
+          {/* Left side image - no changes */}
           <div className="hidden lg:flex lg:w-1/2 justify-end">
             <div className="relative w-[500px] h-[500px]">
               <div className="bg-gradient-to-br from-[#4865F4] to-[#FA828C] rounded-full w-32 h-32 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-20 blur-xl" />
@@ -82,8 +90,10 @@ const LoginPage = () => {
             </div>
           </div>
 
+          {/* Right side form */}
           <div className="w-full lg:w-1/2 flex justify-center lg:justify-start px-4 sm:px-6 lg:px-8">
             <div className="w-full max-w-[430px] space-y-3">
+              {/* Header section - no changes */}
               <div className="mb-4 text-center">
                 <span className="bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-transparent bg-clip-text">
                   Genius
@@ -97,6 +107,7 @@ const LoginPage = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Form fields remain the same */}
                 {isSignUp ? (
                   <>
                     <div>
@@ -184,8 +195,9 @@ const LoginPage = () => {
                       <div className="text-right mt-1">
                         <button
                           type="button"
+                          disabled={isLoading}
                           onClick={handleForgotPassword}
-                          className="text-sm text-gray-400 hover:text-purple-400 transition-colors"
+                          className="text-sm text-gray-400 hover:text-purple-400 transition-colors disabled:opacity-50"
                         >
                           Forgot Password?
                         </button>
@@ -194,19 +206,29 @@ const LoginPage = () => {
                   </>
                 )}
 
+                {/* Updated Submit Button with Loading State */}
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-lg bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-white hover:opacity-90 transition-opacity font-medium mt-6"
+                  disabled={isLoading}
+                  className="w-full py-3 rounded-lg bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-white hover:opacity-90 transition-opacity font-medium mt-6 relative disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  Sign {isSignUp ? "Up" : "In"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" size={20} />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <span>Sign {isSignUp ? "Up" : "In"}</span>
+                  )}
                 </button>
 
                 <div className="text-center text-sm text-gray-400 pt-4">
                   {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
                   <button
                     type="button"
+                    disabled={isLoading}
                     onClick={() => setIsSignUp(!isSignUp)}
-                    className="bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-transparent bg-clip-text hover:opacity-90 transition-opacity"
+                    className="bg-gradient-to-r from-[#FA828C] to-[#4865F4] text-transparent bg-clip-text hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
                     Sign {isSignUp ? "In" : "Up"}
                   </button>

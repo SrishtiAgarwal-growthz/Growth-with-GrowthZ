@@ -37,7 +37,7 @@ export default function Rainbow() {
     igFeedCarousel: [],
     igStoryAds: [],
     linkedinFeedCarousel: [],
-    xFeedCarousel: []
+    xFeedCarousel: [],
   });
 
   const [currentIndex, setCurrentIndex] = useState({
@@ -48,12 +48,12 @@ export default function Rainbow() {
     igFeedCarousel: 0,
     igStoryAds: 0,
     linkedinFeedCarousel: 0,
-    xFeedCarousel: 0
+    xFeedCarousel: 0,
   });
 
   const [adStatuses, setAdStatuses] = useState({
     approved: new Set(),
-    rejected: new Set()
+    rejected: new Set(),
   });
 
   const [activeApp, setActiveApp] = useState("facebook");
@@ -64,16 +64,16 @@ export default function Rainbow() {
     { id: "google", alt: "Google", icon: GoogleIcon },
     { id: "instagram", alt: "Instagram" },
     { id: "linkedin", alt: "Linkedin", icon: LinkedinIcon },
-    { id: "x", alt: "X", icon: TwitterIcon }
+    { id: "x", alt: "X", icon: TwitterIcon },
   ];
 
   useEffect(() => {
     const storedAppId = localStorage.getItem("appId");
-    if (!storedAppId) {
-      console.log("No appId found, redirecting to genius");
-      navigate("/genius");
-      return;
-    }
+    // if (!storedAppId) {
+    //   console.log("No appId found, redirecting to genius");
+    //   navigate("/genius");
+    //   return;
+    // }
 
     const fetchAds = async () => {
       try {
@@ -97,59 +97,73 @@ export default function Rainbow() {
 
         // Sort static ads by size
         const storyAds = rawStaticAds
-          .filter((ad) => ad.creativeUrl?.size === "1440x2560" && ad.creativeUrl?.adUrl)
+          .filter(
+            (ad) =>
+              ad.creativeUrl?.size === "1440x2560" && ad.creativeUrl?.adUrl
+          )
           .map((ad) => ({
             ...ad,
-            creativeUrl: { ...ad.creativeUrl, type: "storyAd" }
+            creativeUrl: { ...ad.creativeUrl, type: "storyAd" },
           }));
 
         const igStoryAds = rawStaticAds
-          .filter((ad) => ad.creativeUrl?.size === "1440x2560" && ad.creativeUrl?.adUrl)
+          .filter(
+            (ad) =>
+              ad.creativeUrl?.size === "1440x2560" && ad.creativeUrl?.adUrl
+          )
           .map((ad) => ({
             ...ad,
-            creativeUrl: { ...ad.creativeUrl, type: "igStoryAd" }
+            creativeUrl: { ...ad.creativeUrl, type: "igStoryAd" },
           }));
 
         const displayAds = rawStaticAds
-          .filter((ad) => ad.creativeUrl?.size === "300x250" && ad.creativeUrl?.adUrl)
+          .filter(
+            (ad) => ad.creativeUrl?.size === "300x250" && ad.creativeUrl?.adUrl
+          )
           .map((ad) => ({
             ...ad,
-            creativeUrl: { ...ad.creativeUrl, type: "displayAd" }
+            creativeUrl: { ...ad.creativeUrl, type: "displayAd" },
           }));
 
         const xFeedCarousel = rawStaticAds
-          .filter((ad) => ad.creativeUrl?.size === "800x800" && ad.creativeUrl?.adUrl)
+          .filter(
+            (ad) => ad.creativeUrl?.size === "800x800" && ad.creativeUrl?.adUrl
+          )
           .map((ad) => ({
             ...ad,
-            creativeUrl: { ...ad.creativeUrl, type: "xFeedCarousel" }
+            creativeUrl: { ...ad.creativeUrl, type: "xFeedCarousel" },
           }));
 
         // Sort animations by size
         const feedCarousel = rawAnimationAds
           .filter(
             (ad) =>
-              ad.creativeUrl?.size === "1080x1080" && ad.creativeUrl?.animationUrl
+              ad.creativeUrl?.size === "1080x1080" &&
+              ad.creativeUrl?.animationUrl
           )
           .map((ad) => ({
             ...ad,
-            creativeUrl: { ...ad.creativeUrl, type: "feedCarousel" }
+            creativeUrl: { ...ad.creativeUrl, type: "feedCarousel" },
           }));
 
         const linkedinFeedCarousel = rawStaticAds
-          .filter((ad) => ad.creativeUrl?.size === "720x900" && ad.creativeUrl?.adUrl)
+          .filter(
+            (ad) => ad.creativeUrl?.size === "720x900" && ad.creativeUrl?.adUrl
+          )
           .map((ad) => ({
             ...ad,
-            creativeUrl: { ...ad.creativeUrl, type: "feedCarousel" }
+            creativeUrl: { ...ad.creativeUrl, type: "feedCarousel" },
           }));
 
         const igFeedCarousel = rawAnimationAds
           .filter(
             (ad) =>
-              ad.creativeUrl?.size === "1080x1080" && ad.creativeUrl?.animationUrl
+              ad.creativeUrl?.size === "1080x1080" &&
+              ad.creativeUrl?.animationUrl
           )
           .map((ad) => ({
             ...ad,
-            creativeUrl: { ...ad.creativeUrl, type: "igFeedCarousel" }
+            creativeUrl: { ...ad.creativeUrl, type: "igFeedCarousel" },
           }));
 
         const animatedAds = rawAnimationAds
@@ -159,7 +173,7 @@ export default function Rainbow() {
           )
           .map((ad) => ({
             ...ad,
-            creativeUrl: { ...ad.creativeUrl, type: "animatedAd" }
+            creativeUrl: { ...ad.creativeUrl, type: "animatedAd" },
           }));
 
         // Finally set them in state
@@ -171,7 +185,7 @@ export default function Rainbow() {
           igFeedCarousel,
           igStoryAds,
           linkedinFeedCarousel,
-          xFeedCarousel
+          xFeedCarousel,
         });
       } catch (err) {
         console.error("[Rainbow] Error fetching ads:", err);
@@ -206,7 +220,7 @@ export default function Rainbow() {
 
     setCurrentIndex((prev) => ({
       ...prev,
-      [activeMockup]: (prev[activeMockup] + 1) % currentAds.length
+      [activeMockup]: (prev[activeMockup] + 1) % currentAds.length,
     }));
   }, [ads, activeMockup]);
 
@@ -220,7 +234,7 @@ export default function Rainbow() {
       [activeMockup]:
         prev[activeMockup] === 0
           ? currentAds.length - 1
-          : prev[activeMockup] - 1
+          : prev[activeMockup] - 1,
     }));
   }, [ads, activeMockup]);
 
@@ -270,14 +284,17 @@ export default function Rainbow() {
 
         const payload = {
           creativeId: creativeUrl,
-          status: "approved"
+          status: "approved",
         };
 
-        const response = await fetch(`${BASE_URL}/api/creativesStatus/approve`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        const response = await fetch(
+          `${BASE_URL}/api/creativesStatus/approve`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
         if (!response.ok) {
           const data = await response.json();
           throw new Error(data.message || "Failed to approve creative");
@@ -319,8 +336,8 @@ export default function Rainbow() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             creativeId: creativeUrl,
-            status: "rejected"
-          })
+            status: "rejected",
+          }),
         });
         if (!response.ok) {
           const data = await response.json();
@@ -399,7 +416,7 @@ export default function Rainbow() {
           justifyContent: "center",
           alignItems: "center",
           height: "100vh",
-          backgroundColor: "black"
+          backgroundColor: "black",
         }}
       >
         <video autoPlay loop muted style={{ width: "200px", height: "200px" }}>
@@ -414,8 +431,53 @@ export default function Rainbow() {
     <div className="bg-black min-h-screen w-full relative overflow-x-hidden">
       {error && <p className="text-red-500 text-center">{error}</p>}
 
+      <div className="fixed top-5 right-4"> {/* Added container with positioning */}
+      <button className="group flex items-center justify-start w-10 h-10 rounded-full border-none cursor-pointer relative overflow-hidden transition-all duration-300 shadow-md hover:w-32 hover:rounded-full bg-red-500 active:translate-x-0.5 active:translate-y-0.5"
+      onClick={ ()=> navigate("/login")}
+      >
+        <div className="w-full transition-all duration-300 flex items-center justify-center group-hover:w-1/3 group-hover:pl-5">
+          <svg 
+            viewBox="0 0 512 512" 
+            className="w-4 h-4 fill-white"
+          >
+            <path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z" />
+          </svg>
+        </div>
+        
+        <div className="absolute right-0 w-0 opacity-0 text-white text-[15px] font-semibold transition-all duration-300 group-hover:opacity-100 group-hover:w-2/3 group-hover:pr-3">
+          Logout
+        </div>
+      </button>
+    </div>
+
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-[6rem] bg-[#0F0F0F] flex flex-col items-center justify-center gap-8 z-10">
+      <div className=" fixed left-0">
+        <button
+        onClick={() => navigate("/genius")}
+          className="bg-black text-center w-24 rounded-2xl h-7 relative text-white text-xs font-semibold group"
+          type="button"
+        >
+          <div className="bg-blue-500 rounded-xl h-6 w-1/4 flex items-center justify-center absolute left-1 top-[4px] group-hover:w-[80px] z-10 duration-500">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 1024 1024"
+              height="15px"
+              width="15px"
+            >
+              <path
+                d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"
+                fill="#000000"
+              ></path>
+              <path
+                d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"
+                fill="#000000"
+              ></path>
+            </svg>
+          </div>
+          <p className="translate-x-1">Go Back</p>
+        </button>
+      </div>
+      <div className="fixed left-0 top-[80px] h-[calc(100%-80px)] w-[6rem] bg-[#0F0F0F] flex flex-col items-center justify-center gap-8 z-10">
         {apps.map((app) => (
           <div key={app.id} className="relative flex items-center">
             {activeApp === app.id && (
@@ -430,7 +492,11 @@ export default function Rainbow() {
               } transition-colors duration-300`}
             >
               <div className="w-[3rem] h-[3rem] flex items-center justify-center">
-                <img src={app.icon} alt={app.alt} className="w-full h-full object-contain" />
+                <img
+                  src={app.icon}
+                  alt={app.alt}
+                  className="w-full h-full object-contain"
+                />
               </div>
             </button>
           </div>
