@@ -432,7 +432,7 @@ export default function Rainbow() {
       {error && <p className="text-red-500 text-center">{error}</p>}
 
       <div className="fixed top-5 right-4"> {/* Added container with positioning */}
-      <button className="group flex items-center justify-start w-10 h-10 rounded-full border-none cursor-pointer relative overflow-hidden transition-all duration-300 shadow-md hover:w-32 hover:rounded-full bg-red-500 active:translate-x-0.5 active:translate-y-0.5"
+      <button className="group flex items-center justify-start w-10 h-10 rounded-full border-none cursor-pointer relative overflow-hidden transition-all duration-300 shadow-md hover:w-32 hover:rounded-full bg-blue-500 active:translate-x-0.5 active:translate-y-0.5"
       onClick={ ()=> navigate("/login")}
       >
         <div className="w-full transition-all duration-300 flex items-center justify-center group-hover:w-1/3 group-hover:pl-5">
@@ -451,7 +451,7 @@ export default function Rainbow() {
     </div>
 
       {/* Sidebar */}
-      <div className=" fixed left-0">
+      <div className=" fixed left-0 mt-4">
         <button
         onClick={() => navigate("/genius")}
           className="bg-black text-center w-24 rounded-2xl h-7 relative text-white text-xs font-semibold group"

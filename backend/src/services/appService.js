@@ -76,17 +76,8 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
   // 1) Try to find if there's already an existing app doc
   // ------------------------------------------------------------
   let existingDoc = null;
-  let googleAppId = null;
-  let appleId = null;
-
-  if (googlePlayUrl) {
-    googleAppId = extractGooglePlayAppId(googlePlayUrl);
-  }
-  if (appleAppUrl) {
-    // e.g. /id12345 => "12345"
-    const match = appleAppUrl.match(/\/id(\d+)(?:\/)?/);
-    appleId = match ? match[1] : null;
-  }
+  let googleAppId = googlePlayUrl ? extractGooglePlayAppId(googlePlayUrl) : null;
+  let appleId = appleAppUrl ? (appleAppUrl.match(/\/id(\d+)(?:\/)?/) || [])[1] : null;
 
   let existingQuery = null;
   if (googleAppId) {
@@ -102,9 +93,14 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
     }
   }
 
-  // ------------------------------------------------------------
-  // 2) Prepare base appDetails object
-  // ------------------------------------------------------------
+  // ***** FIX: If the app exists AND images are processed, return it immediately *****
+  if (existingDoc && existingDoc.imagesProcessed) {
+    console.log("[saveAppDetailsInDb] App doc already processed. Returning existing doc without re-scraping.");
+    await client.close();
+    return existingDoc;
+  }
+
+  // Prepare the base appDetails object.
   const nowUTC = new Date(); // current UTC time
   const ISTOffset = 5.5 * 60 * 60 * 1000; // 5hr 30min in ms
   const createdAtIST = new Date(nowUTC.getTime() + ISTOffset);
@@ -229,15 +225,16 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
     try {
       // Perform the background removal
       await processAppImages(savedApp._id);
+
+      // Optionally, refresh savedApp after processing
+      savedApp = await appsCollection.findOne({ _id: savedApp._id });
     } catch (err) {
       console.error("[saveAppDetailsInDb] Error processing images =>", err.message);
-      // If you want to skip infinite retries, you can handle it differently,
-      // but do NOT set imagesProcessed = true if we failed to process them.
     }
   } else {
     console.log("[saveAppDetailsInDb] imagesProcessed already true => skip remove-bg calls.");
   }
 
-  // Return the final doc
-  return await appsCollection.findOne({ _id: savedApp._id });
+  await client.close();
+  return savedApp;
 };

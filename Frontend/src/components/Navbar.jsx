@@ -26,8 +26,8 @@ const Navbar = () => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleProductClick = (e) => {
@@ -38,17 +38,12 @@ const Navbar = () => {
   return (
     <nav
       className={`fixed top-0 left-0 w-full z-50 h-[5.125rem] md:h-[6rem] flex items-center transition-colors duration-300 ${
-        hasScrolled
-          ? "bg-black/60 backdrop-blur-xl"
-          : "bg-black"
+        hasScrolled ? "bg-black/60 backdrop-blur-xl" : "bg-black"
       }`}
     >
       <div className="max-w-7xl mx-auto flex justify-between items-center px-[2rem] w-full h-full">
         {/* Logo */}
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center"
-        >
+        <button onClick={() => navigate("/")} className="flex items-center">
           <img
             src={logo}
             alt="Logo"
@@ -61,47 +56,56 @@ const Navbar = () => {
           <div className="flex space-x-[2rem] text-[1rem]">
             {/* Products Dropdown */}
             <div
-  ref={dropdownRef}
-  className="relative group"
-  onMouseEnter={() => {
-    if (closeTimeout) clearTimeout(closeTimeout);
-    !isProductClicked && setIsProductDropdownOpen(true);
-  }}
-  onMouseLeave={() => {
-    if (!isProductClicked) {
-      const timeout = setTimeout(() => {
-        setIsProductDropdownOpen(false);
-      }, 300); // 300ms delay before closing
-      setCloseTimeout(timeout);
-    }
-  }}
->
+              ref={dropdownRef}
+              className="relative group"
+              onMouseEnter={() => {
+                if (closeTimeout) clearTimeout(closeTimeout);
+                !isProductClicked && setIsProductDropdownOpen(true);
+              }}
+              onMouseLeave={() => {
+                if (!isProductClicked) {
+                  const timeout = setTimeout(() => {
+                    setIsProductDropdownOpen(false);
+                  }, 300); // 300ms delay before closing
+                  setCloseTimeout(timeout);
+                }
+              }}
+            >
               <a
                 href="#products"
                 onClick={handleProductClick}
                 className={`text-white hover:text-blue-500 transition duration-300 flex items-center ${
-                  (isProductDropdownOpen || isProductClicked) ? 'text-blue-500' : ''
+                  isProductDropdownOpen || isProductClicked
+                    ? "text-blue-500"
+                    : ""
                 }`}
               >
                 Products
                 <svg
                   className={`ml-2 w-4 h-4 transition-transform duration-200 ${
-                    (isProductDropdownOpen || isProductClicked) ? 'rotate-180' : ''
+                    isProductDropdownOpen || isProductClicked
+                      ? "rotate-180"
+                      : ""
                   }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </a>
 
               {/* Dropdown Menu */}
               <div
                 className={`absolute left-0 mt-2 w-48 rounded-md shadow-lg transition-all duration-200 ease-in-out transform ${
-                  (isProductDropdownOpen || isProductClicked)
-                    ? 'opacity-100 translate-y-0'
-                    : 'opacity-0 -translate-y-2 pointer-events-none'
+                  isProductDropdownOpen || isProductClicked
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 -translate-y-2 pointer-events-none"
                 }`}
               >
                 <div className="rounded-md bg-black shadow-xs">
@@ -173,11 +177,17 @@ const Navbar = () => {
             </a>
           </div>
           <button
-            onClick={() => navigate("/login")}
-            className="bg-transparent text-white px-[1.5rem] py-[0.5rem] rounded-full border-2 border-blue-500 hover:bg-blue-500 hover:text-black transition duration-300"
-          >
-            TRY ME
-          </button>
+        onClick={() => navigate("/login")}
+        className="relative overflow-hidden bg-transparent text-white px-6 py-2 rounded-full border-2 border-blue-500 transition-colors duration-300 group"
+      >
+        <span className="relative z-10 transition-colors duration-300 group-hover:text-black">
+          TRY ME
+        </span>
+        <div 
+          className="absolute inset-0 bg-blue-500 transform origin-bottom-left -translate-x-full translate-y-full transition-transform duration-300 group-hover:translate-x-0 group-hover:translate-y-0"
+        />
+      </button>
+
         </div>
 
         {/* Mobile Menu Button */}
@@ -209,18 +219,23 @@ const Navbar = () => {
               <span>Products</span>
               <svg
                 className={`w-4 h-4 transition-transform duration-200 ${
-                  isProductClicked ? 'rotate-180' : ''
+                  isProductClicked ? "rotate-180" : ""
                 }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </button>
             <div
               className={`pl-4 space-y-2 transition-all duration-200 ${
-                isProductClicked ? 'block' : 'hidden'
+                isProductClicked ? "block" : "hidden"
               }`}
             >
               <a

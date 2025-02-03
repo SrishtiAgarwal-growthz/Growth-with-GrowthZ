@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import image1 from "../assets/HomePage/Hero1.png";
@@ -62,13 +61,25 @@ const Hero = () => {
           <div className="flex justify-center mt-[1rem] sm:mt-[1.5rem]">
             <div
               onClick={() => navigate("/login")}
-              className="bg-[#015FF8] p-[0.125rem] rounded-full w-[8rem] md:w-[11.25rem] hover:shadow-lg transition-all duration-300 cursor-pointer"
+              className="bg-[#015FF8] p-[0.125rem] rounded-full w-[8rem] md:w-[11.25rem] hover:shadow-lg transition-all duration-300 cursor-pointer active:scale-75"
             >
-              <button className="bg-[#015FF8] w-full h-[2.75rem] md:h-[3.875rem] px-[1rem] rounded-full text-[0.75rem] md:text-[1.25rem] flex items-center justify-between text-white">
-                <span className="ml-[0.75rem] font-bold">TRY ME</span>
-                <div className="w-[2rem] md:w-[3rem] h-[2rem] md:h-[3rem] rounded-full bg-black flex items-center justify-center">
+              <button className="bg-blue-600 w-full h-11 md:h-16 px-4 rounded-full text-sm md:text-xl flex items-center justify-between text-white group ">
+                <span className="ml-3 font-bold">TRY ME</span>
+                <div className="w-8 md:w-12 h-8 md:h-12 rounded-full bg-black flex items-center justify-center relative overflow-hidden">
+                  {/* Original Arrow */}
                   <svg
-                    className="w-[1.5rem] md:w-[2rem] h-[1.5rem] md:h-[2rem] text-white transform -rotate-45"
+                    className="w-6 md:w-8 h-6 md:h-8 text-white absolute transform -rotate-45 duration-0 group-hover:duration-300 group-hover:translate-x-[150%] group-hover:-translate-y-[150%]"
+                    fill="none"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+
+                  {/* Copy Arrow */}
+                  <svg
+                    className="w-6 md:w-8 h-6 md:h-8 text-white absolute transform -rotate-45 -translate-x-[150%] translate-y-[150%] duration-0 group-hover:duration-300 delay-100 group-hover:translate-x-0 group-hover:translate-y-0"
                     fill="none"
                     strokeWidth="2"
                     stroke="currentColor"
@@ -247,4 +258,3 @@ const Hero = () => {
 };
 
 export default Hero;
-

@@ -177,6 +177,7 @@ export const animationTemplates = {
         display: flex;
         flex-direction: column;
         width: 100%;
+        opacity: 0;
         transform: translateX(-100px);
         animation: slideInFromLeft 1s ease forwards; /* Add slideInFromLeft animation */
         animation-delay: 0.5s; /* Delay for sequential effect */
@@ -254,6 +255,7 @@ export const animationTemplates = {
         justify-content: center;
         margin: 0 auto;
         position: relative;
+        opacity: 0;
         transform: translateX(100px);
         animation: slideInFromRight 1s ease forwards; /* Add slideInFromRight animation */
         animation-delay: 1s; /* Delay for sequential effect */
@@ -275,6 +277,7 @@ export const animationTemplates = {
         display: flex;
         justify-content: center;
         margin-top: 6px;
+        opacity: 0;
         transform: translateX(-100px);
         animation: slideInFromLeft 1s ease forwards; /* Add slideInFromLeft animation */
         animation-delay: 1.5s; /* Delay for sequential effect */
