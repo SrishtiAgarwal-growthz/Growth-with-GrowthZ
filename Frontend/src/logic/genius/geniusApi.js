@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "https://growth-with-growthz.onrender.com";
 
 /**
  * Save app details by making a POST request to the backend.

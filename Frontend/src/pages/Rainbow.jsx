@@ -16,7 +16,7 @@ import XFeedCarousel from "../components/PhoneMockup/XMockup/XFeedCarousel";
 import TwitterIcon from "../assets/PhoneMockup/Twitter.png";
 import LinkedinIcon from "../assets/PhoneMockup/Linkedin.png";
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "https://growth-with-growthz.onrender.com";
 
 export default function Rainbow() {
   const navigate = useNavigate();
