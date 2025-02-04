@@ -14,6 +14,7 @@ import IgStoryAds from "../components/PhoneMockup/InstaMockup/InstaStoryAds";
 import LinkedInFeedCarousel from "../components/PhoneMockup/LinkedinMockup/LinkedinFeedCarousel";
 import XFeedCarousel from "../components/PhoneMockup/XMockup/XFeedCarousel";
 import TwitterIcon from "../assets/PhoneMockup/Twitter.png";
+import InstaIcon from "../assets/PhoneMockup/insta.png"
 import LinkedinIcon from "../assets/PhoneMockup/Linkedin.png";
 
 const BASE_URL = "https://growth-with-growthz.onrender.com";
@@ -62,7 +63,7 @@ export default function Rainbow() {
   const apps = [
     { id: "facebook", alt: "Facebook", icon: FacebookIcon },
     { id: "google", alt: "Google", icon: GoogleIcon },
-    { id: "instagram", alt: "Instagram" },
+    { id: "instagram", alt: "Instagram", icon: InstaIcon },
     { id: "linkedin", alt: "Linkedin", icon: LinkedinIcon },
     { id: "x", alt: "X", icon: TwitterIcon },
   ];

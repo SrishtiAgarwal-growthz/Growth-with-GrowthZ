@@ -70,11 +70,11 @@ export default function TwitterFeedCarousel({
               className="w-full h-full object-cover"
             />
           </div>
-          <img
+          {/* <img
             src="/api/placeholder/24/24"
             alt="X Logo"
             className="w-6 h-6"
-          />
+          /> */}
           <div className="flex items-center space-x-4">
             <button className="px-4 py-1.5 bg-transparent border border-gray-600 rounded-full text-[10px] font-semibold">
               Upgrade
