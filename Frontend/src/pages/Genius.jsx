@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import CustomAlert from "../components/Alert.jsx";
 
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "http://localhost:8000";
 
 export default function GeniusMarketingForm() {
   const navigate = useNavigate();
@@ -126,7 +126,7 @@ export default function GeniusMarketingForm() {
       // If google_play or apple_app => call /generate-phrases
       if (googlePlayUrl || appleAppUrl) {
         // Save the app
-        const savedApp = await saveAppDetails(formData);
+        const savedApp = await saveAppDetails(formData, userId);
         if (!savedApp._id) {
           throw new Error("App ID not returned from saveAppDetails.");
         }

@@ -65,7 +65,7 @@ export const fetchOrCreateApp = async (googlePlayUrl, appleAppUrl, websiteUrl = 
  *   - If the doc is new or imagesProcessed is false, we do remove-bg on up to 5 screenshots.
  *   - We rely on processAppImages to set imagesProcessed=true **only** if all 5 succeed.
  */
-export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl = null) => {
+export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl = null, userId) => {
   console.log("[saveAppDetailsInDb] Called with:", { googlePlayUrl, appleAppUrl, websiteUrl });
 
   const client = await connectToMongo();
@@ -224,7 +224,7 @@ export const saveAppDetailsInDb = async (googlePlayUrl, appleAppUrl, websiteUrl 
     console.log("[saveAppDetailsInDb] imagesProcessed is false => calling processAppImages...");
     try {
       // Perform the background removal
-      await processAppImages(savedApp._id);
+      await processAppImages(savedApp._id, userId);
 
       // Optionally, refresh savedApp after processing
       savedApp = await appsCollection.findOne({ _id: savedApp._id });

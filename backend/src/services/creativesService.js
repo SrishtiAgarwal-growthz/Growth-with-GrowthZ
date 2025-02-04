@@ -28,7 +28,7 @@ import { fetchFont } from "../utils/fontDownload.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const processAppImages = async (appId) => {
+export const processAppImages = async (appId, userId) => {
   const client = await connectToMongo();
   const db = client.db("GrowthZ");
   const appsCollection = db.collection("Apps");
@@ -120,8 +120,8 @@ export const processAppImages = async (appId) => {
           
           console.log(`[processAppImages] Uploading processed image to S3 for: ${image.screenshot}`);
           const s3Url = await uploadToS3(
-            noBgBuffer,
-            `extracted_images/${appId}`,
+            buffer,
+            `users/${userId}/app/${appId}/extracted_images`,
             `${appId}-${createdAtIST}.png`
           );
 
@@ -299,7 +299,7 @@ export const generateAdImages = async (appId, userId) => {
           // If you want to upload to S3:
           const s3Url = await uploadToS3(
             fs.readFileSync(adPath),
-            `creatives/${appId}`,
+            `users/${userId}/app/${appId}/creatives`,
             `ad-${appId}-${name}-${createdAtIST}.png`
           );
 
@@ -442,7 +442,7 @@ export const generateAdAnimation = async (appId, userId) => {
 
           const s3Url = await uploadToS3(
             fs.readFileSync(animationPath),
-            `creatives/${appId}`,
+            `users/${userId}/app/${appId}/animations`,
             `animation-${appId}-${name}-${createdAtIST}.mp4`
           );
 

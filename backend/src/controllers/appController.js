@@ -9,7 +9,7 @@ import { processAppImages } from "../services/creativesService.js";
  */
 export const saveAppDetails = async (req, res) => {
   try {
-    const { google_play, apple_app } = req.body;
+    const { google_play, apple_app, userId } = req.body;
 
     // Ensure at least one URL is provided
     if (!google_play && !apple_app) {
@@ -39,7 +39,7 @@ export const saveAppDetails = async (req, res) => {
 
     while (attempts < 3) {
       try {
-        savedApp = await saveAppDetailsInDb(google_play, apple_app);
+        savedApp = await saveAppDetailsInDb(google_play, apple_app, userId);
         break;
       } catch (error) {
         attempts++;
@@ -55,7 +55,7 @@ export const saveAppDetails = async (req, res) => {
     }
 
     // 2) Process images if needed
-    const result = await processAppImages(appIdFromResponse);
+    const result = await processAppImages(appIdFromResponse, userId);
 
     // Return success even if Apple data fetch failed
     return res.status(201).json({

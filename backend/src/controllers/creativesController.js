@@ -14,7 +14,7 @@ export const processImagesForApp = async (req, res) => {
     console.log(`[CreativesController] Processing images for app: ${appId}`);
 
     // Call the service to process app images
-    const updatedImages = await processAppImages(appId);
+    const updatedImages = await processAppImages(appId, userId);
 
     res.status(200).json({
       message: "Images processed successfully.",

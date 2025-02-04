@@ -1,4 +1,4 @@
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "http://localhost:8000";
 
 /**
  * Save app details by making a POST request to the backend.
@@ -6,7 +6,7 @@ const BASE_URL = "https://growth-with-growthz.onrender.com";
  * @param {Object} formData - The form data containing app URLs.
  * @returns {Promise<Object>} - The saved app data from the backend.
  */
-export const saveAppDetails = async (formData) => {
+export const saveAppDetails = async (formData, userId) => {
     try {
         const response = await fetch(`${BASE_URL}/api/app/save-app`, {
             method: 'POST',
@@ -16,6 +16,7 @@ export const saveAppDetails = async (formData) => {
             body: JSON.stringify({
                 google_play: formData.google_play,
                 apple_app: formData.apple_app,
+                userId,
             }),
         });
 
