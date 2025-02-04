@@ -120,7 +120,7 @@ export const processAppImages = async (appId, userId) => {
           
           console.log(`[processAppImages] Uploading processed image to S3 for: ${image.screenshot}`);
           const s3Url = await uploadToS3(
-            buffer,
+            noBgBuffer,
             `users/${userId}/app/${appId}/extracted_images`,
             `${appId}-${createdAtIST}.png`
           );
