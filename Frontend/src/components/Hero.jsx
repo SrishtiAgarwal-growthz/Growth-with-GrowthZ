@@ -10,9 +10,7 @@ import image6 from "../assets/HomePage/Hero6.png";
 const Hero = () => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
-
   const images = [image1, image2, image3, image4, image5, image6];
-
   const growthStyle = {
     color: "#007bff",
     fontWeight: "bold",
@@ -23,14 +21,13 @@ const Hero = () => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768); // 768px → 48rem
     };
-
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   return (
-    <div className="relative w-full bg-black min-h-[31.875rem] md:min-h-[42.5rem] lg:min-h-screen overflow-hidden mt-[5rem] lg:mt-[5rem]">
+    <div className="relative w-full bg-black min-h-[50vh] md:min-h-[70vh] lg:min-h-screen overflow-hidden mt-[5rem]">
       {/* Gradient Background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="w-full h-full relative">
@@ -45,7 +42,6 @@ const Hero = () => {
           />
         </div>
       </div>
-
       {/* Combined Content Container */}
       <div className="relative z-10 flex flex-col items-center">
         {/* Hero Content */}
@@ -53,11 +49,9 @@ const Hero = () => {
           <h1 className="text-[1.875rem] sm:text-[2.25rem] md:text-[3.125rem] lg:text-[3.75rem] font-bold text-white">
             Powering the <span style={growthStyle}>&ldquo;Growth&rdquo;</span>
           </h1>
-
           <p className="text-gray-300 text-[1rem] sm:text-[1.125rem] lg:text-[1.25rem] mt-[0.75rem] sm:mt-[0.25rem]">
             Campaign &mdash;{">"} Scalable &mdash;{">"} Conversions
           </p>
-
           <div className="flex justify-center mt-[1rem] sm:mt-[1.5rem]">
             <div
               onClick={() => navigate("/login")}
@@ -76,7 +70,6 @@ const Hero = () => {
                   >
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
-
                   {/* Copy Arrow */}
                   <svg
                     className="w-6 md:w-8 h-6 md:h-8 text-white absolute transform -rotate-45 -translate-x-[150%] translate-y-[150%] duration-0 group-hover:duration-300 delay-100 group-hover:translate-x-0 group-hover:translate-y-0"
@@ -92,7 +85,6 @@ const Hero = () => {
             </div>
           </div>
         </div>
-
         {/* Carousel Container */}
         <div className="w-full overflow-hidden">
           <div className="carousel-container">
@@ -127,134 +119,117 @@ const Hero = () => {
           </div>
         </div>
       </div>
-
       <style>
         {`
-           .carousel-container {
-    width: 100%;
-    overflow: hidden;
-    position: relative;
-    margin-top: ${isMobile ? "1.5rem" : "0"};
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y pinch-zoom;
-  }
-
-  .carousel-track {
-    display: flex;
-    width: max-content;
-    animation: smoothScroll 30s linear infinite;
-    will-change: transform;
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
-  }
-
-  .carousel-item {
-    flex: 0 0 auto;
-    padding: 0;
-    margin-right: ${isMobile ? "0.5rem" : "0rem"};
-    margin-top: ${isMobile ? "0.5rem" : "0"};
-    width: ${isMobile ? "calc(100vw - 4rem)" : "23.5rem"};
-    max-width: ${isMobile ? "17.5rem" : "25rem"};
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-
-  .carousel-image-container {
-    width: 100%;
-    height: ${isMobile ? "17.5rem" : "25rem"};
-    position: relative;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-
-  .carousel-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: optimizeQuality;
-  }
-
-  @-webkit-keyframes smoothScroll {
-    0% {
-      -webkit-transform: translate3d(0, 0, 0);
-      transform: translate3d(0, 0, 0);
-    }
-    100% {
-      -webkit-transform: translate3d(-50%, 0, 0);
-      transform: translate3d(-50%, 0, 0);
-    }
-  }
-
-  @keyframes smoothScroll {
-    0% {
-      -webkit-transform: translate3d(0, 0, 0);
-      transform: translate3d(0, 0, 0);
-    }
-    100% {
-      -webkit-transform: translate3d(-50%, 0, 0);
-      transform: translate3d(-50%, 0, 0);
-    }
-  }
-
-  .carousel-track:hover {
-    -webkit-animation-play-state: paused;
-    animation-play-state: paused;
-  }
-
-  /* Smooth fade effect at the edges */
-  .carousel-track::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 6.25rem;
-    background: linear-gradient(to right, rgba(0,0,0,0), rgba(0,0,0,1));
-    pointer-events: none;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-
-  /* Remove blue highlight on tap in iOS */
-  .carousel-container, 
-  .carousel-track, 
-  .carousel-item, 
-  .carousel-image-container {
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  /* Improve performance on iOS */
-  @supports (-webkit-overflow-scrolling: touch) {
-    .carousel-track {
-      -webkit-overflow-scrolling: touch;
-      -webkit-transform: translate3d(0, 0, 0);
-      transform: translate3d(0, 0, 0);
-    }
-  }
-
-  /* Prevent text size adjustment on orientation change */
-  @media screen and (orientation: portrait) {
-    html {
-      -webkit-text-size-adjust: 100%;
-      text-size-adjust: 100%;
-    }
-  }
+          .carousel-container {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            margin-top: ${isMobile ? "1.5rem" : "0"};
+            padding: 0 1rem; /* Add horizontal padding */
+            box-sizing: border-box;
+          }
+          .carousel-track {
+            display: flex;
+            width: max-content;
+            animation: smoothScroll 30s linear infinite;
+            will-change: transform;
+            -webkit-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+          }
+          .carousel-item {
+            flex: 0 0 auto;
+            padding: 0;
+            margin-right: ${isMobile ? "0.5rem" : "0rem"};
+            margin-top: ${isMobile ? "0.5rem" : "0"};
+            width: ${isMobile ? "calc(100vw - 4rem)" : "23.5rem"};
+            max-width: ${isMobile ? "17.5rem" : "25rem"};
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+          }
+          .carousel-image-container {
+            width: 100%;
+            height: auto; /* Allow height to adjust dynamically */
+            max-height: none; /* Remove fixed height constraints */
+            position: relative;
+            border-radius: 0.5rem;
+            overflow: hidden;
+          }
+          .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures the image covers the container */
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+          }
+          @-webkit-keyframes smoothScroll {
+            0% {
+              -webkit-transform: translate3d(0, 0, 0);
+              transform: translate3d(0, 0, 0);
+            }
+            100% {
+              -webkit-transform: translate3d(-50%, 0, 0);
+              transform: translate3d(-50%, 0, 0);
+            }
+          }
+          @keyframes smoothScroll {
+            0% {
+              -webkit-transform: translate3d(0, 0, 0);
+              transform: translate3d(0, 0, 0);
+            }
+            100% {
+              -webkit-transform: translate3d(-50%, 0, 0);
+              transform: translate3d(-50%, 0, 0);
+            }
+          }
+          .carousel-track:hover {
+            -webkit-animation-play-state: paused;
+            animation-play-state: paused;
+          }
+          /* Smooth fade effect at the edges */
+          .carousel-track::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 6.25rem;
+            background: linear-gradient(to right, rgba(0,0,0,0), rgba(0,0,0,1));
+            pointer-events: none;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+          }
+          /* Remove blue highlight on tap in iOS */
+          .carousel-container, 
+          .carousel-track, 
+          .carousel-item, 
+          .carousel-image-container {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+          }
+          /* Improve performance on iOS */
+          @supports (-webkit-overflow-scrolling: touch) {
+            .carousel-track {
+              -webkit-overflow-scrolling: touch;
+              -webkit-transform: translate3d(0, 0, 0);
+              transform: translate3d(0, 0, 0);
+            }
+          }
+          /* Prevent text size adjustment on orientation change */
+          @media screen and (orientation: portrait) {
+            html {
+              -webkit-text-size-adjust: 100%;
+              text-size-adjust: 100%;
+            }
+          }
         `}
       </style>
     </div>
   );
 };
 
-export default Hero;
+export default Hero;  
