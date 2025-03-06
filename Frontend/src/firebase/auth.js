@@ -8,7 +8,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "https://growth-with-growthz-mc12.onrender.com";
 
 /**
  * Check if the email domain is blocked.

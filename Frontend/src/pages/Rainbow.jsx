@@ -17,7 +17,7 @@ import TwitterIcon from "../assets/PhoneMockup/Twitter.png";
 import InstaIcon from "../assets/PhoneMockup/insta.png"
 import LinkedinIcon from "../assets/PhoneMockup/Linkedin.png";
 
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "https://growth-with-growthz-mc12.onrender.com";
 
 export default function Rainbow() {
   const navigate = useNavigate();

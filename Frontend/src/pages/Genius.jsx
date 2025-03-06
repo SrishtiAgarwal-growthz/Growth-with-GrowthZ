@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import CustomAlert from "../components/Alert.jsx";
 
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "https://growth-with-growthz-mc12.onrender.com";
 
 export default function GeniusMarketingForm() {
   const navigate = useNavigate();

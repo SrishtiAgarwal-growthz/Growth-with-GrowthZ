@@ -1,5 +1,5 @@
 // rainbowApi.js
-const BASE_URL = "https://growth-with-growthz.onrender.com";
+const BASE_URL = "https://growth-with-growthz-mc12.onrender.com";
 
 /**
  * POST /api/creatives/addCreativeToTasks
