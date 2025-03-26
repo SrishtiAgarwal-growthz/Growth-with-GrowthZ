@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import logo from "../assets/logo.png";
 import menuIcon from "../assets/Hamburger.png";
 import { useNavigate } from "react-router-dom";
@@ -8,8 +8,8 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   // const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
-  const [isProductClicked, setIsProductClicked] = useState(false);
-  const dropdownRef = useRef(null);
+  // const [isProductClicked, setIsProductClicked] = useState(false);
+  // const dropdownRef = useRef(null);
   // const [closeTimeout, setCloseTimeout] = useState(null);
   useEffect(() => {
     const handleScroll = () => {
@@ -19,16 +19,15 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsProductClicked(false);
-      }
-    };
+  // useEffect(() => {
+  //   const handleClickOutside = (event) => {
+  //     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+  //     }
+  //   };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => document.removeEventListener("mousedown", handleClickOutside);
+  // }, []);
 
   // const handleProductClick = (e) => {
   //   e.preventDefault();
@@ -203,13 +202,13 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div
+      {/* <div
         className={`md:hidden absolute top-[5.125rem] left-0 right-0 bg-black transition-all duration-300 ease-in-out ${
           isOpen ? "h-auto opacity-100" : "h-0 opacity-0 overflow-hidden"
         }`}
       >
         <div className="px-[2rem] py-[1rem] space-y-[1rem]">
-          {/* Mobile Products Dropdown */}
+        
           <div className="space-y-2">
             <button
               onClick={() => setIsProductClicked(!isProductClicked)}
@@ -307,7 +306,7 @@ const Navbar = () => {
             TRY ME
           </button>
         </div>
-      </div>
+      </div> */}
     </nav>
   );
 };
