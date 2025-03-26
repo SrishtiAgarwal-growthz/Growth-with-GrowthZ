@@ -7,10 +7,10 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
-  const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
+  // const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
   const [isProductClicked, setIsProductClicked] = useState(false);
   const dropdownRef = useRef(null);
-  const [closeTimeout, setCloseTimeout] = useState(null);
+  // const [closeTimeout, setCloseTimeout] = useState(null);
   useEffect(() => {
     const handleScroll = () => {
       setHasScrolled(window.scrollY > 0);
@@ -30,10 +30,10 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleProductClick = (e) => {
-    e.preventDefault();
-    setIsProductClicked(!isProductClicked);
-  };
+  // const handleProductClick = (e) => {
+  //   e.preventDefault();
+  //   setIsProductClicked(!isProductClicked);
+  // };
 
   return (
     <nav
@@ -52,9 +52,9 @@ const Navbar = () => {
         </button>
 
         {/* Desktop Menu */}
-        <div className="hidden custom-md:flex items-center space-x-[3.5rem]">
+        {/* <div className="hidden custom-md:flex items-center space-x-[3.5rem]">
           <div className="flex space-x-[2rem] text-[1rem]">
-            {/* Products Dropdown */}
+          
             <div
               ref={dropdownRef}
               className="relative group"
@@ -100,7 +100,7 @@ const Navbar = () => {
                 </svg>
               </a>
 
-              {/* Dropdown Menu */}
+            
               <div
                 className={`absolute left-0 mt-2 w-48 rounded-md shadow-lg transition-all duration-200 ease-in-out transform ${
                   isProductDropdownOpen || isProductClicked
@@ -188,9 +188,8 @@ const Navbar = () => {
         />
       </button>
 
-        </div>
+        </div> */}
 
-        {/* Mobile Menu Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="custom-md:hidden flex items-center justify-center"
